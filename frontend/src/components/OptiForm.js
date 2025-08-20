@@ -42,9 +42,10 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
 
   useEffect(() => {
     setFormData((prev) => ({
-      ...prev,
+      ...initialFormState,
       ...initialData,
     }));
+    setErrors({});
   }, [initialData]);
 
   useEffect(() => {
@@ -104,7 +105,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="text"
             name="nmOpti"
-            value={formData.nmOpti}
+            value={formData.nmOpti || ""}
             onChange={handleChange}
             placeholder="Masukkan nama opportunity"
             className={inputStyle}
@@ -119,7 +120,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="text"
             name="contactOpti"
-            value={formData.contactOpti}
+            value={formData.contactOpti || ""}
             onChange={handleChange}
             placeholder="Nama kontak PIC"
             className={inputStyle}
@@ -133,7 +134,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="email"
             name="emailOpti"
-            value={formData.emailOpti}
+            value={formData.emailOpti || ""}
             onChange={handleChange}
             placeholder="contoh@email.com"
             className={inputStyle}
@@ -148,7 +149,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="text"
             name="mobileOpti"
-            value={formData.mobileOpti}
+            value={formData.mobileOpti || ""}
             onChange={handleChange}
             placeholder="08xxxxxxxxxx"
             className={inputStyle}
@@ -161,7 +162,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           </label>
           <select
             name="statOpti"
-            value={formData.statOpti}
+            value={formData.statOpti || ""}
             onChange={handleChange}
             className={inputStyle}
           >
@@ -181,7 +182,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="text"
             name="propOpti"
-            value={formData.propOpti}
+            value={formData.propOpti || ""}
             onChange={handleChange}
             placeholder="Nomor atau referensi proposal"
             className={inputStyle}
@@ -214,7 +215,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           </label>
           <select
             name="idCustomer"
-            value={formData.idCustomer}
+            value={formData.idCustomer || ""}
             onChange={handleChange}
             className={inputStyle}
           >
@@ -234,7 +235,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           </label>
           <select
             name="idSumber"
-            value={formData.idSumber}
+            value={formData.idSumber || ""}
             onChange={handleChange}
             className={inputStyle}
           >
@@ -254,7 +255,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           </label>
           <textarea
             name="kebutuhan"
-            value={formData.kebutuhan}
+            value={formData.kebutuhan || ""}
             onChange={handleChange}
             placeholder="(kosong, isi dengan deskripsi tambahan)"
             className={inputStyle}
