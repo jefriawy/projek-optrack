@@ -48,9 +48,9 @@ const UserManagement = () => {
     );
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-2xl">
+    <>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        👥 User Management
+        All Users
       </h2>
 
       {success && (
@@ -125,7 +125,7 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 };
 
