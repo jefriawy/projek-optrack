@@ -119,73 +119,73 @@ const OptiPage = () => {
         pageNumbers.push(i);
     }
     
-    const pdfDocument = sortedOptis.length > 0 ? (
-        <OptiListPdf optis={sortedOptis} />
-    ) : (
+    const pdfDocument = (
         <Document>
             <Page>
-                <Text>No data available</Text>
+                <Text>Test PDF</Text>
             </Page>
         </Document>
     );
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="bg-white rounded-xl shadow p-6 mb-6 flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Opportunity Page</h1>
-                <div className="flex items-center gap-4">
-                    <div className="relative">
+        <div className="flex-grow p-8 bg-gray-100">
+            <header className="flex justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800">Opportunity Page</h1>
+                </div>
+                <div className="flex items-center">
+                    <div className="relative flex items-center w-64 mr-4">
                         <input
                             type="text"
                             placeholder="Search Perusahaan..."
+                            className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-64 pl-4 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                        <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <FaSearch className="absolute right-3 text-gray-400" />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <FaUserCircle className="text-gray-500 text-2xl" />
-                        <span className="font-semibold text-gray-700">{user.name}</span>
+                    <div className="flex items-center">
+                        <FaUserCircle className="text-gray-500 text-2xl mr-2" />
+                        <span className="font-medium text-gray-700">
+                            {user.name || "User"}
+                        </span>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Opportunity</h2>
-            <p className="text-gray-600 mb-4">Data Opportunity</p>
-
-            <div className="flex flex-wrap gap-4 mb-4">
-                <button
-                    onClick={handleAddOpti}
-                    className="bg-black text-white px-5 py-2 rounded font-semibold hover:bg-gray-800 transition"
-                >
-                    Tambah Opportunity
-                </button>
-                <PDFDownloadLink
-                    document={pdfDocument}
-                    fileName="laporan_opti.pdf"
-                    className="bg-red-600 text-white px-5 py-2 rounded font-semibold hover:bg-red-700 transition"
-                >
-                    {({ loading }) => (loading ? "Membuat PDF..." : "Export to PDF")}
-                </PDFDownloadLink>
-            </div>
-            <div className="flex justify-end items-center gap-2 mb-2">
-                <label
-                    htmlFor="sortOrder"
-                    className="text-sm font-medium text-gray-700"
-                >
-                    Urutkan:
-                </label>
-                <select
-                    id="sortOrder"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="p-2 border rounded-md"
-                >
-                    <option value="name_asc">Nama Opti</option>
-                    <option value="customer_asc">Customer</option>
-                    <option value="date_desc">Tanggal</option>
-                </select>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Opportunity</h1>
+            <p className="text-gray-600 mb-6">Data Opportunity</p>
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex space-x-4">
+                    <button
+                        onClick={handleAddOpti}
+                        className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
+                    >
+                        Tambah Opportunity
+                    </button>
+                    {optis.length > 0 && (
+                        <PDFDownloadLink
+                            document={pdfDocument}
+                            fileName="laporan_opti.pdf"
+                            className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
+                        >
+                            {({ loading }) => (loading ? "Membuat PDF..." : "Export to PDF")}
+                        </PDFDownloadLink>
+                    )}
+                </div>
+                <div className="flex items-center">
+                    <label htmlFor="sortOrder" className="text-gray-700 mr-2">Urutkan:</label>
+                    <select
+                        id="sortOrder"
+                        className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                    >
+                        <option value="name_asc">Nama Opti</option>
+                        <option value="customer_asc">Customer</option>
+                        <option value="date_desc">Tanggal</option>
+                    </select>
+                </div>
             </div>
 
             <OptiTable
