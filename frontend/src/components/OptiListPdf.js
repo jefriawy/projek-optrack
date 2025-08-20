@@ -1,4 +1,3 @@
-// frontend/src/components/OptiListPdf.js
 import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 
@@ -41,24 +40,32 @@ const OptiListPdf = ({ optis }) => (
             <Text style={styles.tableCell}>Status</Text>
           </View>
         </View>
-        {optis.map((opti) => (
-          <View style={styles.tableRow} key={opti.idOpti}>
-            <View style={styles.tableCol}>
-              <Text style={styles.tableCell}>{opti.nmOpti}</Text>
+        {optis && optis.length > 0 ? (
+          optis.map((opti) => (
+            <View style={styles.tableRow} key={opti.idOpti}>
+              <View style={styles.tableCol}>
+                <Text style={styles.tableCell}>{opti.nmOpti}</Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text style={styles.tableCell}>{opti.nmCustomer}</Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text style={styles.tableCell}>
+                  {new Date(opti.datePropOpti).toLocaleDateString("id-ID")}
+                </Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text style={styles.tableCell}>{opti.statOpti}</Text>
+              </View>
             </View>
-            <View style={styles.tableCol}>
-              <Text style={styles.tableCell}>{opti.nmCustomer}</Text>
-            </View>
-            <View style={styles.tableCol}>
-              <Text style={styles.tableCell}>
-                {new Date(opti.datePropOpti).toLocaleDateString("id-ID")}
-              </Text>
-            </View>
-            <View style={styles.tableCol}>
-              <Text style={styles.tableCell}>{opti.statOpti}</Text>
+          ))
+        ) : (
+          <View style={styles.tableRow}>
+            <View style={{ ...styles.tableCol, width: '100%' }}>
+              <Text style={{ ...styles.tableCell, textAlign: 'center' }}>No data available</Text>
             </View>
           </View>
-        ))}
+        )}
       </View>
     </Page>
   </Document>

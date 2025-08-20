@@ -56,16 +56,16 @@ const OptiDetailPdf = ({ opti }) => (
         <Text style={styles.headerTitle}>Opportunity Detail Report</Text>
       </View>
       <View style={styles.section}>
-        <Text><Text style={styles.label}>Nama Opti:</Text> <Text style={styles.value}>{opti.nmOpti || "-"}</Text></Text>
-        <Text><Text style={styles.label}>Customer:</Text> <Text style={styles.value}>{opti.nmCustomer || "-"}</Text></Text>
-        <Text><Text style={styles.label}>Kontak Person:</Text> <Text style={styles.value}>{opti.contactOpti || "-"}</Text></Text>
-        <Text><Text style={styles.label}>Status:</Text> <Text style={styles.value}>{opti.statOpti || "-"}</Text></Text>
-        <Text><Text style={styles.label}>Sumber:</Text> <Text style={styles.value}>{opti.nmSumber || "-"}</Text></Text>
-        <Text><Text style={styles.label}>Tanggal Proposal:</Text> <Text style={styles.value}>{opti.datePropOpti ? new Date(opti.datePropOpti).toLocaleDateString("id-ID") : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Nama Opti:</Text> <Text style={styles.value}>{opti && opti.nmOpti ? opti.nmOpti : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Customer:</Text> <Text style={styles.value}>{opti && opti.nmCustomer ? opti.nmCustomer : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Kontak Person:</Text> <Text style={styles.value}>{opti && opti.contactOpti ? opti.contactOpti : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Status:</Text> <Text style={styles.value}>{opti && opti.statOpti ? opti.statOpti : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Sumber:</Text> <Text style={styles.value}>{opti && opti.nmSumber ? opti.nmSumber : "-"}</Text></Text>
+        <Text><Text style={styles.label}>Tanggal Proposal:</Text> <Text style={styles.value}>{opti && opti.datePropOpti ? new Date(opti.datePropOpti).toLocaleDateString("id-ID") : "-"}</Text></Text>
       </View>
       <View style={styles.section}>
         <Text style={styles.label}>Kebutuhan:</Text>
-        <Text style={styles.kebutuhan}>{opti.kebutuhan || "Tidak ada deskripsi."}</Text>
+        <Text style={styles.kebutuhan}>{opti && opti.kebutuhan ? opti.kebutuhan : "Tidak ada deskripsi."}</Text>
       </View>
     </Page>
   </Document>

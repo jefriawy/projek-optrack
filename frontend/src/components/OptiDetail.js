@@ -6,14 +6,16 @@ import OptiDetailPdf from "./OptiDetailPdf";
 const OptiDetail = ({ opti }) => {
   if (!opti) return null;
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("id-ID");
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("id-ID");
+  };
 
   return (
     <div className="p-4 space-y-4">
       <div>
         <h3 className="font-bold text-lg">{opti.nmOpti}</h3>
-        <p className="text-sm text-gray-500">Perusahaan: {opti.nmCustomer}</p>
+        <p className="text-sm text-gray-500">Perusahaan: {opti.corpCustomer || "-"}</p>
       </div>
       <div className="grid grid-cols-2 gap-4 border-t pt-4">
         <p>

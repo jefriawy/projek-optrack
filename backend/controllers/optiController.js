@@ -1,6 +1,7 @@
 // backend/controllers/optiController.js
 const Opti = require("../models/opti");
 const Customer = require("../models/customer");
+const pool = require('../config/database');
 
 const createOpti = async (req, res) => {
   try {
@@ -22,8 +23,19 @@ const createOpti = async (req, res) => {
 
 const getOptis = async (req, res) => {
   try {
-    const optis = await Opti.findAll();
-    res.json(optis);
+    const searchTerm = req.query.search;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const [optis, totalCount] = await Opti.findAllPaginated(searchTerm, limit, offset);
+
+    res.json({
+      data: optis,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    });
   } catch (error) {
     console.error("Error fetching opportunities:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });
