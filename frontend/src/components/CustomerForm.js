@@ -4,13 +4,18 @@ import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import * as Yup from "yup";
 
+// Schema validasi disesuaikan untuk tidak memerlukan idStatCustomer jika role adalah Sales
 const validationSchema = Yup.object({
   nmCustomer: Yup.string().required("Customer name is required"),
   emailCustomer: Yup.string().email("Invalid email format").required("Email is required"),
   mobileCustomer: Yup.string().matches(/^\d+$/, "Phone number must be numeric").optional(),
   addrCustomer: Yup.string().optional(),
   corpCustomer: Yup.string().optional(),
-  idStatCustomer: Yup.number().required("Status is required"),
+  idStatCustomer: Yup.number().when("$userRole", {
+    is: (userRole) => userRole !== "Sales",
+    then: (schema) => schema.required("Status is required"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
   descCustomer: Yup.string().optional(),
 });
 
@@ -29,8 +34,8 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Fetch status options
-    if (user && user.token) {
+    // Fetch status options hanya jika user bukan Sales atau jika sedang edit
+    if (user && user.token && (user.role !== 'Sales' || initialData)) {
       axios.get("http://localhost:3000/api/customer/status", {
           headers: { Authorization: `Bearer ${user.token}` },
         })
@@ -38,7 +43,7 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
         .catch((error) => console.error("Error fetching status options:", error));
     }
 
-    // If editing, populate form
+    // Mengisi form jika ada initialData
     if (initialData) {
       setFormData({
         nmCustomer: initialData.nmCustomer || "",
@@ -50,13 +55,14 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
         descCustomer: initialData.descCustomer || "",
       });
     } else {
+      // Mengatur default status untuk Sales saat form kosong
       setFormData({
         nmCustomer: "",
         emailCustomer: "",
         mobileCustomer: "",
         addrCustomer: "",
         corpCustomer: "",
-        idStatCustomer: "",
+        idStatCustomer: user?.role === 'Sales' ? 1 : "", // Default 1 untuk Sales
         descCustomer: "",
       });
     }
@@ -70,8 +76,11 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await validationSchema.validate(formData, { abortEarly: false });
-      onSubmit(formData); // Pass data to parent component
+      // Menyesuaikan validasi Yup dengan role pengguna
+      await validationSchema.validate(formData, { context: { userRole: user?.role }, abortEarly: false });
+      
+      // Kirim data yang sudah divalidasi ke komponen parent
+      onSubmit(formData);
     } catch (error) {
       if (error.name === "ValidationError") {
         const validationErrors = {};
@@ -85,7 +94,6 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Form fields remain the same, but without the main container and title */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="form-group">
           <label>Name</label>
@@ -110,18 +118,22 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
           <label>Corporation</label>
           <input type="text" name="corpCustomer" placeholder="Customer Corporation" value={formData.corpCustomer} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label>Status Customer</label>
-          <select name="idStatCustomer" value={formData.idStatCustomer} onChange={handleChange}>
-            <option value="">Select Status Customer</option>
-            {statusOptions.map((status) => (
-              <option key={status.idStatCustomer} value={status.idStatCustomer}>
-                {status.nmStatCustomer}
-              </option>
-            ))}
-          </select>
-          {errors.idStatCustomer && <p className="error">{errors.idStatCustomer}</p>}
-        </div>
+
+        {/* Status Customer hanya ditampilkan jika role bukan Sales */}
+        {(user?.role !== 'Sales') && (
+            <div className="form-group">
+                <label>Status Customer</label>
+                <select name="idStatCustomer" value={formData.idStatCustomer} onChange={handleChange}>
+                    <option value="">Select Status Customer</option>
+                    {statusOptions.map((status) => (
+                    <option key={status.idStatCustomer} value={status.idStatCustomer}>
+                        {status.nmStatCustomer}
+                    </option>
+                    ))}
+                </select>
+                {errors.idStatCustomer && <p className="error">{errors.idStatCustomer}</p>}
+            </div>
+        )}
       </div>
       <div className="form-group">
         <label>Description</label>

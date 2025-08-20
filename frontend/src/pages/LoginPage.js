@@ -1,6 +1,6 @@
 // frontend/src/pages/LoginPage.js
 import React, { useContext, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import { AuthContext } from "../context/AuthContext";
 
@@ -10,7 +10,21 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/customer", { replace: true });
+      // Logika pengalihan berdasarkan role pengguna setelah login
+      switch (user.role) {
+        case "Admin":
+          navigate("/dashboard-admin", { replace: true });
+          break;
+        case "Head Sales":
+          navigate("/customer", { replace: true });
+          break;
+        case "Sales":
+          navigate("/customer", { replace: true });
+          break;
+        default:
+          // Arahkan ke halaman default jika role tidak terdaftar
+          navigate("/login", { replace: true });
+      }
     }
   }, [user, navigate]);
 

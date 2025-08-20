@@ -1,4 +1,4 @@
-// frontend/src/components/Sidebaar.js
+// frontend/src/components/Sidebar.js
 import React, { useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -12,18 +12,29 @@ const Sidebar = () => {
     navigate("/login");
   };
 
-  // Semua menu pakai link untuk navigasi
-  const menuItems = [
-    { icon: "🏠", name: "Home", link: "/" },
-    { icon: "⚙️", name: "Opti", link: "/opti" },
-    { icon: "👥", name: "Customer", link: "/customer" },
-    { icon: "🎓", name: "Training", link: "/training" },
-    { icon: "📂", name: "Project", link: "/project" },
-    { icon: "🤝", name: "Outsource", link: "/outsource" },
-    ...(user && user.role && user.role.toLowerCase() === "admin"
-      ? [{ icon: "🧑‍💼", name: "Manage User", link: "/users" }]
-      : []),
-  ];
+  let menuItems = [];
+
+  // Tentukan menu berdasarkan role
+  if (user && user.role === "Admin") {
+    menuItems = [
+      { icon: "🏠", name: "Home", link: "/" },
+      { icon: "👥", name: "Sales", link: "/sales" },
+      { icon: "🎓", name: "Trainer", link: "/training" },
+      { icon: "🧑‍💼", name: "Expert", link: "/expert" },
+      { icon: "📂", name: "Project", link: "/project" },
+      { icon: "🤝", name: "Outsource", link: "/outsource" },
+      { icon: "🔧", name: "Manage User", link: "/users" }, // Tautan untuk manage user
+    ];
+  } else if (user && (user.role === "Sales" || user.role === "Head Sales")) {
+    menuItems = [
+      { icon: "🏠", name: "Home", link: "/" },
+      { icon: "⚙️", name: "Opti", link: "/opti" },
+      { icon: "👥", name: "Customer", link: "/customer" },
+      { icon: "🎓", name: "Training", link: "/training" },
+      { icon: "📂", name: "Project", link: "/project" },
+      { icon: "🤝", name: "Outsource", link: "/outsource" },
+    ];
+  }
 
   return (
     <div className="w-64 bg-white h-screen flex flex-col p-4 shadow-lg fixed top-0 left-0 z-40">

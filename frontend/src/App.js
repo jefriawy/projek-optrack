@@ -10,6 +10,7 @@ import CustomerDetailPage from "./pages/CustomerDetailPage";
 import OptiPage from "./pages/OptiPage";
 import SalesPage from "./pages/SalesPage";
 import Layout from "./components/Layout";
+import AdminDashboard from "./components/AdminDashboard"; // Pastikan Anda mengimpor komponen ini
 import "./App.css";
 
 const App = () => {
@@ -18,6 +19,17 @@ const App = () => {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          
+          {/* Rute untuk Dashboard Admin */}
+          <Route
+            path="/dashboard-admin"
+            element={
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            }
+          />
+          
           {/* Routes wrapped with Layout */}
           <Route
             path="/opti"

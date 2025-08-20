@@ -44,8 +44,8 @@ const createUser = async (req, res) => {
     const userId = userResult.insertId;
     console.log("User created with ID:", userId); // Debug
 
-    // Jika role Sales, buat entri di tabel sales
-    if (role === "Sales") {
+    // Perbaikan: Jika role Sales atau Head Sales, buat entri di tabel sales
+    if (role === "Sales" || role === "Head Sales") {
       const salesResult = await User.createSales(
         { nmSales: name, emailSales: email, mobileSales, descSales, userId },
         connection
@@ -89,7 +89,7 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (user.role === "Sales") {
+    if (user.role === "Sales" || user.role === "Head Sales") {
       await User.deleteSales(id, connection);
     }
 
