@@ -119,13 +119,7 @@ const OptiPage = () => {
         pageNumbers.push(i);
     }
     
-    const pdfDocument = (
-        <Document>
-            <Page>
-                <Text>Test PDF</Text>
-            </Page>
-        </Document>
-    );
+const pdfDocument = <OptiListPdf optis={sortedOptis} />;
 
     return (
         <div className="flex-grow p-8 bg-gray-100">

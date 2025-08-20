@@ -16,7 +16,7 @@ const UserManagementPage = () => {
       <Sidebar />
       <div className="flex-grow p-8">
         <header className="flex justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+          <h1 className="text-2xl font-bold text-gray-800">👥 User Management</h1>
         </header>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <UserManagement />
