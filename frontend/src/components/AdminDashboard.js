@@ -3,6 +3,27 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { Bar, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -17,6 +38,7 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hoveredCard, setHoveredCard] = useState(null); // New state for hover
 
   useEffect(() => {
     const fetchUserCounts = async () => {
@@ -67,26 +89,215 @@ const AdminDashboard = () => {
 
   const roleCards = [
     { name: "Sales", count: userCounts.Sales, link: "/sales" },
-    { name: "Head of Sales", count: userCounts['Head Sales'], link: "/sales" }, // Perbaikan: link mengarah ke /sales
-    { name: "Trainer", count: userCounts.Trainer, link: "/training" },
+    { name: "Head Sales", count: userCounts['Head Sales'], link: "/sales" }, // Changed name to match key
     { name: "Expert", count: userCounts.Expert, link: "/expert" },
     { name: "Project", count: userCounts.Project, link: "/project" },
     { name: "Outsource", count: userCounts.Outsource, link: "/outsource" },
     { name: "Semua", count: userCounts.Semua, link: "/users" },
   ];
 
+  const chartData = {
+    labels: Object.keys(userCounts).filter(role => role !== 'Semua'),
+    datasets: [
+      {
+        label: 'Jumlah Pengguna',
+        data: Object.values(userCounts).filter((_, index) => Object.keys(userCounts)[index] !== 'Semua'),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Jumlah Pengguna Berdasarkan Peran',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
+  const roleColors = {
+    'Sales': {
+      background: 'rgba(255, 99, 132, 0.6)',
+      border: 'rgba(255, 99, 132, 1)',
+    },
+    'Head Sales': {
+      background: 'rgba(54, 162, 235, 0.6)',
+      border: 'rgba(54, 162, 235, 1)',
+    },
+    'Trainer': {
+      background: 'rgba(255, 206, 86, 0.6)',
+      border: 'rgba(255, 206, 86, 1)',
+    },
+    'Expert': {
+      background: 'rgba(75, 192, 192, 0.6)',
+      border: 'rgba(75, 192, 192, 1)',
+    },
+    'Project': {
+      background: 'rgba(153, 102, 255, 0.6)',
+      border: 'rgba(153, 102, 255, 1)',
+    },
+    'Outsource': {
+      background: 'rgba(255, 159, 64, 0.6)',
+      border: 'rgba(255, 159, 64, 1)',
+    },
+  };
+
+  // Function to generate pie chart data for a specific role
+  const generatePieChartData = (roleName, roleCount) => {
+    if (roleName === 'Semua') {
+      const labels = Object.keys(userCounts).filter(role => role !== 'Semua');
+      const data = labels.map(role => userCounts[role]);
+
+      const backgroundColors = [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+      ];
+      const borderColors = [
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+      ];
+
+      return {
+        labels: labels,
+        datasets: [
+          {
+            data: data,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1,
+          },
+        ],
+      };
+    } else {
+      const totalUsers = userCounts.Semua;
+      const otherRolesCount = totalUsers - roleCount;
+      const roleColor = roleColors[roleName] || { background: 'rgba(200, 200, 200, 0.6)', border: 'rgba(200, 200, 200, 1)' };
+
+      return {
+        labels: [roleName, 'Peran Lain'],
+        datasets: [
+          {
+            data: [roleCount, otherRolesCount],
+            backgroundColor: [
+              roleColor.background,
+              'rgba(200, 200, 200, 0.6)',
+            ],
+            borderColor: [
+              roleColor.border,
+              'rgba(200, 200, 200, 1)',
+            ],
+            borderWidth: 1,
+          },
+        ],
+      };
+    }
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false, // Allow chart to be smaller than its container
+    plugins: {
+      legend: {
+        display: false, // Hide legend for small pie charts
+      },
+      title: {
+        display: false, // Hide title for small pie charts
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed !== null) {
+              label += context.parsed;
+            }
+            return label;
+          }
+        }
+      }
+    },
+    animation: {
+      animateRotate: true, // Enable rotation animation
+      animateScale: true,  // Enable scaling animation
+    },
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Dashboard Admin</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      {/* Bar Chart (moved to top) */}
+      <div className="mb-8 bg-white p-6 rounded-lg shadow-md"> {/* Added mb-8 for spacing */}
+        <h2 className="text-2xl font-bold mb-4">Statistik Pengguna</h2>
+        <Bar data={chartData} options={chartOptions} />
+      </div>
+
+      {/* Role Cards (moved below bar chart) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"> {/* Added mt-8 for spacing */}
         {roleCards.map((card) => (
-          <div key={card.name} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <h2 className="text-xl font-semibold mb-2">{card.name}</h2>
-            <p className="text-4xl font-bold text-gray-800 mb-4">{card.count}</p>
-            <Link to={card.link} className="text-blue-600 hover:underline">
-              View
-            </Link>
-          </div>
+          <Link
+            key={card.name}
+            to={card.link}
+            className="block" // Make the Link a block element to contain the card
+          >
+            <div
+              className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden" // Added relative
+              onMouseEnter={() => setHoveredCard(card.name)}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              {/* Text content */}
+              <div className={`transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+                <h2 className="text-xl font-semibold mb-2">{card.name}</h2>
+                <p className="text-4xl font-bold text-gray-800 mb-4">{card.count}</p>
+              </div>
+
+              {/* Pie chart overlay */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center w-[85%] h-[85%] mx-auto my-auto transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+              >
+                <Pie data={generatePieChartData(card.name, card.count)} options={pieChartOptions} />
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -94,3 +305,6 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+
+
