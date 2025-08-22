@@ -159,75 +159,79 @@ const OptiPage = () => {
                 </div>
             </header>
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Opportunity</h1>
-            <p className="text-gray-600 mb-6">Data Opportunity</p>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex space-x-4">
-                    <button
-                        onClick={handleAddOpti}
-                        className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
-                    >
-                        Tambah Opportunity
-                    </button>
-                    {optis.length > 0 && sortedOptis.length > 0 && (
+            <main className="bg-white p-6 rounded-lg shadow-sm">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Opportunity</h1>
+                <p className="text-gray-600 mb-6">Data Opportunity</p>
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex space-x-4">
                         <button
-                            onClick={handleDownloadPdf}
-                            className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
+                            onClick={handleAddOpti}
+                            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
                         >
-                            Export to PDF
+                            Tambah Opportunity
                         </button>
-                    )}
+                        {optis.length > 0 && sortedOptis.length > 0 && (
+                            <button
+                                onClick={handleDownloadPdf}
+                                className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
+                            >
+                                Export to PDF
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex items-center">
+                        <label htmlFor="sortOrder" className="text-gray-700 mr-2">Urutkan:</label>
+                        <select
+                            id="sortOrder"
+                            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value)}
+                        >
+                            <option value="name_asc">Nama Opti</option>
+                            <option value="customer_asc">Customer</option>
+                            <option value="date_desc">Tanggal</option>
+                        </select>
+                    </div>
                 </div>
-                <div className="flex items-center">
-                    <label htmlFor="sortOrder" className="text-gray-700 mr-2">Urutkan:</label>
-                    <select
-                        id="sortOrder"
-                        className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                    >
-                        <option value="name_asc">Nama Opti</option>
-                        <option value="customer_asc">Customer</option>
-                        <option value="date_desc">Tanggal</option>
-                    </select>
+
+                <div className="overflow-x-auto">
+                    <OptiTable
+                        optis={sortedOptis}
+                        onViewOpti={handleViewOpti}
+                        onEditOpti={handleEditOpti}
+                    />
                 </div>
-            </div>
 
-            <OptiTable
-                optis={sortedOptis}
-                onViewOpti={handleViewOpti}
-                onEditOpti={handleEditOpti}
-            />
-
-            <div className="flex justify-center mt-6 space-x-2">
-                <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Previous
-                </button>
-                {pageNumbers.map((page) => (
+                <div className="flex justify-center mt-6 space-x-2">
                     <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-4 py-2 text-sm font-medium rounded-md ${
-                            page === currentPage
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {page}
+                        Previous
                     </button>
-                ))}
-                <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Next
-                </button>
-            </div>
+                    {pageNumbers.map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-4 py-2 text-sm font-medium rounded-md ${
+                                page === currentPage
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+            </main>
 
             <Modal
                 isOpen={isFormModalOpen}
