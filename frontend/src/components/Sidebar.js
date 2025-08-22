@@ -1,5 +1,5 @@
 // frontend/src/components/Sidebar.js
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import homeIcon from "../iconres/home2.png";
@@ -17,6 +17,7 @@ import logoutIcon from "../iconres/logout2.png";
 const Sidebar = () => {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -48,37 +49,106 @@ const Sidebar = () => {
   }
 
   return (
-    <div className="w-64 bg-white h-screen flex flex-col p-4 shadow-lg fixed top-0 left-0 z-40">
-      <div className="flex justify-center items-center mb-10">
-        <img src={require("../imgres/logo.png")} alt="OPTrack Logo" className="h-12 object-contain" />
+    <div
+      className={`bg-white h-screen flex flex-col shadow-lg fixed top-0 left-0 z-40 transition-all duration-500 ease-in-out ${collapsed ? 'w-20' : 'w-64'}`}
+      style={{
+        padding: collapsed ? '16px 6px' : '16px',
+        transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1), padding 0.5s cubic-bezier(0.4,0,0.2,1)',
+      }}
+    >
+      <div className={`flex items-center mb-10 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <img
+          src={require("../imgres/logo.png")}
+          alt="OPTrack Logo"
+          className={`object-contain transition-all duration-500 ease-in-out ${collapsed ? 'h-8' : 'h-12'}`}
+          style={{
+            opacity: 1,
+            transition: 'height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        />
+        <button
+          onClick={() => setCollapsed((prev) => !prev)}
+          className={`ml-2 p-1 rounded hover:bg-gray-200 transition`}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+            {collapsed ? (
+              <polyline points="9 18 15 12 9 6" />
+            ) : (
+              <polyline points="15 18 9 12 15 6" />
+            )}
+          </svg>
+        </button>
       </div>
       <nav className="flex-grow">
         <ul>
           {menuItems.map((item) => (
             <li
               key={item.name}
-              className={`flex items-center p-3 my-1 rounded-lg cursor-pointer transition-colors hover:bg-gray-100`}
+              className={`flex items-center my-1 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 ${collapsed ? 'justify-center' : ''}`}
+              style={{
+                padding: collapsed ? '12px 0' : '12px',
+                transition: 'padding 0.5s cubic-bezier(0.4,0,0.2,1)',
+              }}
             >
-              <img src={item.icon} alt={item.name} className="mr-4 w-6 h-6 object-contain" />
-              <Link to={item.link} className="sidebar-link w-full">
-                {item.name}
-              </Link>
+              <img
+                src={item.icon}
+                alt={item.name}
+                className={`object-contain transition-all duration-500 ease-in-out ${collapsed ? 'w-7 h-7' : 'mr-4 w-6 h-6'}`}
+                style={{
+                  opacity: 1,
+                  transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1), height 0.5s cubic-bezier(0.4,0,0.2,1), margin 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+              <span
+                style={{
+                  opacity: collapsed ? 0 : 1,
+                  maxWidth: collapsed ? 0 : 200,
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
+                  display: collapsed ? 'none' : 'inline',
+                }}
+              >
+                <Link to={item.link} className="sidebar-link w-full">
+                  {item.name}
+                </Link>
+              </span>
             </li>
           ))}
         </ul>
       </nav>
       <div>
         <ul>
-          <li className="flex items-center p-3 my-1 rounded-lg cursor-pointer hover:bg-gray-100">
-            <img src={settingIcon} alt="Setting" className="mr-4 w-6 h-6 object-contain" />
-            <span>Setting</span>
-          </li>
           <li
-            className="flex items-center p-3 my-1 rounded-lg cursor-pointer hover:bg-gray-100 text-red-500"
+            className={`flex items-center my-1 rounded-lg cursor-pointer hover:bg-gray-100 text-red-500 ${collapsed ? 'justify-center' : ''}`}
+            style={{
+              padding: collapsed ? '12px 0' : '12px',
+              transition: 'padding 0.5s cubic-bezier(0.4,0,0.2,1)',
+            }}
             onClick={handleLogout}
           >
-            <img src={logoutIcon} alt="Log out" className="mr-4 w-6 h-6 object-contain" />
-            <span>Log out</span>
+            <img
+              src={logoutIcon}
+              alt="Log out"
+              className={`object-contain transition-all duration-500 ease-in-out ${collapsed ? 'w-7 h-7' : 'mr-4 w-6 h-6'}`}
+              style={{
+                opacity: 1,
+                transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1), height 0.5s cubic-bezier(0.4,0,0.2,1), margin 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            />
+            <span
+              style={{
+                opacity: collapsed ? 0 : 1,
+                maxWidth: collapsed ? 0 : 200,
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
+                display: collapsed ? 'none' : 'inline',
+              }}
+            >
+              Log out
+            </span>
           </li>
         </ul>
       </div>
