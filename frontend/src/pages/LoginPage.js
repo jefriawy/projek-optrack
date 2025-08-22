@@ -31,33 +31,39 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden fixed inset-0">
-      {/* Background + Overlay */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${background})` }}
-      >
-        <div className="absolute inset-0 bg-black/70" /> {/* overlay gelap */}
+  <div className="h-screen w-screen overflow-hidden fixed inset-0">
+    {/* Background + Overlay */}
+    <div
+      className="absolute inset-0 bg-cover bg-center"
+      style={{ backgroundImage: `url(${background})` }}
+    >
+      <div className="absolute inset-0 bg-black/70" /> {/* overlay gelap */}
+    </div>
+
+    {/* Konten */}
+    <div className="relative z-10 flex flex-col lg:flex-row w-full h-full items-center justify-center lg:justify-between px-6 sm:px-10 lg:px-20 gap-10">
+      {/* kiri: logo + teks */}
+      <div className="text-white text-center lg:text-left max-w-2xl">
+        <img
+          src={logo}
+          alt="OPTrack Logo"
+          className="mb-4 mx-auto lg:mx-0 w-[250px] sm:w-[300px] md:w-[400px] lg:w-[500px]"
+        />
+        <p className="text-base sm:text-lg md:text-xl lg:text-3xl leading-relaxed">
+          Selamat datang di{" "}
+          <span className="font-bold">OPTrack!</span> Platform smart tracking
+          untuk mengoptimalkan operasional perusahaan Anda.
+        </p>
       </div>
 
-      {/* Konten */}
-      <div className="relative z-10 flex w-full h-full items-center justify-between px-12 lg:px-20">
-        {/* kiri: logo + teks */}
-        <div className="max-w-2xl text-white">
-          <img src={logo} alt="OPTrack Logo" className="mb-4 w-[450px] lg:w-[500px]" />
-          <p className="text-2xl lg:text-3xl leading-relaxed">
-            Selamat datang di <span className="font-bold">OPTrack!</span> Platform smart tracking
-            untuk mengoptimalkan operasional perusahaan Anda.
-          </p>
-        </div>
-
-        {/* kanan: form login */}
-        <div className="bg-black/40 p-12 lg:p-16 rounded-[21px] shadow-lg w-full max-w-lg">
-          <LoginForm />
-        </div>
+      {/* kanan: form login */}
+      <div className="bg-black/40 p-6 sm:p-10 lg:p-16 rounded-2xl shadow-lg w-full max-w-md sm:max-w-lg">
+        <LoginForm />
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default LoginPage;
