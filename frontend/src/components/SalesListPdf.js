@@ -1,6 +1,7 @@
 // frontend/src/components/SalesListPdf.js
 import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import { PdfHeader, PdfFooter } from './PdfHeaderFooter';
 
 const styles = StyleSheet.create({
   page: {
@@ -9,17 +10,7 @@ const styles = StyleSheet.create({
     padding: 30,
     backgroundColor: "#ffffff",
   },
-  header: {
-    backgroundColor: "#334155", // Warna abu-abu gelap
-    color: "white",
-    padding: 15,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: "Helvetica-Bold",
-  },
+  // header and headerTitle removed, now using PdfHeader
   table: {
     display: "table",
     width: "auto",
@@ -78,9 +69,7 @@ const SalesListPdf = ({ sales }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Laporan Data Sales</Text>
-        </View>
+  <PdfHeader title="DATA SALES" subtitle="Laporan Data Sales" />
 
         <View style={styles.table}>
           <View style={[styles.tableRow, styles.tableHeader]}>
@@ -124,9 +113,7 @@ const SalesListPdf = ({ sales }) => {
             </View>
           )}
         </View>
-        <Text style={styles.footer} fixed>
-          Laporan dibuat pada: {new Date().toLocaleDateString('id-ID')}
-        </Text>
+  <PdfFooter />
       </Page>
     </Document>
   );

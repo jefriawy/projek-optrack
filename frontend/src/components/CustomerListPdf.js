@@ -1,6 +1,7 @@
 // frontend/src/componenets/CustomerListPdf.js
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
+import { PdfHeader, PdfFooter } from './PdfHeaderFooter';
 
 // Re-using and adapting styles from the single-customer template
 const styles = StyleSheet.create({
@@ -10,18 +11,7 @@ const styles = StyleSheet.create({
     padding: 30,
     backgroundColor: '#ffffff'
   },
-  header: {
-    backgroundColor: '#3B82F6',
-    color: 'white',
-    padding: 15,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'Helvetica-Bold',
-  },
+  // header and headerTitle removed, now using PdfHeader
   table: {
     display: "table",
     width: "auto",
@@ -66,10 +56,7 @@ const CustomerListPdf = ({ customers }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Customer Data Report</Text>
-        </View>
-
+        <PdfHeader title="DATA PELANGGAN" subtitle="Laporan Data Pelanggan" />
         <View style={styles.table}>
           {/* Table Header */}
           <View style={[styles.tableRow, styles.tableHeader]}>
@@ -107,9 +94,7 @@ const CustomerListPdf = ({ customers }) => (
         </View>
       </View>
 
-      <Text style={styles.footer} fixed>
-        Generated on: {new Date().toLocaleDateString('id-ID')} - PT. eNetwoQ ServIT Indonesia
-      </Text>
+  <PdfFooter />
     </Page>
   </Document>
 );
