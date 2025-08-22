@@ -3,6 +3,8 @@ import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import { AuthContext } from "../context/AuthContext";
+import logo from "../imgres/logo.png";
+import background from "../imgres/backlogin.png";
 
 const LoginPage = () => {
   const { user, loading } = useContext(AuthContext);
@@ -10,19 +12,15 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      // Logika pengalihan berdasarkan role pengguna setelah login
       switch (user.role) {
         case "Admin":
           navigate("/dashboard-admin", { replace: true });
           break;
         case "Head Sales":
-          navigate("/customer", { replace: true });
-          break;
         case "Sales":
           navigate("/customer", { replace: true });
           break;
         default:
-          // Arahkan ke halaman default jika role tidak terdaftar
           navigate("/login", { replace: true });
       }
     }
@@ -33,8 +31,31 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <LoginForm />
+    <div className="h-screen w-screen overflow-hidden fixed inset-0">
+      {/* Background + Overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${background})` }}
+      >
+        <div className="absolute inset-0 bg-black/70" /> {/* overlay gelap */}
+      </div>
+
+      {/* Konten */}
+      <div className="relative z-10 flex w-full h-full items-center justify-between px-12 lg:px-20">
+        {/* kiri: logo + teks */}
+        <div className="max-w-2xl text-white">
+          <img src={logo} alt="OPTrack Logo" className="mb-4 w-[450px] lg:w-[500px]" />
+          <p className="text-2xl lg:text-3xl leading-relaxed">
+            Selamat datang di <span className="font-bold">OPTrack!</span> Platform smart tracking
+            untuk mengoptimalkan operasional perusahaan Anda.
+          </p>
+        </div>
+
+        {/* kanan: form login */}
+        <div className="bg-black/40 p-12 lg:p-16 rounded-[21px] shadow-lg w-full max-w-lg">
+          <LoginForm />
+        </div>
+      </div>
     </div>
   );
 };
