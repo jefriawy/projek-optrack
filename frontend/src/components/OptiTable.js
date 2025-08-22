@@ -28,32 +28,32 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
-        <table className="min-w-full divide-y divide-gray-200">
+    <div className="overflow-x-auto">
+        <table className="min-w-full bg-white">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 NAMA OPTI
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 NAMA PERUSAHAAN
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 NAMA CUSTOMER
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 NAMA KONTAK PIC
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 TANGGAL
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 STATUS OPTI
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 SUMBER
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 AKSI
               </th>
             </tr>
@@ -62,22 +62,22 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
             {optis.length > 0 ? (
               optis.map((opti) => (
                 <tr key={opti.idOpti}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 font-medium text-gray-900">
                     {opti.nmOpti}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-gray-700">
                     {opti.corpCustomer || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-gray-700">
                     {opti.nmCustomer || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-gray-700">
                     {opti.contactOpti || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-gray-700">
                     {formatDate(opti.datePropOpti)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                         opti.statOpti
@@ -86,19 +86,19 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                       {opti.statOpti || "-"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-gray-700">
                     {opti.nmSumber || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 flex gap-2">
                     <button
                       onClick={() => onViewOpti(opti)}
-                      className="text-blue-600 hover:text-blue-900 mr-2 px-3 py-1 rounded-md bg-blue-100"
+                      className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
                     >
                       View
                     </button>
                     <button
                       onClick={() => onEditOpti(opti)}
-                      className="text-green-600 hover:text-green-900 px-3 py-1 rounded-md bg-green-100"
+                      className="px-4 py-1 rounded bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition"
                     >
                       Edit
                     </button>
@@ -109,7 +109,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
               <tr>
                 <td
                   colSpan="8"
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
+                  className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   Belum ada data opportunity. Klik "Tambah Opti" untuk memulai.
                 </td>

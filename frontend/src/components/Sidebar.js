@@ -2,6 +2,17 @@
 import React, { useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import homeIcon from "../iconres/home2.png";
+import salesIcon from "../iconres/team.png";
+import trainerIcon from "../iconres/training2.png";
+import expertIcon from "../iconres/expert2.png";
+import projectIcon from "../iconres/project2.png";
+import outsourceIcon from "../iconres/outsouce.png";
+import userManageIcon from "../iconres/usermanage2.png";
+import optiIcon from "../iconres/opti2.png";
+import customerIcon from "../iconres/customer2.png";
+import settingIcon from "../iconres/setting2.png";
+import logoutIcon from "../iconres/logout2.png";
 
 const Sidebar = () => {
   const { logout, user } = useContext(AuthContext);
@@ -17,22 +28,22 @@ const Sidebar = () => {
   // Tentukan menu berdasarkan role
   if (user && user.role === "Admin") {
     menuItems = [
-      { icon: "🏠", name: "Home", link: "/" },
-      { icon: "👥", name: "Sales", link: "/sales" },
-      { icon: "🎓", name: "Trainer", link: "/training" },
-      { icon: "🧑‍💼", name: "Expert", link: "/expert" },
-      { icon: "📂", name: "Project", link: "/project" },
-      { icon: "🤝", name: "Outsource", link: "/outsource" },
-      { icon: "🔧", name: "Manage User", link: "/users" }, // Tautan untuk manage user
+      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: salesIcon, name: "Sales", link: "/sales" },
+      { icon: trainerIcon, name: "Trainer", link: "/training" },
+      { icon: expertIcon, name: "Expert", link: "/expert" },
+      { icon: projectIcon, name: "Project", link: "/project" },
+      { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
+      { icon: userManageIcon, name: "Manage User", link: "/users" },
     ];
   } else if (user && (user.role === "Sales" || user.role === "Head Sales")) {
     menuItems = [
-      { icon: "🏠", name: "Home", link: "/" },
-      { icon: "⚙️", name: "Opti", link: "/opti" },
-      { icon: "👥", name: "Customer", link: "/customer" },
-      { icon: "🎓", name: "Training", link: "/training" },
-      { icon: "📂", name: "Project", link: "/project" },
-      { icon: "🤝", name: "Outsource", link: "/outsource" },
+      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: optiIcon, name: "Opti", link: "/opti" },
+      { icon: customerIcon, name: "Customer", link: "/customer" },
+      { icon: trainerIcon, name: "Training", link: "/training" },
+      { icon: projectIcon, name: "Project", link: "/project" },
+      { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
   }
 
@@ -46,7 +57,7 @@ const Sidebar = () => {
               key={item.name}
               className={`flex items-center p-3 my-1 rounded-lg cursor-pointer transition-colors hover:bg-gray-100`}
             >
-              <span className="mr-4">{item.icon}</span>
+              <img src={item.icon} alt={item.name} className="mr-4 w-6 h-6 object-contain" />
               <Link to={item.link} className="sidebar-link w-full">
                 {item.name}
               </Link>
@@ -57,14 +68,14 @@ const Sidebar = () => {
       <div>
         <ul>
           <li className="flex items-center p-3 my-1 rounded-lg cursor-pointer hover:bg-gray-100">
-            <span className="mr-4">⚙️</span>
+            <img src={settingIcon} alt="Setting" className="mr-4 w-6 h-6 object-contain" />
             <span>Setting</span>
           </li>
           <li
             className="flex items-center p-3 my-1 rounded-lg cursor-pointer hover:bg-gray-100 text-red-500"
             onClick={handleLogout}
           >
-            <span className="mr-4">➡️</span>
+            <img src={logoutIcon} alt="Log out" className="mr-4 w-6 h-6 object-contain" />
             <span>Log out</span>
           </li>
         </ul>
