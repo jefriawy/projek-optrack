@@ -49,7 +49,9 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-white h-screen flex flex-col p-4 shadow-lg fixed top-0 left-0 z-40">
-      <div className="text-2xl font-bold mb-10">OPTrack</div>
+      <div className="flex justify-center items-center mb-10">
+        <img src={require("../imgres/logo.png")} alt="OPTrack Logo" className="h-12 object-contain" />
+      </div>
       <nav className="flex-grow">
         <ul>
           {menuItems.map((item) => (

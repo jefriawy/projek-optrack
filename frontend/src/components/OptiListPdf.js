@@ -1,14 +1,10 @@
 import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import { PdfHeader, PdfFooter } from './PdfHeaderFooter';
 
 const styles = StyleSheet.create({
   page: { fontFamily: "Helvetica", fontSize: 10, padding: 30 },
-  header: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
-    fontFamily: "Helvetica-Bold",
-  },
+  // header removed, now using PdfHeader
   table: { display: "table", width: "auto" },
   tableRow: {
     margin: "auto",
@@ -56,7 +52,7 @@ const getDisplayStatus = (status) => {
 const OptiListPdf = ({ optis }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      <Text style={styles.header}>Laporan Opportunity (OPTI)</Text>
+  <PdfHeader title="DATA OPPORTUNITY" subtitle="Laporan Data Opportunity" />
       <View style={styles.table}>
         <View style={[styles.tableRow, styles.tableHeader]}>
           <View style={styles.tableCol}>
@@ -99,6 +95,7 @@ const OptiListPdf = ({ optis }) => (
           </View>
         )}
       </View>
+      <PdfFooter />
     </Page>
   </Document>
 );
