@@ -91,29 +91,43 @@ const Sidebar = () => {
                 transition: 'padding 0.5s cubic-bezier(0.4,0,0.2,1)',
               }}
             >
-              <img
-                src={item.icon}
-                alt={item.name}
-                className={`object-contain transition-all duration-500 ease-in-out ${collapsed ? 'w-7 h-7' : 'mr-4 w-6 h-6'}`}
+              <Link
+                to={item.link}
+                className="sidebar-link flex items-center w-full"
                 style={{
-                  opacity: 1,
-                  transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1), height 0.5s cubic-bezier(0.4,0,0.2,1), margin 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)',
-                }}
-              />
-              <span
-                style={{
-                  opacity: collapsed ? 0 : 1,
-                  maxWidth: collapsed ? 0 : 200,
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
-                  display: collapsed ? 'none' : 'inline',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  width: '100%',
+                  height: '100%',
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
               >
-                <Link to={item.link} className="sidebar-link w-full">
-                  {item.name}
-                </Link>
-              </span>
+                <img
+                  src={item.icon}
+                  alt={item.name}
+                  className={`object-contain transition-all duration-500 ease-in-out ${collapsed ? 'w-7 h-7' : 'mr-4 w-6 h-6'}`}
+                  style={{
+                    opacity: 1,
+                    transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1), height 0.5s cubic-bezier(0.4,0,0.2,1), margin 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)',
+                  }}
+                />
+                {!collapsed && (
+                  <span
+                    style={{
+                      opacity: 1,
+                      maxWidth: 200,
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
+                      display: 'inline',
+                    }}
+                  >
+                    {item.name}
+                  </span>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
