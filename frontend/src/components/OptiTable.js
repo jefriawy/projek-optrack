@@ -12,14 +12,16 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Prospect":
+      case "Follow Up":
         return "bg-blue-100 text-blue-800";
-      case "Negotiation":
+      case "On-Progress":
         return "bg-yellow-100 text-yellow-800";
-      case "Closed-Won":
+      case "Success":
         return "bg-green-100 text-green-800";
-      case "Closed-Lost":
+      case "Failed":
         return "bg-red-100 text-red-800";
+      case "Just Get Info":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

@@ -167,10 +167,11 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
             className={inputStyle}
           >
             <option value="">Pilih status opportunity</option>
-            <option value="Prospect">Prospect</option>
-            <option value="Negotiation">Negotiation</option>
-            <option value="Closed-Won">Closed-Won</option>
-            <option value="Closed-Lost">Closed-Lost</option>
+            <option value="Follow Up">Follow Up</option>
+            <option value="On-Progress">On-Progress</option>
+            <option value="Success">Success</option>
+            <option value="Failed">Failed</option>
+            <option value="Just Get Info">Just Get Info</option>
           </select>
           {errors.statOpti && <p className="error">{errors.statOpti}</p>}
         </div>

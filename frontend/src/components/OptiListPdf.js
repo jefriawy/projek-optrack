@@ -21,6 +21,38 @@ const styles = StyleSheet.create({
   tableCell: { margin: 5, fontSize: 9 },
 });
 
+// Format tanggal manual agar kompatibel dengan React PDF
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const d = new Date(dateString);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// Mapping status lama ke status baru
+const getDisplayStatus = (status) => {
+  switch (status) {
+    case "Prospect":
+    case "Follow Up":
+      return "Follow Up";
+    case "Negotiation":
+    case "On-Progress":
+      return "On-Progress";
+    case "Closed-Won":
+    case "Success":
+      return "Success";
+    case "Closed-Lost":
+    case "Failed":
+      return "Failed";
+    case "Just Get Info":
+      return "Just Get Info";
+    default:
+      return status || "-";
+  }
+};
+
 const OptiListPdf = ({ optis }) => (
   <Document>
     <Page size="A4" style={styles.page}>
@@ -51,11 +83,11 @@ const OptiListPdf = ({ optis }) => (
               </View>
               <View style={styles.tableCol}>
                 <Text style={styles.tableCell}>
-                  {new Date(opti.datePropOpti).toLocaleDateString("id-ID")}
+                  {formatDate(opti.datePropOpti)}
                 </Text>
               </View>
               <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>{opti.statOpti}</Text>
+                <Text style={styles.tableCell}>{getDisplayStatus(opti.statOpti)}</Text>
               </View>
             </View>
           ))

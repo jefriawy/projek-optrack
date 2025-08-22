@@ -1,5 +1,5 @@
 // frontend/src/pages/OptiPage.js
-import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
+import React, { useContext, useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -7,9 +7,9 @@ import Modal from "../components/Modal";
 import OptiForm from "../components/OptiForm";
 import OptiTable from "../components/OptiTable";
 import OptiDetail from "../components/OptiDetail";
+import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
 import { FaSearch, FaUserCircle } from "react-icons/fa";
-import { PDFDownloadLink, Document, Page, Text } from "@react-pdf/renderer";
 
 const OptiPage = () => {
     const { user, loading } = useContext(AuthContext);
@@ -111,6 +111,20 @@ const OptiPage = () => {
         fetchOptis(searchTerm, pageNumber);
     };
 
+    const handleDownloadPdf = async () => {
+        const doc = <OptiListPdf optis={Array.isArray(sortedOptis) ? sortedOptis : []} />;
+        const asPdf = pdf(doc);
+        const blob = await asPdf.toBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "laporan_opti.pdf";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     if (loading) return <div>Loading...</div>;
     if (!user) return <Navigate to="/login" />;
 
@@ -118,8 +132,6 @@ const OptiPage = () => {
     for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
     }
-    
-const pdfDocument = <OptiListPdf optis={sortedOptis} />;
 
     return (
         <div className="flex-grow p-8 bg-gray-100">
@@ -157,14 +169,13 @@ const pdfDocument = <OptiListPdf optis={sortedOptis} />;
                     >
                         Tambah Opportunity
                     </button>
-                    {optis.length > 0 && (
-                        <PDFDownloadLink
-                            document={pdfDocument}
-                            fileName="laporan_opti.pdf"
+                    {optis.length > 0 && sortedOptis.length > 0 && (
+                        <button
+                            onClick={handleDownloadPdf}
                             className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
                         >
-                            {({ loading }) => (loading ? "Membuat PDF..." : "Export to PDF")}
-                        </PDFDownloadLink>
+                            Export to PDF
+                        </button>
                     )}
                 </div>
                 <div className="flex items-center">
