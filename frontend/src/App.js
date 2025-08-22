@@ -1,19 +1,22 @@
 // frontend/App.js
-import React from "react";
+import React, { useContext } from "react"; // Added useContext
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, AuthContext } from "./context/AuthContext"; // Added AuthContext
 import LoginPage from "./pages/LoginPage";
-import CustomerPage from "./pages/CustomerPage";
+import CustomerPage from "././pages/CustomerPage";
 import AddCustomerPage from "./pages/AddCustomerPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import CustomerDetailPage from "./pages/CustomerDetailPage";
 import OptiPage from "./pages/OptiPage";
 import SalesPage from "./pages/SalesPage";
+import HomePage from "./pages/HomePage"; // Import HomePage
 import Layout from "./components/Layout";
 import AdminDashboard from "./components/AdminDashboard"; // Pastikan Anda mengimpor komponen ini
 import "./App.css";
 
 const App = () => {
+  const { user } = useContext(AuthContext); // Access user context
+
   return (
     <Router>
       <AuthProvider>
@@ -79,8 +82,21 @@ const App = () => {
               </Layout>
             }
           />
-          <Route path="/" element={<LoginPage />} />{" "}
-          {/* Default route to login */}
+          <Route
+            path="/"
+            element={
+              user && user.role === "Admin" ? (
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              ) : (
+                <Layout>
+                  <HomePage />
+                </Layout>
+              )
+            }
+          />{" "}
+          {/* Default route based on user role */}
         </Routes>
       </AuthProvider>
     </Router>
