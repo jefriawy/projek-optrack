@@ -19,6 +19,7 @@ const OptiPage = () => {
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [isViewModalOpen, setViewModalOpen] = useState(false);
     const [editingOpti, setEditingOpti] = useState(null);
+    const [statusFilter, setStatusFilter] = useState(""); // filter status
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -69,6 +70,16 @@ const OptiPage = () => {
                 return arr;
         }
     }, [optis, sortOrder]);
+
+    const filteredOptis = useMemo(() => {
+        let data = [...optis];
+        if (statusFilter) {
+            data = data.filter(opti => opti.statOpti === statusFilter);
+        }
+        // Default sorting by tanggal terbaru
+        data.sort((a, b) => new Date(b.datePropOpti) - new Date(a.datePropOpti));
+        return data;
+    }, [optis, statusFilter]);
 
     const handleAddOpti = () => {
         setEditingOpti(null);
@@ -180,23 +191,26 @@ const OptiPage = () => {
                         )}
                     </div>
                     <div className="flex items-center">
-                        <label htmlFor="sortOrder" className="text-gray-700 mr-2">Urutkan:</label>
+                        <label htmlFor="statusFilter" className="text-gray-700 ml-4 mr-2">Status:</label>
                         <select
-                            id="sortOrder"
+                            id="statusFilter"
                             className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value)}
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
                         >
-                            <option value="name_asc">Nama Opti</option>
-                            <option value="customer_asc">Customer</option>
-                            <option value="date_desc">Tanggal</option>
+                            <option value="">Semua Status</option>
+                            <option value="Follow Up">Follow Up</option>
+                            <option value="On-Progress">On-Progress</option>
+                            <option value="Success">Success</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Just Get Info">Just Get Info</option>
                         </select>
                     </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <OptiTable
-                        optis={sortedOptis}
+                        optis={filteredOptis}
                         onViewOpti={handleViewOpti}
                         onEditOpti={handleEditOpti}
                     />
