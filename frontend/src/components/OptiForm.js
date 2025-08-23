@@ -212,7 +212,6 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
             name="datePropOpti"
             value={formatDateInput(formData.datePropOpti)}
             className={inputStyle}
-            disabled
           />
           {errors.datePropOpti && (
             <p className="error">{errors.datePropOpti}</p>

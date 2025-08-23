@@ -13,7 +13,6 @@ const UserManagementPage = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar />
       <div className="flex-grow p-8">
         <header className="flex justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
           <h1 className="text-2xl font-bold text-gray-800">👥 User Management</h1>
