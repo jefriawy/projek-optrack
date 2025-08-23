@@ -25,7 +25,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
     contactOpti: "",
     emailOpti: "",
     mobileOpti: "",
-    statOpti: "",
+    statOpti: user?.role === "Sales" ? "Just Get Info" : "",
     propOpti: "",
     datePropOpti: new Date().toISOString().slice(0, 10),
     idSumber: "",
@@ -46,12 +46,13 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    setFormData({
+    setFormData((prev) => ({
       ...initialFormState,
       ...safeInitialData,
+      statOpti: user?.role === "Sales" ? "Just Get Info" : (safeInitialData.statOpti || ""),
       datePropOpti:
         safeInitialData.datePropOpti || new Date().toISOString().slice(0, 10),
-    });
+    }));
   }, [initialData]);
 
   useEffect(() => {
@@ -178,6 +179,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
             value={formData.statOpti || ""}
             onChange={handleChange}
             className={inputStyle}
+            disabled={user?.role === "Sales"}
           >
             <option value="">Pilih status opportunity</option>
             <option value="Follow Up">Follow Up</option>

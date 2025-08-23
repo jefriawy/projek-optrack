@@ -15,7 +15,7 @@ const OptiPage = () => {
     const { user, loading } = useContext(AuthContext);
     const [optis, setOptis] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortOrder, setSortOrder] = useState("name_asc");
+    const [sortOrder, setSortOrder] = useState("date_desc");
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [isViewModalOpen, setViewModalOpen] = useState(false);
     const [editingOpti, setEditingOpti] = useState(null);
