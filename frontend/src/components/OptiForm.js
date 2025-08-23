@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import * as Yup from "yup";
+import axios from "axios";
 
 const validationSchema = Yup.object({
   nmOpti: Yup.string().required("Nama Opti wajib diisi"),
@@ -16,36 +16,42 @@ const validationSchema = Yup.object({
   kebutuhan: Yup.string(),
 });
 
-const initialFormState = {
-  nmOpti: "",
-  idCustomer: "",
-  contactOpti: "",
-  emailOpti: "",
-  mobileOpti: "",
-  statOpti: "",
-  propOpti: "",
-  datePropOpti: "",
-  idSumber: "",
-  kebutuhan: "",
-};
-
 const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
   const { user } = useContext(AuthContext);
 
+  const initialFormState = {
+    nmOpti: "",
+    idCustomer: "",
+    contactOpti: "",
+    emailOpti: "",
+    mobileOpti: "",
+    statOpti: "",
+    propOpti: "",
+    datePropOpti: new Date().toISOString().slice(0, 10),
+    idSumber: "",
+    kebutuhan: "",
+  };
+
+  // Pastikan initialData selalu objek
+  const safeInitialData = initialData || {};
+
   const [formData, setFormData] = useState({
     ...initialFormState,
-    ...initialData,
+    ...safeInitialData,
+    datePropOpti:
+      safeInitialData.datePropOpti || new Date().toISOString().slice(0, 10),
   });
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    setFormData((prev) => ({
+    setFormData({
       ...initialFormState,
-      ...initialData,
-    }));
-    setErrors({});
+      ...safeInitialData,
+      datePropOpti:
+        safeInitialData.datePropOpti || new Date().toISOString().slice(0, 10),
+    });
   }, [initialData]);
 
   useEffect(() => {
@@ -197,13 +203,9 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="date"
             name="datePropOpti"
-            value={
-              formData.datePropOpti
-                ? formData.datePropOpti.slice(0, 10)
-                : ""
-            }
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            value={formData.datePropOpti}
+            className={inputStyle}
+            disabled // atau gunakan readOnly
           />
           {errors.datePropOpti && (
             <p className="error">{errors.datePropOpti}</p>
