@@ -101,6 +101,13 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
   const inputStyle =
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
 
+  const formatDateInput = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    if (isNaN(d)) return "";
+    return d.toISOString().slice(0, 10);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
@@ -203,9 +210,9 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           <input
             type="date"
             name="datePropOpti"
-            value={formData.datePropOpti}
+            value={formatDateInput(formData.datePropOpti)}
             className={inputStyle}
-            disabled // atau gunakan readOnly
+            disabled
           />
           {errors.datePropOpti && (
             <p className="error">{errors.datePropOpti}</p>
