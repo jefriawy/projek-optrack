@@ -44,7 +44,18 @@ const getOptis = async (req, res) => {
 
 const getFormOptions = async (req, res) => {
   try {
-    const customers = await Customer.findAll();
+    let customers;
+    if (req.user.role === "Sales") {
+      // Ambil hanya customer milik sales ini
+      const [sales] = await pool.query("SELECT idSales FROM sales WHERE userId = ?", [req.user.id]);
+      if (!sales.length) {
+        return res.status(403).json({ error: "User is not a registered sales" });
+      }
+      const idSales = sales[0].idSales;
+      customers = await Customer.findBySalesId(idSales);
+    } else {
+      customers = await Customer.findAll();
+    }
     const sumber = await Opti.findSumberOptions();
     res.json({ customers, sumber });
   } catch (error) {
