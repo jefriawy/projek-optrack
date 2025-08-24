@@ -27,8 +27,14 @@ const getOptis = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const { user } = req; // Ambil user dari request
 
-    const [optis, totalCount] = await Opti.findAllPaginated(searchTerm, limit, offset);
+    const [optis, totalCount] = await Opti.findAllPaginated(
+      searchTerm,
+      limit,
+      offset,
+      user
+    );
 
     res.json({
       data: optis,

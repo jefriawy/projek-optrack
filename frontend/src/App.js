@@ -1,6 +1,11 @@
 // frontend/App.js
 import React, { useContext } from "react"; // Added useContext
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext"; // Added AuthContext
 import LoginPage from "./pages/LoginPage";
 import CustomerPage from "././pages/CustomerPage";
@@ -11,93 +16,129 @@ import OptiPage from "./pages/OptiPage";
 import SalesPage from "./pages/SalesPage";
 import HomePage from "./pages/HomePage"; // Import HomePage
 import Layout from "./components/Layout";
-import AdminDashboard from "./components/AdminDashboard"; // Pastikan Anda mengimpor komponen ini
+import AdminDashboardPage from "./pages/AdminDashboardPage"; // Pastikan Anda mengimpor komponen ini
+import TrainingPage from "./pages/TrainingPage";
+import ProjectPage from "./pages/ProjectPage";
+import OutsourcePage from "./pages/OutsourcePage";
 import "./App.css";
 
-const App = () => {
+const AppRoutes = () => {
   const { user } = useContext(AuthContext); // Access user context
 
   return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* Rute untuk Dashboard Admin */}
+      <Route
+        path="/dashboard-admin"
+        element={
+          <Layout>
+            <AdminDashboardPage />
+          </Layout>
+        }
+      />
+
+      {/* Routes wrapped with Layout */}
+      <Route
+        path="/opti"
+        element={
+          <Layout>
+            <OptiPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/customer"
+        element={
+          <Layout>
+            <CustomerPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/sales"
+        element={
+          <Layout>
+            <SalesPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/training"
+        element={
+          <Layout>
+            <TrainingPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/project"
+        element={
+          <Layout>
+            <ProjectPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/outsource"
+        element={
+          <Layout>
+            <OutsourcePage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/customer/add"
+        element={
+          <Layout>
+            <AddCustomerPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/customer/:id"
+        element={
+          <Layout>
+            <CustomerDetailPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <Layout>
+            <UserManagementPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          user ? (
+            user.role === "Admin" ? (
+              <Layout>
+                <AdminDashboardPage />
+              </Layout>
+            ) : (
+              <Layout>
+                <HomePage />
+              </Layout>
+            )
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+    </Routes>
+  );
+};
+
+const App = () => {
+  return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          
-          {/* Rute untuk Dashboard Admin */}
-          <Route
-            path="/dashboard-admin"
-            element={
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            }
-          />
-          
-          {/* Routes wrapped with Layout */}
-          <Route
-            path="/opti"
-            element={
-              <Layout>
-                <OptiPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/customer"
-            element={
-              <Layout>
-                <CustomerPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/sales"
-            element={
-              <Layout>
-                <SalesPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/customer/add"
-            element={
-              <Layout>
-                <AddCustomerPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/customer/:id"
-            element={
-              <Layout>
-                <CustomerDetailPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <Layout>
-                <UserManagementPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/"
-            element={
-              user && user.role === "Admin" ? (
-                <Layout>
-                  <AdminDashboard />
-                </Layout>
-              ) : (
-                <Layout>
-                  <HomePage />
-                </Layout>
-              )
-            }
-          />{" "}
-          {/* Default route based on user role */}
-        </Routes>
+        <AppRoutes />
       </AuthProvider>
     </Router>
   );

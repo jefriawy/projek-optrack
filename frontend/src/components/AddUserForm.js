@@ -1,4 +1,4 @@
-// frontend/src/components/AddSalesForm.js
+// frontend/src/components/AddUserForm.js
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -8,18 +8,20 @@ const validationSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email format").required("Email is required"),
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
-  role: Yup.string().oneOf(["Sales", "Head Sales"]).required("Role is required"),
+  role: Yup.string().oneOf(["Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).required("Role is required"),
+  secondRole: Yup.string().oneOf(["", "Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).optional(),
   mobileSales: Yup.string().matches(/^\d*$/, "Phone number must be numeric").optional(),
   descSales: Yup.string().optional(),
 });
 
-const AddSalesForm = ({ onClose, onSubmit }) => {
+const AddUserForm = ({ onClose, onSubmit }) => {
   const { user } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     role: "Sales", // Set default role to 'Sales'
+    secondRole: "",
     mobileSales: "",
     descSales: "",
   });
@@ -74,8 +76,25 @@ const AddSalesForm = ({ onClose, onSubmit }) => {
           <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md" required>
             <option value="Sales">Sales</option>
             <option value="Head Sales">Head Sales</option>
+            <option value="Admin">Admin</option>
+            <option value="Human Capital">Human Capital</option>
+            <option value="Trainer">Trainer</option>
+            <option value="Expert">Expert</option>
           </select>
           {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+        </div>
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">Second Role (Opsional)</label>
+          <select name="secondRole" value={formData.secondRole} onChange={handleChange} className="w-full p-2 border rounded-md">
+            <option value="">None</option>
+            <option value="Sales">Sales</option>
+            <option value="Head Sales">Head Sales</option>
+            <option value="Admin">Admin</option>
+            <option value="Human Capital">Human Capital</option>
+            <option value="Trainer">Trainer</option>
+            <option value="Expert">Expert</option>
+          </select>
+          {errors.secondRole && <p className="text-red-500 text-sm mt-1">{errors.secondRole}</p>}
         </div>
       </div>
       <div>
@@ -92,11 +111,11 @@ const AddSalesForm = ({ onClose, onSubmit }) => {
           Batal
         </button>
         <button type="submit" className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition">
-          Tambah Sales
+          Tambah Pengguna
         </button>
       </div>
     </form>
   );
 };
 
-export default AddSalesForm;
+export default AddUserForm;

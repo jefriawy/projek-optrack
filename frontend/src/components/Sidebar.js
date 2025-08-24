@@ -1,3 +1,4 @@
+// frontend/src/components/Sidebar.js
 import React, { useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -40,110 +41,76 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: homeIcon, name: "Home", link: "/" },
       { icon: optiIcon, name: "Opti", link: "/opti" },
       { icon: customerIcon, name: "Customer", link: "/customer" },
-      { icon: trainerIcon, name: "Training", link: "/training" },
+      { icon: trainerIcon, name: "Trainer", link: "/training" },
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
   }
 
   return (
-    <div
-      className="h-screen flex flex-col"
-    >
-      <div className={`flex items-center mb-10 ${isSidebarOpen ? 'justify-between' : 'justify-center'}`}>
+    <div className="h-screen flex flex-col bg-white shadow-lg">
+      <div className={`flex items-center mb-4 p-4 ${isSidebarOpen ? 'justify-between' : 'justify-center'}`}>
         <Link to="/">
           <img
             src={isSidebarOpen ? require("../imgres/logo.png") : require("../imgres/minimize logo.png")}
             alt="OPTrack Logo"
-            className={`object-contain transition-all duration-500 ease-in-out ${isSidebarOpen ? 'h-12' : 'h-10'}`}
+            className={`object-contain transition-all duration-300 ease-in-out ${isSidebarOpen ? 'h-12' : 'h-10'}`}
           />
         </Link>
         <button
           onClick={toggleSidebar}
-          className={`ml-2 p-1 rounded hover:bg-gray-200 transition`}
+          className="p-1 rounded hover:bg-gray-200 transition hidden md:block"
           aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
-            {isSidebarOpen ? (
-              <polyline points="15 18 9 12 15 6" />
-            ) : (
-              <polyline points="9 18 15 12 9 6" />
-            )}
+            <polyline points={isSidebarOpen ? "15 18 9 12 15 6" : "9 18 15 12 9 6"} />
           </svg>
         </button>
       </div>
-      <nav className="flex-grow">
+      <nav className="flex-grow px-4">
         <ul>
           {menuItems.map((item) => (
             <li
               key={item.name}
-              className={`flex items-center my-1 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 ${isSidebarOpen ? '' : 'justify-center'}`}
-              style={{
-                padding: isSidebarOpen ? '12px' : '12px 0',
-              }}
+              className="my-1"
             >
               <Link
                 to={item.link}
-                className="sidebar-link flex items-center w-full"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                  width: '100%',
-                  height: '100%',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
+                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 ${!isSidebarOpen && 'justify-center'}`}
               >
                 <img
                   src={item.icon}
                   alt={item.name}
-                  className={`object-contain transition-all duration-500 ease-in-out ${isSidebarOpen ? 'mr-4 w-6 h-6' : 'w-7 h-7'}`}
+                  className={`object-contain transition-all duration-300 ease-in-out ${isSidebarOpen ? 'mr-4 w-6 h-6' : 'w-7 h-7'}`}
                 />
-                {isSidebarOpen && (
-                  <span
-                    style={{
-                      maxWidth: 200,
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
-                      display: 'inline',
-                    }}
-                  >
-                    {item.name}
-                  </span>
-                )}
+                <span
+                  className={`transition-all duration-300 ${isSidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}
+                >
+                  {item.name}
+                </span>
               </Link>
             </li>
           ))}
         </ul>
       </nav>
-      <div>
+      <div className="p-4">
         <ul>
           <li
-            className={`flex items-center my-1 rounded-lg cursor-pointer hover:bg-gray-100 text-red-500 ${isSidebarOpen ? '' : 'justify-center'}`}
-            style={{
-              padding: isSidebarOpen ? '12px' : '12px 0',
-            }}
+            className="my-1"
             onClick={handleLogout}
           >
-            <img
-              src={logoutIcon}
-              alt="Log out"
-              className={`object-contain transition-all duration-500 ease-in-out ${isSidebarOpen ? 'mr-4 w-6 h-6' : 'w-7 h-7'}`}
-            />
-            <span
-              style={{
-                opacity: isSidebarOpen ? 1 : 0,
-                maxWidth: isSidebarOpen ? 200 : 0,
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                transition: 'opacity 0.4s, max-width 0.5s cubic-bezier(0.4,0,0.2,1)',
-                display: isSidebarOpen ? 'inline' : 'none',
-              }}
-            >
-              Log out
-            </span>
+            <div className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 text-red-500 ${!isSidebarOpen && 'justify-center'}`}>
+              <img
+                src={logoutIcon}
+                alt="Log out"
+                className={`object-contain transition-all duration-300 ease-in-out ${isSidebarOpen ? 'mr-4 w-6 h-6' : 'w-7 h-7'}`}
+              />
+              <span
+                className={`transition-all duration-300 ${isSidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}
+              >
+                Log out
+              </span>
+            </div>
           </li>
         </ul>
       </div>
