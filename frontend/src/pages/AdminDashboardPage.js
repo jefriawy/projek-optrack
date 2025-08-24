@@ -25,7 +25,7 @@ ChartJS.register(
   ArcElement
 );
 
-const AdminDashboard = () => {
+const AdminDashboardPage = () => {
   const { user } = useContext(AuthContext);
   const [userCounts, setUserCounts] = useState({
     Sales: 0,
@@ -103,12 +103,12 @@ const AdminDashboard = () => {
         label: 'Jumlah Pengguna',
         data: Object.values(userCounts).filter((_, index) => Object.keys(userCounts)[index] !== 'Semua'),
         backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
         ],
         borderColor: [
           'rgba(255, 99, 132, 1)',
@@ -125,6 +125,7 @@ const AdminDashboard = () => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -262,17 +263,22 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Dashboard Admin</h1>
+    <div className="flex-grow p-8 bg-gray-100 w-full max-w-full overflow-hidden">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">📊 Dashboard Admin</h1>
+      </header>
 
-      {/* Bar Chart (moved to top) */}
-      <div className="mb-8 bg-white p-6 rounded-lg shadow-md"> {/* Added mb-8 for spacing */}
-        <h2 className="text-2xl font-bold mb-4">Statistik Pengguna</h2>
-        <Bar data={chartData} options={chartOptions} />
+      {/* Bar Chart */}
+      <div className="mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-md">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Statistik Pengguna</h2>
+        <div className="h-80 sm:h-96">
+          <Bar data={chartData} options={chartOptions} />
+        </div>
       </div>
 
-      {/* Role Cards (moved below bar chart) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"> {/* Added mt-8 for spacing */}
+      {/* Role Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {roleCards.map((card) => (
           <Link
             key={card.name}
@@ -280,21 +286,22 @@ const AdminDashboard = () => {
             className="block" // Make the Link a block element to contain the card
           >
             <div
-              className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden" // Added relative
+              className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden h-32 sm:h-40"
               onMouseEnter={() => setHoveredCard(card.name)}
               onMouseLeave={() => setHoveredCard(null)}
             >
               {/* Text content */}
               <div className={`transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-                <h2 className="text-xl font-semibold mb-2">{card.name}</h2>
-                <p className="text-4xl font-bold text-gray-800 mb-4">{card.count}</p>
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">{card.name}</h2>
+                <p className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">{card.count}</p>
               </div>
 
               {/* Pie chart overlay */}
               <div
-                className={`absolute inset-0 flex items-center justify-center w-[85%] h-[85%] mx-auto my-auto transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-              >
-                <Pie data={generatePieChartData(card.name, card.count)} options={pieChartOptions} />
+                className={`absolute inset-0 flex items-center justify-center w-full h-full transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <div className="w-24 h-24 sm:w-32 sm:h-32">
+                  <Pie data={generatePieChartData(card.name, card.count)} options={pieChartOptions} />
+                </div>
               </div>
             </div>
           </Link>
@@ -304,7 +311,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
-
-
-
+export default AdminDashboardPage;

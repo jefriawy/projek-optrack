@@ -146,12 +146,12 @@ const OptiPage = () => {
 
     return (
         <div className="flex-grow p-8 bg-gray-100">
-            <header className="flex justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Opportunity Page</h1>
+            <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
+                <div className="w-full md:w-auto mb-4 md:mb-0">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Opportunity Page</h1>
                 </div>
-                <div className="flex items-center">
-                    <div className="relative flex items-center w-64 mr-4">
+                <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
+                    <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
                         <input
                             type="text"
                             placeholder="Search Perusahaan..."
@@ -173,28 +173,28 @@ const OptiPage = () => {
             <main className="bg-white p-6 rounded-lg shadow-sm">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Opportunity</h1>
                 <p className="text-gray-600 mb-6">Data Opportunity</p>
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex space-x-4">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mb-4 md:mb-0">
                         <button
                             onClick={handleAddOpti}
-                            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
+                            className="w-full md:w-auto bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
                         >
                             Tambah Opportunity
                         </button>
                         {optis.length > 0 && sortedOptis.length > 0 && (
                             <button
                                 onClick={handleDownloadPdf}
-                                className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
+                                className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300"
                             >
                                 Export to PDF
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center">
-                        <label htmlFor="statusFilter" className="text-gray-700 ml-4 mr-2">Status:</label>
+                    <div className="w-full md:w-auto flex items-center">
+                        <label htmlFor="statusFilter" className="text-gray-700 mr-2">Status:</label>
                         <select
                             id="statusFilter"
-                            className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >

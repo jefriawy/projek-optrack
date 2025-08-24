@@ -3,15 +3,12 @@ import axios from 'axios';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import SalesTable from '../components/SalesTable';
-import Modal from '../components/Modal';
-import AddSalesForm from '../components/AddSalesForm';
 
 const SalesPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [salesData, setSalesData] = useState([]);
   const [headSalesData, setHeadSalesData] = useState([]);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchSalesData = async () => {
     if (user && user.token && (user.role === 'Head Sales' || user.role === 'Admin')) {
@@ -33,21 +30,6 @@ const SalesPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  const handleAddSalesSubmit = async (formData) => {
-    try {
-      await axios.post('http://localhost:3000/api/user', formData, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      fetchSalesData();
-      handleCloseModal();
-    } catch (err) {
-      setError(err.response?.data?.error || '❌ Gagal menambah data sales.');
-    }
-  };
-
   if (loading) return <div className="text-center mt-20">Loading...</div>;
   if (!user || !['Admin', 'Head Sales'].includes(user.role)) {
     return <Navigate to="/login" />;
@@ -56,16 +38,8 @@ const SalesPage = () => {
   return (
     <div className="flex-grow p-8 bg-gray-100">
       {/* Header */}
-      <header className="flex justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">📊 Sales Page</h1>
-        {user.role === 'Admin' && (
-          <button
-            onClick={handleOpenModal}
-            className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            + Tambah Sales
-          </button>
-        )}
+      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">📊 Sales Page</h1>
       </header>
 
       {/* Error Message */}
@@ -106,11 +80,6 @@ const SalesPage = () => {
           )}
         </div>
       </div>
-
-      {/* Modal Add Sales */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Tambah Sales Baru">
-        <AddSalesForm onClose={handleCloseModal} onSubmit={handleAddSalesSubmit} />
-      </Modal>
     </div>
   );
 };

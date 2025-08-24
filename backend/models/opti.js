@@ -36,17 +36,34 @@ const Opti = {
     return { idOpti: result.insertId, ...optiData, idSales };
   },
 
-  async findAllPaginated(searchTerm, limit, offset) {
+  async findAllPaginated(searchTerm, limit, offset, user) {
     let baseQuery = `
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
     `;
     const params = [];
+    let whereClauses = [];
 
     if (searchTerm) {
-      baseQuery += ` WHERE c.corpCustomer LIKE ?`;
+      whereClauses.push(`c.corpCustomer LIKE ?`);
       params.push(`%${searchTerm}%`);
+    }
+
+    if (user && user.role === "Sales") {
+      const [sales] = await pool.query("SELECT idSales FROM sales WHERE userId = ?", [user.id]);
+      if (sales.length > 0) {
+        const idSales = sales[0].idSales;
+        whereClauses.push(`o.idSales = ?`);
+        params.push(idSales);
+      } else {
+        // If the user is a sales person but not in the sales table, return no data
+        return [[], 0];
+      }
+    }
+
+    if (whereClauses.length > 0) {
+      baseQuery += ` WHERE ${whereClauses.join(" AND ")}`;
     }
 
     // Query untuk menghitung total data

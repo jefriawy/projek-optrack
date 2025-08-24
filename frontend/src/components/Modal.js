@@ -18,7 +18,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       onClick={onClose} // klik backdrop nutup
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-fadeIn"
+        className="bg-white rounded-2xl shadow-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl max-h-[90vh] flex flex-col animate-fadeIn"
         onClick={(e) => e.stopPropagation()} // biar klik dalam modal gak nutup
       >
         {/* Header */}
