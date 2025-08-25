@@ -6,6 +6,10 @@ const pool = require('../config/database');
 const createOpti = async (req, res) => {
   try {
     const optiData = req.body;
+    // Jika user sales, paksa status jadi "Just Get Info"
+    if (req.user.role === "Sales") {
+      optiData.statOpti = "Just Get Info";
+    }
     const customer = await Customer.findById(optiData.idCustomer);
     if (!customer || !customer.idSales) {
       return res
@@ -86,6 +90,10 @@ const getOptiById = async (req, res) => {
 const updateOpti = async (req, res) => {
   try {
     const { id } = req.params;
+    // Jika user sales, paksa status jadi "Just Get Info"
+    if (req.user.role === "Sales") {
+      req.body.statOpti = "Just Get Info";
+    }
     const affectedRows = await Opti.update(id, req.body);
     if (affectedRows === 0) {
       return res.status(404).json({ error: "Opportunity not found" });
