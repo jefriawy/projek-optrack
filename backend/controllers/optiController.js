@@ -5,7 +5,11 @@ const pool = require('../config/database');
 
 const createOpti = async (req, res) => {
   try {
-    const optiData = req.body;
+    const optiData = { ...req.body };
+    if (req.file) {
+      optiData.proposalOpti = req.file.path;
+    }
+
     const customer = await Customer.findById(optiData.idCustomer);
     if (!customer || !customer.idSales) {
       return res
@@ -86,7 +90,12 @@ const getOptiById = async (req, res) => {
 const updateOpti = async (req, res) => {
   try {
     const { id } = req.params;
-    const affectedRows = await Opti.update(id, req.body);
+    const optiData = { ...req.body };
+    if (req.file) {
+      optiData.proposalOpti = req.file.path;
+    }
+
+    const affectedRows = await Opti.update(id, optiData);
     if (affectedRows === 0) {
       return res.status(404).json({ error: "Opportunity not found" });
     }

@@ -1,6 +1,5 @@
 // frontend/src/components/AddUserForm.js
 import React, { useState, useContext } from "react";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import * as Yup from "yup";
 
@@ -8,10 +7,8 @@ const validationSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email format").required("Email is required"),
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
-  role: Yup.string().oneOf(["Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).required("Role is required"),
-  secondRole: Yup.string().oneOf(["", "Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).optional(),
-  mobileSales: Yup.string().matches(/^\d*$/, "Phone number must be numeric").optional(),
-  descSales: Yup.string().optional(),
+  role: Yup.string().oneOf(["Sales", "Head Sales", "Admin", "Expert"]).required("Role is required"),
+  mobile: Yup.string().required("Mobile number is required"),
 });
 
 const AddUserForm = ({ onClose, onSubmit }) => {
@@ -20,10 +17,8 @@ const AddUserForm = ({ onClose, onSubmit }) => {
     name: "",
     email: "",
     password: "",
-    role: "Sales", // Set default role to 'Sales'
-    secondRole: "",
-    mobileSales: "",
-    descSales: "",
+    role: "Sales", // Default role
+    mobile: "",
   });
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
@@ -47,7 +42,7 @@ const AddUserForm = ({ onClose, onSubmit }) => {
         });
         setErrors(validationErrors);
       } else {
-        setErrorMessage(error.response?.data?.error || "Failed to add new sales user.");
+        setErrorMessage(error.response?.data?.error || "Failed to add new user.");
       }
     }
   };
@@ -77,34 +72,15 @@ const AddUserForm = ({ onClose, onSubmit }) => {
             <option value="Sales">Sales</option>
             <option value="Head Sales">Head Sales</option>
             <option value="Admin">Admin</option>
-            <option value="Human Capital">Human Capital</option>
-            <option value="Trainer">Trainer</option>
             <option value="Expert">Expert</option>
           </select>
           {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
         </div>
         <div>
-          <label className="block text-gray-700 font-semibold mb-1">Second Role (Opsional)</label>
-          <select name="secondRole" value={formData.secondRole} onChange={handleChange} className="w-full p-2 border rounded-md">
-            <option value="">None</option>
-            <option value="Sales">Sales</option>
-            <option value="Head Sales">Head Sales</option>
-            <option value="Admin">Admin</option>
-            <option value="Human Capital">Human Capital</option>
-            <option value="Trainer">Trainer</option>
-            <option value="Expert">Expert</option>
-          </select>
-          {errors.secondRole && <p className="text-red-500 text-sm mt-1">{errors.secondRole}</p>}
+          <label className="block text-gray-700 font-semibold mb-1">Nomor HP</label>
+          <input type="text" name="mobile" value={formData.mobile} onChange={handleChange} className="w-full p-2 border rounded-md" required />
+          {errors.mobile && <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>}
         </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 font-semibold mb-1">Nomor HP</label>
-        <input type="text" name="mobileSales" value={formData.mobileSales} onChange={handleChange} className="w-full p-2 border rounded-md" placeholder="Opsional" />
-        {errors.mobileSales && <p className="text-red-500 text-sm mt-1">{errors.mobileSales}</p>}
-      </div>
-      <div>
-        <label className="block text-gray-700 font-semibold mb-1">Deskripsi</label>
-        <textarea name="descSales" value={formData.descSales} onChange={handleChange} className="w-full p-2 border rounded-md" rows="3" placeholder="Opsional"></textarea>
       </div>
       <div className="flex justify-end space-x-2 pt-4">
         <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">

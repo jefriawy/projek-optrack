@@ -20,11 +20,11 @@ const User = {
   },
 
   async create(userData, connection = pool) {
-    const { name, email, password, role } = userData;
+    const { id, name, email, password, role, mobile } = userData;
     const result = await connection.query(
-      `INSERT INTO users (name, email, password, role, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, NOW(), NOW())`,
-      [name, email, password, role]
+      `INSERT INTO users (id, name, email, password, role, mobile, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [id, name, email, password, role, mobile]
     );
     return result[0];
   },
