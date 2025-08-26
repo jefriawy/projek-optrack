@@ -29,12 +29,12 @@ async function generateUserId(role) {
   }
 
   const prefix = `${year}${roleCode}`;
-  const query = `SELECT id FROM users WHERE id LIKE ? ORDER BY id DESC LIMIT 1`;
+  const query = `SELECT id FROM users WHERE id LIKE ? ORDER BY CAST(SUBSTRING(id, -3) AS UNSIGNED) DESC LIMIT 1`;
   
   const [rows] = await pool.query(query, [`${prefix}%`]);
 
   let increment = 1;
-  if (rows.length > 0 && rows[0].id) {
+  if (rows.length > 0 && rows[0].id && typeof rows[0].id === 'string') {
     const lastId = rows[0].id;
     // Mengambil 3 digit terakhir sebagai nomor urut
     const lastIncrement = parseInt(lastId.slice(-3), 10);
