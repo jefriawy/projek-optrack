@@ -11,20 +11,23 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      switch (user.role) {
-        case "Admin":
-          navigate("/dashboard-admin", { replace: true });
-          break;
-        case "Head Sales":
-        case "Sales":
-          navigate("/customer", { replace: true });
-          break;
-        default:
-          navigate("/login", { replace: true });
-      }
+  if (user) {
+    switch (user.role) {
+      case "Admin":
+        navigate("/dashboard-admin", { replace: true });
+        break;
+      case "Head Sales":
+      case "Sales":
+        navigate("/customer", { replace: true });
+        break;
+      case "Expert":
+        navigate("/training", { replace: true });
+        break;
+      default:
+        navigate("/login", { replace: true });
     }
-  }, [user, navigate]);
+  }
+}, [user, navigate]);
 
   if (loading) {
     return (
