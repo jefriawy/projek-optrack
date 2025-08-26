@@ -34,7 +34,7 @@ async function generateUserId(role) {
   const [rows] = await pool.query(query, [`${prefix}%`]);
 
   let increment = 1;
-  if (rows.length > 0) {
+  if (rows.length > 0 && rows[0].id) {
     const lastId = rows[0].id;
     // Mengambil 3 digit terakhir sebagai nomor urut
     const lastIncrement = parseInt(lastId.slice(-3), 10);
