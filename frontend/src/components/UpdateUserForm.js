@@ -9,7 +9,6 @@ const validationSchema = Yup.object({
   role: Yup.string().oneOf(["Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).required("Role is required"),
   secondRole: Yup.string().oneOf(["", "Sales", "Head Sales", "Admin", "Human Capital", "Trainer", "Expert"]).optional(),
   mobileSales: Yup.string().matches(/^\d*$/, "Phone number must be numeric").optional(),
-  descSales: Yup.string().optional(),
 });
 
 const UpdateUserForm = ({ onClose, onSubmit, userToEdit }) => {
@@ -20,7 +19,6 @@ const UpdateUserForm = ({ onClose, onSubmit, userToEdit }) => {
     role: "Sales",
     secondRole: "",
     mobileSales: "",
-    descSales: "",
   });
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
@@ -33,7 +31,6 @@ const UpdateUserForm = ({ onClose, onSubmit, userToEdit }) => {
         role: userToEdit.role || "Sales",
         secondRole: userToEdit.secondRole || "",
         mobileSales: userToEdit.mobileSales || "",
-        descSales: userToEdit.descSales || "",
       });
     }
   }, [userToEdit]);
@@ -117,10 +114,6 @@ const UpdateUserForm = ({ onClose, onSubmit, userToEdit }) => {
         <label className="block text-gray-700 font-semibold mb-1">Nomor HP</label>
         <input type="text" name="mobileSales" value={formData.mobileSales} onChange={handleChange} className="w-full p-2 border rounded-md" placeholder="Opsional" />
         {errors.mobileSales && <p className="text-red-500 text-sm mt-1">{errors.mobileSales}</p>}
-      </div>
-      <div>
-        <label className="block text-gray-700 font-semibold mb-1">Deskripsi</label>
-        <textarea name="descSales" value={formData.descSales} onChange={handleChange} className="w-full p-2 border rounded-md" rows="3" placeholder="Opsional"></textarea>
       </div>
       <div className="flex justify-end space-x-2 pt-4">
         <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">

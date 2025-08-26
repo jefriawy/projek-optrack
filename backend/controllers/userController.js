@@ -50,8 +50,12 @@ const createUser = async (req, res) => {
 
     // Perbaikan: Jika role Sales atau Head Sales, buat entri di tabel sales
     if (role === "Sales" || role === "Head Sales") {
+      const salesData = { nmSales: name, emailSales: email, mobileSales: mobile, userId };
+      if (descSales) {
+        salesData.descSales = descSales;
+      }
       const salesResult = await User.createSales(
-        { nmSales: name, emailSales: email, mobileSales, descSales, userId }, // userId is already the new ID
+        salesData, // userId is already the new ID
         connection
       );
       console.log("Sales record created with idSales:", salesResult.insertId); // Debug
