@@ -2,21 +2,22 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const pool = require("../config/database");
+const { generateUserId } = require("../utils/idGenerator");
 
 const createUser = async (req, res) => {
   let connection;
   try {
-    const { name, email, password, role, mobileSales, descSales } = req.body;
+    const { name, email, password, role, mobile, descSales } = req.body;
     console.log("Creating user:", {
       name,
       email,
       role,
-      mobileSales,
+      mobile,
       descSales,
     }); // Debug
 
     // Validasi role
-    if (!["Sales", "Admin", "HC", "Expert", "Trainer", "Head Sales"].includes(role)) {
+    if (!["Sales", "Admin", "Expert", "Head Sales"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }
 
@@ -29,6 +30,10 @@ const createUser = async (req, res) => {
       return res.status(400).json({ error: "Email already in use" });
     }
 
+    // Generate new user ID
+    const userId = await generateUserId(role);
+    console.log("Generated new User ID:", userId); // Debug
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -36,18 +41,17 @@ const createUser = async (req, res) => {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    // Buat user di tabel users
-    const userResult = await User.create(
-      { name, email, password: hashedPassword, role },
+    // Buat user di tabel users with the new ID
+    await User.create(
+      { id: userId, name, email, password: hashedPassword, role, mobile }, // Pass the new ID
       connection
     );
-    const userId = userResult.insertId;
     console.log("User created with ID:", userId); // Debug
 
     // Perbaikan: Jika role Sales atau Head Sales, buat entri di tabel sales
     if (role === "Sales" || role === "Head Sales") {
       const salesResult = await User.createSales(
-        { nmSales: name, emailSales: email, mobileSales, descSales, userId },
+        { nmSales: name, emailSales: email, mobileSales, descSales, userId }, // userId is already the new ID
         connection
       );
       console.log("Sales record created with idSales:", salesResult.insertId); // Debug
@@ -55,7 +59,8 @@ const createUser = async (req, res) => {
 
     // Commit transaksi
     await connection.commit();
-    res.status(201).json({ message: "User created", id: userId });
+    res.status(201).json({ message: "User created", id: userId }); // Return the new ID
+
   } catch (error) {
     if (connection) await connection.rollback();
     console.error("Error creating user:", error);

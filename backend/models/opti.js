@@ -14,11 +14,14 @@ const Opti = {
       idCustomer,
       kebutuhan,
       idSumber,
+      jenisOpti,
+      namaExpert,
+      proposalOpti,
     } = optiData;
 
     const [result] = await pool.query(
-      `INSERT INTO opti (nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, propOpti, datePropOpti, idCustomer, kebutuhan, idSumber, idSales)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO opti (nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, propOpti, datePropOpti, idCustomer, kebutuhan, idSumber, idSales, jenisOpti, namaExpert, proposalOpti)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nmOpti,
         contactOpti,
@@ -31,6 +34,9 @@ const Opti = {
         kebutuhan,
         idSumber,
         idSales,
+        jenisOpti,
+        namaExpert,
+        proposalOpti,
       ]
     );
     return { idOpti: result.insertId, ...optiData, idSales };
@@ -117,9 +123,12 @@ const Opti = {
       idCustomer,
       idSumber,
       kebutuhan,
+      jenisOpti,
+      namaExpert,
+      proposalOpti,
     } = optiData;
     const [result] = await pool.query(
-      `UPDATE opti SET nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, propOpti = ?, datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ? WHERE idOpti = ?`,
+      `UPDATE opti SET nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, propOpti = ?, datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?, jenisOpti = ?, namaExpert = ?, proposalOpti = ? WHERE idOpti = ?`,
       [
         nmOpti,
         contactOpti,
@@ -131,6 +140,9 @@ const Opti = {
         idCustomer,
         idSumber,
         kebutuhan,
+        jenisOpti,
+        namaExpert,
+        proposalOpti,
         idOpti,
       ]
     );

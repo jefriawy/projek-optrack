@@ -3,6 +3,7 @@ import { AuthContext } from "../context/AuthContext";
 import * as Yup from "yup";
 import axios from "axios";
 
+// Updated validation schema
 const validationSchema = Yup.object({
   nmOpti: Yup.string().required("Nama Opti wajib diisi"),
   idCustomer: Yup.number().required("Perusahaan wajib dipilih"),
@@ -10,15 +11,19 @@ const validationSchema = Yup.object({
   emailOpti: Yup.string().email("Email tidak valid"),
   mobileOpti: Yup.string(),
   statOpti: Yup.string().required("Status Opti wajib diisi"),
-  propOpti: Yup.string(),
   datePropOpti: Yup.date().required("Tanggal wajib diisi"),
   idSumber: Yup.number().required("Sumber wajib dipilih"),
   kebutuhan: Yup.string(),
+  // New fields
+  jenisOpti: Yup.string().required("Jenis Opti wajib diisi"),
+  namaExpert: Yup.string().required("Nama Expert wajib diisi"),
+  proposalOpti: Yup.mixed().optional(), // For the file upload
 });
 
 const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
   const { user } = useContext(AuthContext);
 
+  // Updated initial state
   const initialFormState = {
     nmOpti: "",
     idCustomer: "",
@@ -26,13 +31,13 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
     emailOpti: "",
     mobileOpti: "",
     statOpti: user?.role === "Sales" ? "Just Get Info" : "",
-    propOpti: "",
     datePropOpti: new Date().toISOString().slice(0, 10),
     idSumber: "",
     kebutuhan: "",
+    jenisOpti: "",
+    namaExpert: "",
   };
 
-  // Pastikan initialData selalu objek
   const safeInitialData = initialData || {};
 
   const [formData, setFormData] = useState({
@@ -41,6 +46,10 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
     datePropOpti:
       safeInitialData.datePropOpti || new Date().toISOString().slice(0, 10),
   });
+  
+  // State for file
+  const [proposalFile, setProposalFile] = useState(null);
+
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
   const [errors, setErrors] = useState({});
@@ -80,16 +89,38 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
     }
   };
 
+  // Handler for file input
+  const handleFileChange = (e) => {
+    setProposalFile(e.target.files[0]);
+  };
+
   const handleReset = () => {
     setFormData({ ...initialFormState });
+    setProposalFile(null);
     setErrors({});
   };
 
+  // Updated submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await validationSchema.validate(formData, { abortEarly: false });
-      onSubmit(formData);
+      // Create a temporary object for validation, excluding the file
+      const dataToValidate = { ...formData };
+      if (proposalFile) {
+        dataToValidate.proposalOpti = proposalFile;
+      }
+      
+      await validationSchema.validate(dataToValidate, { abortEarly: false });
+
+      const submissionData = new FormData();
+      for (const key in formData) {
+        submissionData.append(key, formData[key]);
+      }
+      if (proposalFile) {
+        submissionData.append("proposalOpti", proposalFile);
+      }
+
+      onSubmit(submissionData);
     } catch (error) {
       const validationErrors = {};
       error.inner.forEach((err) => {
@@ -112,6 +143,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+        {/* Existing fields... */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Nama Opti *
@@ -170,6 +202,41 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
           />
         </div>
 
+        {/* New Field: Jenis Opti */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Jenis Opti *
+          </label>
+          <select
+            name="jenisOpti"
+            value={formData.jenisOpti || ""}
+            onChange={handleChange}
+            className={inputStyle}
+          >
+            <option value="">Pilih Jenis Opti</option>
+            <option value="Training">Training</option>
+            <option value="Project">Project</option>
+            <option value="Outsource">Outsource</option>
+          </select>
+          {errors.jenisOpti && <p className="error">{errors.jenisOpti}</p>}
+        </div>
+
+        {/* New Field: Nama Expert */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nama Expert *
+          </label>
+          <input
+            type="text"
+            name="namaExpert"
+            value={formData.namaExpert || ""}
+            onChange={handleChange}
+            placeholder="Masukkan nama expert"
+            className={inputStyle}
+          />
+          {errors.namaExpert && <p className="error">{errors.namaExpert}</p>}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Status Opti *
@@ -193,16 +260,37 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            Sumber
+          </label>
+          <select
+            name="idSumber"
+            value={formData.idSumber || ""}
+            onChange={handleChange}
+            className={inputStyle}
+          >
+            <option value="">Pilih sumber opportunity</option>
+            {sumber.map((s) => (
+              <option key={s.idSumber} value={s.idSumber}>
+                {s.nmSumber}
+              </option>
+            ))}
+          </select>
+          {errors.idSumber && <p className="error">{errors.idSumber}</p>}
+        </div>
+
+        {/* Updated Field: Proposal Opti (File Upload) */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Proposal Opti
           </label>
           <input
-            type="text"
-            name="propOpti"
-            value={formData.propOpti || ""}
-            onChange={handleChange}
-            placeholder="Nomor atau referensi proposal"
-            className={inputStyle}
+            type="file"
+            name="proposalOpti"
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx"
+            className={`${inputStyle} file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
           />
+          {errors.proposalOpti && <p className="error">{errors.proposalOpti}</p>}
         </div>
 
         <div>
@@ -213,6 +301,7 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
             type="date"
             name="datePropOpti"
             value={formatDateInput(formData.datePropOpti)}
+            onChange={handleChange} // Added onChange here
             className={inputStyle}
           />
           {errors.datePropOpti && (
@@ -238,26 +327,6 @@ const OptiForm = ({ initialData = {}, onSubmit, onClose }) => {
             ))}
           </select>
           {errors.idCustomer && <p className="error">{errors.idCustomer}</p>}
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sumber
-          </label>
-          <select
-            name="idSumber"
-            value={formData.idSumber || ""}
-            onChange={handleChange}
-            className={inputStyle}
-          >
-            <option value="">Pilih sumber opportunity</option>
-            {sumber.map((s) => (
-              <option key={s.idSumber} value={s.idSumber}>
-                {s.nmSumber}
-              </option>
-            ))}
-          </select>
-          {errors.idSumber && <p className="error">{errors.idSumber}</p>}
         </div>
 
         <div className="md:col-span-2">
