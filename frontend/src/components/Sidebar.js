@@ -45,6 +45,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
+  } else if (user && user.role === "Expert") {
+    menuItems = [
+      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: trainerIcon, name: "Training", link: "/training" },
+      { icon: projectIcon, name: "Project", link: "/project" },
+      { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
+    ];
   }
 
   return (

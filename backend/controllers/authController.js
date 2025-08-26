@@ -28,9 +28,9 @@ const login = [
       }
 
       // Izinkan Sales dan Admin login
-      if (!["Sales", "Admin", "Head Sales"].includes(user.role)) {
+      if (!["Sales", "Admin", "Head Sales", "Expert"].includes(user.role)) {
         console.log("Unauthorized role:", user.role); // Debug
-        return res.status(403).json({ error: "Only Sales or Admin can login" });
+        return res.status(403).json({ error: "Only Sales, Admin, Head Sales or Expert can login" });
       }
 
       const token = generateToken(user);

@@ -89,6 +89,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/expert"
+        element={
+          <Layout>
+            <TrainingPage />
+          </Layout>
+        }
+      />
+      <Route
         path="/customer/add"
         element={
           <Layout>
@@ -119,6 +127,10 @@ const AppRoutes = () => {
             user.role === "Admin" ? (
               <Layout>
                 <AdminDashboardPage />
+              </Layout>
+            ) : user.role === "Expert" ? (
+              <Layout>
+                <TrainingPage />
               </Layout>
             ) : (
               <Layout>
