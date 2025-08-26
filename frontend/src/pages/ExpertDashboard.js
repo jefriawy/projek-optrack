@@ -18,14 +18,12 @@ const getStatusColor = (status) => {
   }
 };
 
-// Hitung countdown deadline
 const getDeadlineCountdown = (endDate) => {
   if (!endDate) return "-";
   const now = new Date();
   const end = new Date(endDate);
   const diff = end - now;
   if (diff <= 0) return "Expired";
-
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   return `${days > 0 ? `${days} Hari` : ""} ${hours} Jam`.trim();
@@ -43,20 +41,16 @@ const ExpertDashboard = () => {
 
   const fetchData = async () => {
     try {
-      // Ambil total
       const [trainingRes, projectRes, outsourceRes] = await Promise.all([
         fetch("/api/training").then((r) => r.json()),
         fetch("/api/project").then((r) => r.json()),
         fetch("/api/outsource").then((r) => r.json()),
       ]);
-
       setTotals({
         training: trainingRes.length,
         project: projectRes.length,
         outsource: outsourceRes.length,
       });
-
-      // Ambil history sesuai type
       let data = [];
       if (type === "training") {
         data = trainingRes.map((t) => ({
@@ -80,83 +74,91 @@ const ExpertDashboard = () => {
         }));
       }
       setHistory(data);
-    } catch (error) {
-      console.error("Fetch error:", error);
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Dashboard Expert</h1>
-        <div className="flex space-x-4">
-          <div className="border p-4 rounded-lg">
-            <p className="font-medium">Total Training</p>
-            <p className="text-2xl font-bold">{totals.training}</p>
+      {/* Header + Cards */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-lg sm:text-xl font-bold">Dashboard Expert</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full sm:w-auto">
+          <div className="border p-4 rounded-lg text-center bg-white shadow">
+            <p className="font-medium text-sm sm:text-base">Total Training</p>
+            <p className="text-xl sm:text-2xl font-bold">{totals.training}</p>
           </div>
-          <div className="border p-4 rounded-lg">
-            <p className="font-medium">Total Project</p>
-            <p className="text-2xl font-bold">{totals.project}</p>
+          <div className="border p-4 rounded-lg text-center bg-white shadow">
+            <p className="font-medium text-sm sm:text-base">Total Project</p>
+            <p className="text-xl sm:text-2xl font-bold">{totals.project}</p>
           </div>
-          <div className="border p-4 rounded-lg">
-            <p className="font-medium">Total Outsource</p>
-            <p className="text-2xl font-bold">{totals.outsource}</p>
+          <div className="border p-4 rounded-lg text-center bg-white shadow">
+            <p className="font-medium text-sm sm:text-base">Total Outsource</p>
+            <p className="text-xl sm:text-2xl font-bold">{totals.outsource}</p>
           </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold">History {type === "training" ? "Training" : "Project"}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h2 className="font-semibold text-sm sm:text-base">
+            History {type === "training" ? "Training" : "Project"}
+          </h2>
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="border rounded px-2 py-1"
+            className="border rounded px-2 py-1 text-sm"
           >
             <option value="training">Training</option>
             <option value="project">Project</option>
           </select>
         </div>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">Nama</th>
-              <th className="p-2">Tanggal</th>
-              <th className="p-2">Status</th>
-              <th className="p-2">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((h) => (
-              <tr key={h.id} className="border-b">
-                <td className="p-2">{h.name}</td>
-                <td className="p-2">{h.start}</td>
-                <td className="p-2">
-                  <span className={`px-2 py-1 rounded text-sm ${getStatusColor(h.status)}`}>
-                    {h.status}
-                  </span>
-                </td>
-                <td className="p-2">
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded"
-                    onClick={() => setSelected(h)}
-                  >
-                    View
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm sm:text-base border-collapse">
+            <thead>
+              <tr className="text-left border-b">
+                <th className="p-2">Nama</th>
+                <th className="p-2">Tanggal</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Aksi</th>
               </tr>
-            ))}
-            {history.length === 0 && (
-              <tr>
-                <td colSpan="4" className="p-4 text-center text-gray-500">
-                  No data
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {history.map((h) => (
+                <tr key={h.id} className="border-b">
+                  <td className="p-2">{h.name}</td>
+                  <td className="p-2">{h.start}</td>
+                  <td className="p-2">
+                    <span
+                      className={`px-2 py-1 rounded text-xs sm:text-sm ${getStatusColor(
+                        h.status
+                      )}`}
+                    >
+                      {h.status}
+                    </span>
+                  </td>
+                  <td className="p-2">
+                    <button
+                      className="bg-blue-500 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm"
+                      onClick={() => setSelected(h)}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {history.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="p-4 text-center text-gray-500">
+                    No data
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Detail */}
@@ -166,7 +168,7 @@ const ExpertDashboard = () => {
         title={`${selected?.type} Details`}
       >
         {selected && (
-          <div className="space-y-3">
+          <div className="space-y-3 text-sm sm:text-base">
             <div>
               <p className="font-semibold">{selected.type} Name</p>
               <p>{selected.name}</p>
@@ -181,12 +183,16 @@ const ExpertDashboard = () => {
             </div>
             <div>
               <p className="font-semibold">Status</p>
-              <span className={`px-2 py-1 rounded text-sm ${getStatusColor(selected.status)}`}>
+              <span
+                className={`px-2 py-1 rounded text-xs sm:text-sm ${getStatusColor(
+                  selected.status
+                )}`}
+              >
                 {selected.status}
               </span>
             </div>
             <div className="pt-4">
-              <button className="bg-gray-700 text-white px-4 py-2 rounded">
+              <button className="bg-gray-700 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm">
                 Export to PDF
               </button>
             </div>
