@@ -8,8 +8,10 @@ const authRoutes = require("./routes/auth");
 const customerRoutes = require("./routes/customer");
 const userRoutes = require("./routes/user");
 const optiRoutes = require("./routes/opti");
-const salesRoutes = require("./routes/sales"); // Baris ini ditambahkan
-
+const salesRoutes = require("./routes/sales"); 
+const trainingRoutes = require("./routes/training");
+const projectRoutes = require("./routes/project");
+const outsourceRoutes = require("./routes/outsource");
 const app = express();
 
 // Middleware
@@ -29,7 +31,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/opti", optiRoutes);
-app.use("/api/sales", salesRoutes); // Baris ini ditambahkan
+app.use("/api/sales", salesRoutes);
+app.use("/api/training", trainingRoutes);
+app.use("/api/project", projectRoutes);
+app.use("/api/outsource", outsourceRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 3000;
