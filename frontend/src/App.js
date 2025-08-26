@@ -20,6 +20,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage"; // Pastikan Anda me
 import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
+import ExpertDashboard from "./pages/ExpertDashboard";
 import "./App.css";
 
 const AppRoutes = () => {
@@ -120,28 +121,29 @@ const AppRoutes = () => {
           </Layout>
         }
       />
-      <Route
-        path="/"
-        element={
-          user ? (
-            user.role === "Admin" ? (
-              <Layout>
-                <AdminDashboardPage />
-              </Layout>
-            ) : user.role === "Expert" ? (
-              <Layout>
-                <TrainingPage />
-              </Layout>
+        <Route
+          path="/"
+          element={
+            user ? (
+              user.role === "Admin" ? (
+                <Layout>
+                  <AdminDashboardPage />
+                </Layout>
+              ) : user.role === "Expert" ? (
+                <Layout>
+                  <ExpertDashboard />   {/* <== ganti ke dashboard expert */}
+                </Layout>
+              ) : (
+                <Layout>
+                  <HomePage />
+                </Layout>
+              )
             ) : (
-              <Layout>
-                <HomePage />
-              </Layout>
+              <Navigate to="/login" />
             )
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
+          }
+        />
+
     </Routes>
   );
 };
