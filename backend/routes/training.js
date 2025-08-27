@@ -1,10 +1,21 @@
 const express = require("express");
 const router = express.Router();
+const trainingController = require("../controllers/trainingController");
 const authMiddleware = require("../middleware/authMiddleware");
-const { getTrainings, getTrainingById } = require("../controllers/trainingController");
 
-// Akses untuk Expert, Admin, Head Sales, Sales (read-only)
-router.get("/", authMiddleware(["Expert", "Admin", "Head Sales", "Sales"]), getTrainings);
-router.get("/:id", authMiddleware(["Expert", "Admin", "Head Sales", "Sales"]), getTrainingById);
+// GET all
+router.get("/", authMiddleware(["Admin", "Expert"]), trainingController.getTraining);
+
+// GET by ID
+router.get("/:id", authMiddleware(["Admin", "Expert"]), trainingController.getTrainingById);
+
+// CREATE
+router.post("/", authMiddleware(["Admin"]), trainingController.createTraining);
+
+// UPDATE
+router.put("/:id", authMiddleware(["Admin"]), trainingController.updateTraining);
+
+// DELETE
+router.delete("/:id", authMiddleware(["Admin"]), trainingController.deleteTraining);
 
 module.exports = router;
