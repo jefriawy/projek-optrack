@@ -7,21 +7,25 @@ const { generateUserId } = require("../utils/idGenerator");
 const createUser = async (req, res) => {
   let connection;
   try {
-    const { name, email, password, role, mobile, descSales } = req.body;
-    console.log("Creating user:", {
+    const {
       name,
       email,
+      password,
       role,
       mobile,
       descSales,
-    }); // Debug
+      idSkill,
+      statExpert,
+      Row,
+    } = req.body;
+    console.log("Creating user:", { name, email, role, mobile });
 
-    // Validasi role
+    // Validate the role
     if (!["Sales", "Admin", "Expert", "Head Sales"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }
 
-    // Cek apakah email sudah digunakan
+    // Check if the email is already in use
     const [existingUser] = await pool.query(
       "SELECT id FROM users WHERE email = ?",
       [email]
@@ -30,48 +34,66 @@ const createUser = async (req, res) => {
       return res.status(400).json({ error: "Email already in use" });
     }
 
-    // Generate new user ID
+    // Generate a new user ID
     const userId = await generateUserId(role);
-    console.log("Generated new User ID:", userId); // Debug
+    console.log("Generated new User ID:", userId);
 
-    // Hash password
+    // Hash the password for security
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Mulai transaksi
+    // Start a database transaction
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    // Buat user di tabel users with the new ID
+    // Create the main user entry
     await User.create(
-      { id: userId, name, email, password: hashedPassword, role, mobile }, // Pass the new ID
+      { id: userId, name, email, password: hashedPassword, role, mobile },
       connection
     );
-    console.log("User created with ID:", userId); // Debug
+    console.log("User created with ID:", userId);
 
-    // Perbaikan: Jika role Sales atau Head Sales, buat entri di tabel sales
+    // Conditional logic for specific roles
     if (role === "Sales" || role === "Head Sales") {
-      const salesData = { nmSales: name, emailSales: email, mobileSales: mobile, userId };
+      const salesData = {
+        nmSales: name,
+        emailSales: email,
+        mobileSales: mobile,
+        userId,
+      };
       if (descSales) {
         salesData.descSales = descSales;
       }
-      const salesResult = await User.createSales(
-        salesData, // userId is already the new ID
-        connection
+      const salesResult = await User.createSales(salesData, connection);
+      console.log("Sales record created with idSales:", salesResult.insertId);
+    } else if (role === "Expert") {
+      const expertData = {
+        nmExpert: name,
+        emailExpert: email,
+        mobileExpert: mobile,
+        userId,
+        idSkill,
+        statExpert,
+        Row,
+      };
+      const expertResult = await User.createExpert(expertData, connection);
+      console.log(
+        "Expert record created with idExpert:",
+        expertResult.insertId
       );
-      console.log("Sales record created with idSales:", salesResult.insertId); // Debug
     }
 
-    // Commit transaksi
+    // Commit the transaction if everything is successful
     await connection.commit();
-    res.status(201).json({ message: "User created", id: userId }); // Return the new ID
-
+    res.status(201).json({ message: "User created", id: userId });
   } catch (error) {
+    // Roll back the transaction in case of an error
     if (connection) await connection.rollback();
     console.error("Error creating user:", error);
     res
       .status(500)
       .json({ error: error.sqlMessage || error.message || "Server error" });
   } finally {
+    // Always release the connection back to the pool
     if (connection) connection.release();
   }
 };
@@ -98,10 +120,20 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // --- CORRECTION AND ADDITION ---
+    // Check the user's role and delete from the corresponding table
     if (user.role === "Sales" || user.role === "Head Sales") {
       await User.deleteSales(id, connection);
+      console.log(`Deleted sales record for userId: ${id}`);
+    } else if (user.role === "Expert") {
+      // We need to add a deleteExpert function to the model first.
+      // Assuming it exists, the call would be:
+      await User.deleteExpert(id, connection); // You will need to create this function in user.js
+      console.log(`Deleted expert record for userId: ${id}`);
     }
+    // --- END OF CORRECTION ---
 
+    // Finally, delete the main user entry
     await User.delete(id, connection);
 
     await connection.commit();
