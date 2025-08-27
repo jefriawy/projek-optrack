@@ -1,67 +1,62 @@
-const pool = require("../config/database");
-
-const latestOptiStatusSubquery = `
-  LEFT JOIN (
-    SELECT o1.idCustomer, o1.statOpti
-    FROM opti o1
-    INNER JOIN (
-      SELECT idCustomer, MAX(datePropOpti) AS maxDate
-      FROM opti
-      GROUP BY idCustomer
-    ) last ON last.idCustomer = o1.idCustomer AND o1.datePropOpti = last.maxDate
-    GROUP BY o1.idCustomer
-  ) lo ON lo.idCustomer = p.idCustomer
-`;
+const Project = require("../models/projectModel");
 
 const getProjects = async (req, res) => {
   try {
-    const query = `
-      SELECT 
-        p.idProject,
-        p.nmProject,
-        p.startProject,
-        p.endProject,
-        p.idCustomer,
-        e.nmExpert,
-        lo.statOpti
-      FROM project p
-      LEFT JOIN expert e ON e.idExpert = p.idExpert
-      ${latestOptiStatusSubquery}
-      ORDER BY p.startProject DESC, p.idProject DESC
-    `;
-    const [rows] = await pool.query(query);
-    res.json(rows);
+    const data = await Project.getAllProjects();
+    res.json(data);
   } catch (err) {
-    console.error("getProjects error:", err);
-    res.status(500).json({ error: err.sqlMessage || "Server error" });
+    console.error("Error fetching projects:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 const getProjectById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const query = `
-      SELECT 
-        p.idProject,
-        p.nmProject,
-        p.startProject,
-        p.endProject,
-        p.idCustomer,
-        e.nmExpert,
-        lo.statOpti
-      FROM project p
-      LEFT JOIN expert e ON e.idExpert = p.idExpert
-      ${latestOptiStatusSubquery}
-      WHERE p.idProject = ?
-      LIMIT 1
-    `;
-    const [rows] = await pool.query(query, [id]);
-    if (!rows.length) return res.status(404).json({ error: "Project not found" });
-    res.json(rows[0]);
+    const project = await Project.getProjectById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(project);
   } catch (err) {
-    console.error("getProjectById error:", err);
-    res.status(500).json({ error: err.sqlMessage || "Server error" });
+    console.error("Error fetching project:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-module.exports = { getProjects, getProjectById };
+const createProject = async (req, res) => {
+  try {
+    const id = await Project.createProject(req.body);
+    res.status(201).json({ message: "Project created", id });
+  } catch (err) {
+    console.error("Error creating project:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const updateProject = async (req, res) => {
+  try {
+    const affectedRows = await Project.updateProject(req.params.id, req.body);
+    if (affectedRows === 0) return res.status(404).json({ error: "Project not found" });
+    res.json({ message: "Project updated" });
+  } catch (err) {
+    console.error("Error updating project:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const deleteProject = async (req, res) => {
+  try {
+    const affectedRows = await Project.deleteProject(req.params.id);
+    if (affectedRows === 0) return res.status(404).json({ error: "Project not found" });
+    res.json({ message: "Project deleted" });
+  } catch (err) {
+    console.error("Error deleting project:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+module.exports = {
+  getProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject,
+};

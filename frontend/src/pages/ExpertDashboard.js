@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import Modal from "../components/Modal";
+import { AuthContext } from "../context/AuthContext"; // pastikan path benar
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -29,7 +30,10 @@ const getDeadlineCountdown = (endDate) => {
   return `${days > 0 ? `${days} Hari` : ""} ${hours} Jam`.trim();
 };
 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 const ExpertDashboard = () => {
+  const { user } = useContext(AuthContext); // <-- ambil token/role
   const [totals, setTotals] = useState({ training: 0, project: 0, outsource: 0 });
   const [history, setHistory] = useState([]);
   const [type, setType] = useState("training");
@@ -37,20 +41,38 @@ const ExpertDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, user]);
+
+  const safeFetchJson = async (path) => {
+    const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
+    const headers = { "Accept": "application/json" };
+    if (user?.token) headers["Authorization"] = `Bearer ${user.token}`;
+    const res = await fetch(url, { headers });
+    const contentType = res.headers.get("content-type") || "";
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status} ${res.statusText}: ${text.slice(0, 300)}`);
+    }
+    if (contentType.includes("application/json")) return res.json();
+    const text = await res.text();
+    throw new Error(`Expected JSON but got: ${text.slice(0, 300)}`);
+  };
 
   const fetchData = async () => {
     try {
       const [trainingRes, projectRes, outsourceRes] = await Promise.all([
-        fetch("/api/training").then((r) => r.json()),
-        fetch("/api/project").then((r) => r.json()),
-        fetch("/api/outsource").then((r) => r.json()),
+        safeFetchJson("/api/training"),
+        safeFetchJson("/api/project"),
+        safeFetchJson("/api/outsource"),
       ]);
+
       setTotals({
         training: trainingRes.length,
         project: projectRes.length,
         outsource: outsourceRes.length,
       });
+
       let data = [];
       if (type === "training") {
         data = trainingRes.map((t) => ({

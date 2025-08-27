@@ -1,8 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const outsourceController = require("../controllers/outsourceController");
 const authMiddleware = require("../middleware/authMiddleware");
-const { getOutsources } = require("../controllers/outsourceController");
 
-router.get("/", authMiddleware(["Expert", "Admin", "Head Sales", "Sales"]), getOutsources);
+router.get("/", authMiddleware(["Admin", "Expert"]), outsourceController.getOutsources);
+router.get("/:id", authMiddleware(["Admin", "Expert"]), outsourceController.getOutsourceById);
+router.post("/", authMiddleware(["Admin"]), outsourceController.createOutsource);
+router.put("/:id", authMiddleware(["Admin"]), outsourceController.updateOutsource);
+router.delete("/:id", authMiddleware(["Admin"]), outsourceController.deleteOutsource);
 
 module.exports = router;
