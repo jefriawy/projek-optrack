@@ -10,10 +10,10 @@ const User = {
     return rows[0];
   },
 
-    async findById(id) {
-    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
-    return rows[0];
-  },
+  async findById(id) {
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    return rows[0];
+  },
 
   async comparePassword(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);
@@ -39,6 +39,32 @@ const User = {
     return result[0];
   },
 
+  async createExpert(expertData, connection = pool) {
+    const {
+      nmExpert,
+      emailExpert,
+      mobileExpert,
+      userId,
+      idSkill,
+      statExpert,
+      Row,
+    } = expertData;
+    const result = await connection.query(
+      `INSERT INTO expert (nmExpert, emailExpert, mobileExpert, userId, idSkill, statExpert, Row)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nmExpert,
+        emailExpert || null,
+        mobileExpert || null,
+        userId,
+        idSkill || null,
+        statExpert || null,
+        Row || null,
+      ]
+    );
+    return result[0];
+  },
+
   async findAll() {
     const [rows] = await pool.query("SELECT id, name, email, role FROM users");
     return rows;
@@ -50,6 +76,10 @@ const User = {
 
   async deleteSales(userId, connection = pool) {
     await connection.query("DELETE FROM sales WHERE userId = ?", [userId]);
+  },
+
+  async deleteExpert(userId, connection = pool) {
+    await connection.query("DELETE FROM expert WHERE userId = ?", [userId]);
   },
 };
 

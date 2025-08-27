@@ -1,4 +1,5 @@
 // backend/server.js
+
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
@@ -8,25 +9,24 @@ const authRoutes = require("./routes/auth");
 const customerRoutes = require("./routes/customer");
 const userRoutes = require("./routes/user");
 const optiRoutes = require("./routes/opti");
-const salesRoutes = require("./routes/sales"); 
+const salesRoutes = require("./routes/sales");
 const trainingRoutes = require("./routes/training");
 const projectRoutes = require("./routes/project");
 const outsourceRoutes = require("./routes/outsource");
+const skillRoutes = require("./routes/skill");
+
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Rate limiting untuk login
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many login attempts, please try again later.",
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many login attempts, please try again later.",
 });
 app.use("/api/auth/login", loginLimiter);
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/user", userRoutes);
@@ -35,10 +35,9 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/training", trainingRoutes);
 app.use("/api/project", projectRoutes);
 app.use("/api/outsource", outsourceRoutes);
+app.use("/api/skills", skillRoutes);
 
-
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
