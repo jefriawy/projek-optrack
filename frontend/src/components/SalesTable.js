@@ -1,10 +1,12 @@
 // frontend/src/components/SalesTable.js
-import React from "react";
+import React, { useState } from "react";
 import { FaDownload, FaEye, FaCommentDots } from "react-icons/fa";
+import SalesDetail from "./SalesDetail";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import SalesListPdf from "./SalesListPdf"; // Asumsi Anda akan membuat komponen ini
 
 const SalesTable = ({ sales }) => {
+  const [selectedSales, setSelectedSales] = useState(null);
   return (
     <div>
       {/* Table for medium and larger screens */}
@@ -60,7 +62,7 @@ const SalesTable = ({ sales }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap flex gap-2">
                     <button
-                      onClick={() => console.log("View sales data:", item)} // Ganti dengan logika view
+                      onClick={() => setSelectedSales(item)}
                       className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
                     >
                       VIEW
@@ -113,7 +115,7 @@ const SalesTable = ({ sales }) => {
               </div>
               <div className="mt-4 flex justify-end">
                 <button
-                  onClick={() => console.log("View sales data:", item)} // Ganti dengan logika view
+                  onClick={() => setSelectedSales(item)}
                   className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
                 >
                   VIEW
@@ -133,6 +135,10 @@ const SalesTable = ({ sales }) => {
           </div>
         )}
       </div>
+      {/* Modal Detail Sales */}
+      {selectedSales && (
+        <SalesDetail sales={selectedSales} onClose={() => setSelectedSales(null)} />
+      )}
     </div>
   );
 };

@@ -32,8 +32,6 @@ const AdminDashboardPage = () => {
     'Head Sales': 0,
     Trainer: 0,
     Expert: 0,
-    Project: 0, 
-    Outsource: 0,
     Semua: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -56,8 +54,6 @@ const AdminDashboardPage = () => {
           'Head Sales': 0,
           Trainer: 0,
           Expert: 0,
-          Project: 0,
-          Outsource: 0,
           Semua: users.length,
         };
         
@@ -89,10 +85,8 @@ const AdminDashboardPage = () => {
 
   const roleCards = [
     { name: "Sales", count: userCounts.Sales, link: "/sales" },
-    { name: "Head Sales", count: userCounts['Head Sales'], link: "/sales" }, // Changed name to match key
+    { name: "Head Sales", count: userCounts['Head Sales'], link: "/sales" },
     { name: "Expert", count: userCounts.Expert, link: "/expert" },
-    { name: "Project", count: userCounts.Project, link: "/project" },
-    { name: "Outsource", count: userCounts.Outsource, link: "/outsource" },
     { name: "Semua", count: userCounts.Semua, link: "/users" },
   ];
 
@@ -101,22 +95,20 @@ const AdminDashboardPage = () => {
     datasets: [
       {
         label: 'Jumlah Pengguna',
-        data: Object.values(userCounts).filter((_, index) => Object.keys(userCounts)[index] !== 'Semua'),
+        data: Object.keys(userCounts)
+          .filter(role => role !== 'Semua')
+          .map(role => userCounts[role]),
         backgroundColor: [
           'rgba(255, 99, 132, 1)',
           'rgba(54, 162, 235, 1)',
           'rgba(255, 206, 86, 1)',
           'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
         ],
         borderColor: [
           'rgba(255, 99, 132, 1)',
           'rgba(54, 162, 235, 1)',
           'rgba(255, 206, 86, 1)',
           'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
         ],
         borderWidth: 1,
       },
@@ -162,14 +154,6 @@ const AdminDashboardPage = () => {
       background: 'rgba(75, 192, 192, 0.6)',
       border: 'rgba(75, 192, 192, 1)',
     },
-    'Project': {
-      background: 'rgba(153, 102, 255, 0.6)',
-      border: 'rgba(153, 102, 255, 1)',
-    },
-    'Outsource': {
-      background: 'rgba(255, 159, 64, 0.6)',
-      border: 'rgba(255, 159, 64, 1)',
-    },
   };
 
   // Function to generate pie chart data for a specific role
@@ -177,24 +161,18 @@ const AdminDashboardPage = () => {
     if (roleName === 'Semua') {
       const labels = Object.keys(userCounts).filter(role => role !== 'Semua');
       const data = labels.map(role => userCounts[role]);
-
       const backgroundColors = [
         'rgba(255, 99, 132, 0.6)',
         'rgba(54, 162, 235, 0.6)',
         'rgba(255, 206, 86, 0.6)',
         'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
       ];
       const borderColors = [
         'rgba(255, 99, 132, 1)',
         'rgba(54, 162, 235, 1)',
         'rgba(255, 206, 86, 1)',
         'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)',
       ];
-
       return {
         labels: labels,
         datasets: [

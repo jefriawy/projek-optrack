@@ -70,4 +70,62 @@ const deleteUserByRole = async (req, res) => {
 };
 
 
-module.exports = { getAllUsers, deleteUserByRole };
+// Update user by role and id
+const updateUserByRole = async (req, res) => {
+  const { id, role } = req.params;
+  const data = req.body;
+
+  if (!id || !role) {
+    return res.status(400).json({ error: "User ID and role are required." });
+  }
+
+  let tableName, idColumn, updateFields = [];
+
+  switch (role) {
+    case 'Admin':
+      tableName = 'admin';
+      idColumn = 'idAdmin';
+      if (data.name) updateFields.push(`nmAdmin = '${data.name}'`);
+      if (data.email) updateFields.push(`emailAdmin = '${data.email}'`);
+      if (data.mobile) updateFields.push(`mobileAdmin = '${data.mobile}'`);
+      break;
+    case 'Sales':
+    case 'Head Sales':
+      tableName = 'sales';
+      idColumn = 'idSales';
+      if (data.name) updateFields.push(`nmSales = '${data.name}'`);
+      if (data.email) updateFields.push(`emailSales = '${data.email}'`);
+      if (data.mobile) updateFields.push(`mobileSales = '${data.mobile}'`);
+      if (data.role) updateFields.push(`role = '${data.role}'`);
+      break;
+    case 'Expert':
+      tableName = 'expert';
+      idColumn = 'idExpert';
+      if (data.name) updateFields.push(`nmExpert = '${data.name}'`);
+      if (data.email) updateFields.push(`emailExpert = '${data.email}'`);
+      if (data.mobile) updateFields.push(`mobileExpert = '${data.mobile}'`);
+      break;
+    default:
+      return res.status(400).json({ error: "Invalid user role." });
+  }
+
+  if (updateFields.length === 0) {
+    return res.status(400).json({ error: "No valid fields to update." });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE ${tableName} SET ${updateFields.join(", ")} WHERE ${idColumn} = ?`,
+      [id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    res.json({ message: "User updated successfully" });
+  } catch (error) {
+    console.error(`Error updating user in ${tableName}:`, error);
+    res.status(500).json({ error: `Server error while updating user.` });
+  }
+};
+
+module.exports = { getAllUsers, deleteUserByRole, updateUserByRole };
