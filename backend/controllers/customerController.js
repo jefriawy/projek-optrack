@@ -12,17 +12,19 @@ const createCustomer = async (req, res) => {
       "userId:",
       userId
     );
-    const [sales] = await pool.query(
-      "SELECT idSales FROM sales WHERE userId = ?",
-      [userId]
+    // req.user.id already contains idSales for Sales users (see authController login).
+    // Verify that the idSales exists in the sales table.
+    const idSales = userId;
+    const [salesRow] = await pool.query(
+      "SELECT idSales FROM sales WHERE idSales = ?",
+      [idSales]
     );
-    if (!sales.length) {
-      console.log("No Sales record found for userId:", userId);
+    if (!salesRow.length) {
+      console.log("No Sales record found for idSales:", idSales);
       return res
         .status(400)
         .json({ error: "No Sales record found for this user" });
     }
-    const idSales = sales[0].idSales;
 
     const newCustomer = await Customer.create(customerData, idSales);
     res.status(201).json({ message: "Customer created", data: newCustomer });
@@ -44,14 +46,15 @@ const getCustomers = async (req, res) => {
     let customers;
     
     if (role === "Sales") {
-      const [sales] = await pool.query(
-        "SELECT idSales FROM sales WHERE userId = ?",
-        [userId]
+      // Use idSales directly (req.user.id) and verify existence
+      const idSales = userId;
+      const [salesRow] = await pool.query(
+        "SELECT idSales FROM sales WHERE idSales = ?",
+        [idSales]
       );
-      if (!sales.length) {
+      if (!salesRow.length) {
         return res.status(403).json({ error: "User is not a registered sales" });
       }
-      const idSales = sales[0].idSales;
       customers = await Customer.findBySalesId(idSales, statusFilter, searchTerm);
     } else if (role === "Admin" || role === "Head Sales") {
       customers = await Customer.findAll(statusFilter, searchTerm);
