@@ -1,3 +1,4 @@
+// backend/models/trainingModel.js
 const db = require("../config/database");
 
 // Get all training
@@ -88,10 +89,24 @@ const deleteTraining = async (id) => {
   return result.affectedRows;
 };
 
+// ➕ NEW: Get all training owned by specific expert
+const getByExpertId = async (idExpert) => {
+  const [rows] = await db.query(
+    `SELECT t.*, c.nmCustomer, c.corpCustomer
+     FROM training t
+     LEFT JOIN customer c ON t.idCustomer = c.idCustomer
+     WHERE t.idExpert = ?
+     ORDER BY COALESCE(t.startTraining, t.endTraining) ASC`,
+    [idExpert]
+  );
+  return rows;
+};
+
 module.exports = {
   getAllTraining,
   getTrainingById,
   createTraining,
   updateTraining,
   deleteTraining,
+  getByExpertId, // export baru
 };

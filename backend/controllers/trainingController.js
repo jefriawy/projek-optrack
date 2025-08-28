@@ -1,6 +1,9 @@
+// backend/controllers/trainingController.js
 const Training = require("../models/trainingModel");
 
-const getTraining = async (req, res) => {
+// GET /api/training  (Admin/Expert)
+// Mengambil semua training (sudah ada)
+const getTraining = async (_req, res) => {
   try {
     const data = await Training.getAllTraining();
     res.json(data);
@@ -10,6 +13,8 @@ const getTraining = async (req, res) => {
   }
 };
 
+// GET /api/training/:id  (Admin/Expert)
+// Ambil training by id (sudah ada)
 const getTrainingById = async (req, res) => {
   try {
     const training = await Training.getTrainingById(req.params.id);
@@ -23,6 +28,8 @@ const getTrainingById = async (req, res) => {
   }
 };
 
+// POST /api/training  (Admin)
+// Buat training manual (sudah ada)
 const createTraining = async (req, res) => {
   try {
     const id = await Training.createTraining(req.body);
@@ -33,6 +40,8 @@ const createTraining = async (req, res) => {
   }
 };
 
+// PUT /api/training/:id  (Admin)
+// Update training (sudah ada)
 const updateTraining = async (req, res) => {
   try {
     const affectedRows = await Training.updateTraining(req.params.id, req.body);
@@ -46,6 +55,8 @@ const updateTraining = async (req, res) => {
   }
 };
 
+// DELETE /api/training/:id  (Admin)
+// Hapus training (sudah ada)
 const deleteTraining = async (req, res) => {
   try {
     const affectedRows = await Training.deleteTraining(req.params.id);
@@ -59,10 +70,24 @@ const deleteTraining = async (req, res) => {
   }
 };
 
+// ➕ NEW: GET /api/training/mine  (Expert)
+// daftar training milik expert yang sedang login
+const getMyTrainings = async (req, res) => {
+  try {
+    const expertId = req.user.id; // diisi oleh authMiddleware dari token login:contentReference[oaicite:2]{index=2}
+    const data = await Training.getByExpertId(expertId);
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching training for expert:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getTraining,
   getTrainingById,
   createTraining,
   updateTraining,
   deleteTraining,
+  getMyTrainings, // export baru
 };

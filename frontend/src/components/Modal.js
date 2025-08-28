@@ -14,9 +14,10 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose} // klik backdrop nutup
-    >
+  className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-[1px] p-4"
+  onClick={onClose}
+>
+
       <div
         className="bg-white rounded-2xl shadow-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl max-h-[90vh] flex flex-col animate-fadeIn"
         onClick={(e) => e.stopPropagation()} // biar klik dalam modal gak nutup
