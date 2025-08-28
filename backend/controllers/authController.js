@@ -1,62 +1,89 @@
 // backend/controllers/authController.js
-const User = require("../models/user");
+const bcrypt = require("bcrypt");
 const { generateToken } = require("../utils/jwt");
 const { body, validationResult } = require("express-validator");
+const pool = require("../config/database"); // For admin queries
+const Sales = require("../models/sales");
+const Expert = require("../models/expert");
+
+// Helper to compare passwords
+const comparePassword = async (plainPassword, hashedPassword) => {
+  return await bcrypt.compare(plainPassword, hashedPassword);
+};
 
 const login = [
-  body("email").isEmail().withMessage("Invalid email format"),
-  body("password").notEmpty().withMessage("Password is required"),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log("Validation errors:", errors.array()); // Debug
-      return res.status(400).json({ errors: errors.array() });
-    }
+  body("email").isEmail().withMessage("Invalid email format"),
+  body("password").notEmpty().withMessage("Password is required"),
 
-    const { email, password } = req.body;
-    try {
-      const user = await User.findByEmail(email);
-      console.log("Login attempt:", { email, userFound: !!user }); // Debug
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-      const isMatch = await User.comparePassword(password, user.password);
-      if (!isMatch) {
-        console.log("Password mismatch for user:", email); // Debug
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
+    const { email, password } = req.body;
 
-      // Izinkan Sales dan Admin login
-      if (!["Sales", "Admin", "Head Sales", "Expert"].includes(user.role)) {
-        console.log("Unauthorized role:", user.role); // Debug
-        return res.status(403).json({ error: "Only Sales, Admin, Head Sales or Expert can login" });
-      }
+    try {
+      let user = null;
+      let userType = null;
 
-      const token = generateToken(user);
-      console.log("Token generated for user:", {
-        id: user.id,
-        role: user.role,
-      }); // Debug
-      res.json({ token, role: user.role, userId: user.id, name: user.name });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: error.sqlMessage || "Server error" });
-    }
-  },
+      // 1. Check in Admin table
+      const [adminRows] = await pool.query("SELECT * FROM admin WHERE emailAdmin = ?", [email]);
+      if (adminRows.length > 0) {
+        const adminUser = adminRows[0];
+        const isMatch = await comparePassword(password, adminUser.password);
+        if (isMatch) {
+          user = { id: adminUser.idAdmin, name: adminUser.nmAdmin, role: 'Admin' };
+          userType = 'Admin';
+        }
+      }
+
+      // 2. Check in Sales table if not found
+      if (!user) {
+        const salesUser = await Sales.findByEmail(email);
+        if (salesUser) {
+          const isMatch = await comparePassword(password, salesUser.password);
+          if (isMatch) {
+            user = { id: salesUser.idSales, name: salesUser.nmSales, role: salesUser.role };
+            userType = 'Sales';
+          }
+        }
+      }
+
+      // 3. Check in Expert table if not found
+      if (!user) {
+        const expertUser = await Expert.findByEmail(email);
+        if (expertUser) {
+          const isMatch = await comparePassword(password, expertUser.password);
+          if (isMatch) {
+            user = { id: expertUser.idExpert, name: expertUser.nmExpert, role: 'Expert' };
+            userType = 'Expert';
+          }
+        }
+      }
+
+      // If user is found and password matches
+      if (user) {
+        const token = generateToken(user);
+        return res.json({ token, role: user.role, userId: user.id, name: user.name });
+      }
+
+      // If no user found in any table
+      return res.status(401).json({ error: "Invalid credentials" });
+
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  },
 ];
 
+// The verify function is used by the authMiddleware.
+// After refactoring, the JWT payload itself is the source of truth.
+// We don't need to re-query the database here.
 const verify = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.json({ userId: user.id, role: user.role, name: user.name });
-  } catch (error) {
-    console.error("Verify error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
+  // req.user is populated by the authMiddleware from the decoded token
+  res.json({ userId: req.user.id, role: req.user.role, name: req.user.name });
 };
 
 module.exports = { login, verify };

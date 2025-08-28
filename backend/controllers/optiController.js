@@ -1,6 +1,7 @@
 // backend/controllers/optiController.js
 const Opti = require("../models/opti");
 const Customer = require("../models/customer");
+const Expert = require("../models/expert");
 const pool = require('../config/database');
 
 const createOpti = async (req, res) => {
@@ -67,7 +68,8 @@ const getFormOptions = async (req, res) => {
       customers = await Customer.findAll();
     }
     const sumber = await Opti.findSumberOptions();
-    res.json({ customers, sumber });
+    const experts = await Expert.findAll();
+    res.json({ customers, sumber, experts });
   } catch (error) {
     console.error("Error fetching form options:", error);
     res.status(500).json({ error: "Server error" });

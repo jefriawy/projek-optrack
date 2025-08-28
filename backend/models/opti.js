@@ -1,4 +1,5 @@
 // backend/models/opti.js
+// backend/models/opti.js
 const pool = require("../config/database");
 
 const Opti = {
@@ -15,12 +16,12 @@ const Opti = {
       kebutuhan,
       idSumber,
       jenisOpti,
-      namaExpert,
+      idExpert, // Diubah dari namaExpert
       proposalOpti,
     } = optiData;
 
     const [result] = await pool.query(
-      `INSERT INTO opti (nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, propOpti, datePropOpti, idCustomer, kebutuhan, idSumber, idSales, jenisOpti, namaExpert, proposalOpti)
+      `INSERT INTO opti (nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, propOpti, datePropOpti, idCustomer, kebutuhan, idSumber, idSales, jenisOpti, idExpert, proposalOpti)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nmOpti,
@@ -35,7 +36,7 @@ const Opti = {
         idSumber,
         idSales,
         jenisOpti,
-        namaExpert,
+        idExpert, // Diubah dari namaExpert
         proposalOpti,
       ]
     );
@@ -47,6 +48,7 @@ const Opti = {
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
+      LEFT JOIN expert e ON o.idExpert = e.idExpert -- Ditambahkan
     `;
     const params = [];
     let whereClauses = [];
@@ -83,7 +85,8 @@ const Opti = {
         o.*,
         c.nmCustomer,
         c.corpCustomer,
-        s.nmSumber
+        s.nmSumber,
+        e.nmExpert -- Ditambahkan
       ${baseQuery}
       ORDER BY o.datePropOpti DESC
       LIMIT ? OFFSET ?
@@ -101,10 +104,11 @@ const Opti = {
 
   async findById(idOpti) {
     const query = `
-      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber
+      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert -- Ditambahkan
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
+      LEFT JOIN expert e ON o.idExpert = e.idExpert -- Ditambahkan
       WHERE o.idOpti = ?
     `;
     const [rows] = await pool.query(query, [idOpti]);
@@ -124,11 +128,11 @@ const Opti = {
       idSumber,
       kebutuhan,
       jenisOpti,
-      namaExpert,
+      idExpert, // Diubah dari namaExpert
       proposalOpti,
     } = optiData;
     const [result] = await pool.query(
-      `UPDATE opti SET nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, propOpti = ?, datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?, jenisOpti = ?, namaExpert = ?, proposalOpti = ? WHERE idOpti = ?`,
+      `UPDATE opti SET nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, propOpti = ?, datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?, jenisOpti = ?, idExpert = ?, proposalOpti = ? WHERE idOpti = ?`,
       [
         nmOpti,
         contactOpti,
@@ -141,7 +145,7 @@ const Opti = {
         idSumber,
         kebutuhan,
         jenisOpti,
-        namaExpert,
+        idExpert, // Diubah dari namaExpert
         proposalOpti,
         idOpti,
       ]
@@ -151,3 +155,4 @@ const Opti = {
 };
 
 module.exports = Opti;
+
