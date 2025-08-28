@@ -14,6 +14,8 @@ const trainingRoutes = require("./routes/training");
 const projectRoutes = require("./routes/project");
 const outsourceRoutes = require("./routes/outsource");
 const skillRoutes = require("./routes/skill");
+const adminRoutes = require("./routes/admin");
+const expertRoutes = require("./routes/expert");
 
 const app = express();
 
@@ -36,6 +38,8 @@ app.use("/api/training", trainingRoutes);
 app.use("/api/project", projectRoutes);
 app.use("/api/outsource", outsourceRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/expert", expertRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

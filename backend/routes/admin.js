@@ -1,13 +1,14 @@
+// backend/routes/admin.js
 const express = require("express");
 const router = express.Router();
+const { createAdmin } = require("../controllers/adminController");
 const authMiddleware = require("../middleware/authMiddleware");
-const { getExperts, createExpertUser } = require("../controllers/expertController");
 const { body, validationResult } = require("express-validator");
 
 // Middleware untuk validasi input
-const validateExpertInput = [
-  body("nmExpert", "Expert name is required").notEmpty(),
-  body("emailExpert", "Please include a valid email").isEmail(),
+const validateAdminInput = [
+  body("nmAdmin", "Admin name is required").notEmpty(),
+  body("emailAdmin", "Please include a valid email").isEmail(),
   body("password", "Password must be 6 or more characters").isLength({ min: 6 }),
   (req, res, next) => {
     const errors = validationResult(req);
@@ -18,8 +19,8 @@ const validateExpertInput = [
   },
 ];
 
-router.get("/", authMiddleware(["Expert", "Admin", "Head Sales", "Sales"]), getExperts);
-
-router.post("/", authMiddleware(["Admin"]), validateExpertInput, createExpertUser);
+// Rute untuk membuat admin baru
+// POST /api/admin
+router.post("/", authMiddleware(["Admin"]), validateAdminInput, createAdmin);
 
 module.exports = router;

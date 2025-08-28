@@ -47,7 +47,7 @@ const AdminDashboardPage = () => {
         return;
       }
       try {
-        const response = await axios.get("http://localhost:3000/api/user", {
+        const response = await axios.get("http://localhost:3000/api/user/all", { // <-- URL diperbaiki
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const users = response.data;

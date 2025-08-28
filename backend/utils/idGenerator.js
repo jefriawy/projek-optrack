@@ -2,14 +2,20 @@
 
 const pool = require("../config/database");
 
-// Mapping dari role ke kode numerik
+// Mapping dari role ke kode numerik (HC dan Trainer dihapus)
 const roleToCode = {
   Admin: "01",
   "Head Sales": "02",
   Sales: "03",
   Expert: "04",
-  HC: "05",
-  Trainer: "06",
+};
+
+// Mapping dari role ke informasi tabel
+const roleToTableInfo = {
+  Admin: { tableName: "admin", idColumn: "idAdmin" },
+  "Head Sales": { tableName: "sales", idColumn: "idSales" },
+  Sales: { tableName: "sales", idColumn: "idSales" },
+  Expert: { tableName: "expert", idColumn: "idExpert" },
 };
 
 // Mapping dari jenis file ke kode numerik
@@ -30,24 +36,27 @@ async function generateUserId(role) {
     throw new Error(`Invalid role for ID generation: ${role}`);
   }
 
+  const tableInfo = roleToTableInfo[role];
+  if (!tableInfo) {
+    throw new Error(`Invalid table info for role: ${role}`);
+  }
+
+  const { tableName, idColumn } = tableInfo;
   const prefix = `${year}${roleCode}`;
 
-  // PERBAIKAN: Menggunakan CAST(id AS CHAR) untuk melakukan operasi string pada kolom INT
-  const query = `SELECT id FROM users WHERE CAST(id AS CHAR) LIKE ?
-  ORDER BY CAST(SUBSTRING(CAST(id AS CHAR), 5) AS UNSIGNED) DESC LIMIT 1`;
+  const query = `SELECT ${idColumn} FROM ${tableName} WHERE CAST(${idColumn} AS CHAR) LIKE ?
+  ORDER BY CAST(SUBSTRING(CAST(${idColumn} AS CHAR), 5) AS UNSIGNED) DESC LIMIT 1`;
 
   const [rows] = await pool.query(query, [`${prefix}%`]);
 
   let increment = 1;
-  if (rows.length > 0 && rows[0].id) {
-    // PERBAIKAN: Mengonversi ID (yang diterima sebagai angka) menjadi string sebelum di-slice
-    const lastId = rows[0].id.toString();
+  if (rows.length > 0 && rows[0][idColumn]) {
+    const lastId = rows[0][idColumn].toString();
     const lastIncrement = parseInt(lastId.slice(-3), 10);
     increment = lastIncrement + 1;
   }
 
   const paddedIncrement = increment.toString().padStart(3, "0");
-  // Mengonversi kembali ke Number agar sesuai dengan tipe data di DB
   return Number(`${prefix}${paddedIncrement}`);
 }
 
