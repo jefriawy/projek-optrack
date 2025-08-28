@@ -4,6 +4,9 @@ const Customer = require("../models/customer");
 const Expert = require("../models/expert");
 const pool = require('../config/database');
 
+// ➕ NEW: import Training model untuk auto-create training
+const Training = require("../models/trainingModel");
+
 const createOpti = async (req, res) => {
   try {
     const optiData = { ...req.body };
@@ -18,6 +21,21 @@ const createOpti = async (req, res) => {
         .json({ error: "Customer atau Sales terkait tidak ditemukan." });
     }
     const newOpti = await Opti.create(optiData, customer.idSales);
+
+    // ⬇️ Auto-create training ketika jenisOpti = 'Training'
+    if (optiData.jenisOpti === "Training") {
+      await Training.createTraining({
+        nmTraining: optiData.nmOpti,                // pakai nama dari Opti
+        idTypeTraining: optiData.idTypeTraining || 1,
+        startTraining: optiData.startTraining || null,
+        endTraining: optiData.endTraining || null,
+        idExpert: optiData.idExpert,                // sudah disimpan di tabel opti:contentReference[oaicite:4]{index=4}
+        placeTraining: optiData.placeTraining || null,
+        examTraining: optiData.examTraining || 0,
+        examDateTraining: optiData.examDateTraining || null,
+        idCustomer: optiData.idCustomer,
+      });
+    }
 
     res.status(201).json({ message: "Opportunity created", data: newOpti });
   } catch (error) {
