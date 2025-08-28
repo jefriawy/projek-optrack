@@ -30,10 +30,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     menuItems = [
       { icon: homeIcon, name: "Home", link: "/" },
       { icon: salesIcon, name: "Sales", link: "/sales" },
-      { icon: trainerIcon, name: "Trainer", link: "/training" },
       { icon: expertIcon, name: "Expert", link: "/expert" },
-      { icon: projectIcon, name: "Project", link: "/project" },
-      { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
       { icon: userManageIcon, name: "Manage User", link: "/users" },
     ];
   } else if (user && (user.role === "Sales" || user.role === "Head Sales")) {

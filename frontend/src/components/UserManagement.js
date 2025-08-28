@@ -1,22 +1,53 @@
 // frontend/src/components/UserManagement.js
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
+
 import { AuthContext } from "../context/AuthContext";
 import Modal from "./Modal";
 import AddUserForm from "./AddUserForm";
+import EditUserForm from "./EditUserForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
+
+
 
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [success, setSuccess] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', or 'Expert'
-
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null); // Will store { id, role, name }
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState(null);
+
+  const handleEditClick = (user) => {
+    setUserToEdit(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setUserToEdit(null);
+  };
+
+  const handleEditUserSubmit = async (formData) => {
+    if (!userToEdit) return;
+    try {
+      await axios.put(`http://localhost:3000/api/user/${userToEdit.role}/${userToEdit.id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setSuccess("✅ User updated successfully");
+      fetchUsers();
+      handleCloseEditModal();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || "❌ Failed to update user");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
+  };
 
   const fetchUsers = () => {
     if (user && user.token) {
@@ -178,14 +209,25 @@ const UserManagement = () => {
                       {u.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <td className="px-6 py-4 whitespace-nowrap text-center flex gap-2 justify-center">
                     <button
-                      onClick={() => handleDeleteClick(u)} // Pass the whole user object
+                      onClick={() => handleEditClick(u)}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm font-medium px-3 py-1 rounded shadow-md transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(u)}
                       className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1 rounded shadow-md transition"
                     >
                       Delete
                     </button>
                   </td>
+      {isEditModalOpen && (
+        <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title={"Edit User"}>
+          <EditUserForm user={userToEdit} onClose={handleCloseEditModal} onSubmit={handleEditUserSubmit} />
+        </Modal>
+      )}
                 </tr>
               ))
             ) : (
