@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const {
   createOpti,
   getOptis,
@@ -13,9 +14,15 @@ const {
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Konfigurasi Multer untuk upload proposal
+// Pastikan folder target ada dan gunakan path absolut berbasis __dirname
+const proposalsDir = path.join(__dirname, "..", "uploads", "proposals");
+if (!fs.existsSync(proposalsDir)) {
+  fs.mkdirSync(proposalsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "backend/uploads/proposals/");
+    cb(null, proposalsDir);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname)); // Nama file unik

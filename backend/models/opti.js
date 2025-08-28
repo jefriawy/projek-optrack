@@ -59,13 +59,14 @@ const Opti = {
     }
 
     if (user && user.role === "Sales") {
-      const [sales] = await pool.query("SELECT idSales FROM sales WHERE userId = ?", [user.id]);
-      if (sales.length > 0) {
-        const idSales = sales[0].idSales;
+      // user.id is expected to be idSales (from token). Verifikasi keberadaan dan gunakan langsung.
+      const idSales = user.id;
+      const [salesRow] = await pool.query("SELECT idSales FROM sales WHERE idSales = ?", [idSales]);
+      if (salesRow.length > 0) {
         whereClauses.push(`o.idSales = ?`);
         params.push(idSales);
       } else {
-        // If the user is a sales person but not in the sales table, return no data
+        // Sales tidak ditemukan di tabel sales -> kembalikan kosong
         return [[], 0];
       }
     }

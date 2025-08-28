@@ -57,12 +57,12 @@ const getFormOptions = async (req, res) => {
   try {
     let customers;
     if (req.user.role === "Sales") {
-      // Ambil hanya customer milik sales ini
-      const [sales] = await pool.query("SELECT idSales FROM sales WHERE userId = ?", [req.user.id]);
-      if (!sales.length) {
+      // Ambil hanya customer milik sales ini — req.user.id sudah berisi idSales
+      const idSales = req.user.id;
+      const [salesRow] = await pool.query("SELECT idSales FROM sales WHERE idSales = ?", [idSales]);
+      if (!salesRow.length) {
         return res.status(403).json({ error: "User is not a registered sales" });
       }
-      const idSales = sales[0].idSales;
       customers = await Customer.findBySalesId(idSales);
     } else {
       customers = await Customer.findAll();
