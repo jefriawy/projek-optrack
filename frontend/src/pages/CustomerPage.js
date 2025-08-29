@@ -162,9 +162,8 @@ const CustomerPage = () => {
 
     const filteredAndSortedCustomers = useMemo(() => {
         let filtered = customers.filter(c =>
-            (c.corpCustomer || '').toLowerCase().includes(companyFilter.toLowerCase()) ||
-            (c.nmCustomer || '').toLowerCase().includes(companyFilter.toLowerCase()) ||
-            (c.nmSales || '').toLowerCase().includes(companyFilter.toLowerCase())
+            // HANYA mencari pada field corpCustomer
+            (c.corpCustomer || '').toLowerCase().includes(companyFilter.toLowerCase())
         );
 
         return filtered.sort((a, b) => {
