@@ -1,4 +1,5 @@
 const Outsource = require("../models/outsourceModel");
+const { generateUserId } = require("../utils/idGenerator");
 
 const getOutsources = async (req, res) => {
   try {
@@ -23,7 +24,8 @@ const getOutsourceById = async (req, res) => {
 
 const createOutsource = async (req, res) => {
   try {
-    const id = await Outsource.createOutsource(req.body);
+    const payload = { ...req.body, idOutsource: await generateUserId("Outsource") };
+    const id = await Outsource.createOutsource(payload);
     res.status(201).json({ message: "Outsource created", id });
   } catch (err) {
     console.error("Error creating outsource:", err);

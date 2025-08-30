@@ -14,38 +14,27 @@ const getTrainingById = async (id) => {
 };
 
 // Create training
-const createTraining = async (data) => {
+async function createTraining(data) {
   const {
+    idTraining,
     nmTraining,
-    idTypeTraining,
-    startTraining,
-    endTraining,
-    idExpert,
-    placeTraining,
-    examTraining,
-    examDateTraining,
-    idCustomer,
+    idTypeTraining = 1,
+    startTraining = null,
+    endTraining = null,
+    idExpert = null,
+    placeTraining = null,
+    examTraining = 0,
+    examDateTraining = null,
+    idCustomer = null,
   } = data;
 
-  const [result] = await db.query(
-    `INSERT INTO training 
-     (nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      nmTraining,
-      idTypeTraining,
-      startTraining,
-      endTraining,
-      idExpert,
-      placeTraining,
-      examTraining,
-      examDateTraining,
-      idCustomer,
-    ]
-  );
-
-  return result.insertId;
-};
+  const query = `INSERT INTO training
+    (idTraining, nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const params = [idTraining, nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer];
+  await pool.query(query, params);
+  return idTraining;
+}
 
 // Update training
 const updateTraining = async (id, data) => {

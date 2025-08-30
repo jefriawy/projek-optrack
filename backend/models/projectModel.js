@@ -13,25 +13,12 @@ const getProjectById = async (id) => {
 };
 
 // Create project
-const createProject = async (data) => {
-  const {
-    nmProject,
-    startProject,
-    endProject,
-    idExpert,
-    idCustomer,
-    descriptionProject,
-  } = data;
-
-  const [result] = await db.query(
-    `INSERT INTO project 
-     (nmProject, startProject, endProject, idExpert, idCustomer, descriptionProject)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [nmProject, startProject, endProject, idExpert, idCustomer, descriptionProject]
-  );
-
-  return result.insertId;
-};
+async function createProject(data) {
+  const { idProject, nmProject /*, ... */ } = data;
+  const query = `INSERT INTO project (idProject, nmProject /*, ... */) VALUES (?, ?)`;
+  await pool.query(query, [idProject, nmProject]);
+  return idProject;
+}
 
 // Update project
 const updateProject = async (id, data) => {

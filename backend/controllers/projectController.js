@@ -1,4 +1,5 @@
 const Project = require("../models/projectModel");
+const { generateUserId } = require("../utils/idGenerator");
 
 const getProjects = async (req, res) => {
   try {
@@ -23,7 +24,8 @@ const getProjectById = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
-    const id = await Project.createProject(req.body);
+    const payload = { ...req.body, idProject: await generateUserId("Project") };
+    const id = await Project.createProject(payload);
     res.status(201).json({ message: "Project created", id });
   } catch (err) {
     console.error("Error creating project:", err);
