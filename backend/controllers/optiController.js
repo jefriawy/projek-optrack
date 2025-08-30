@@ -4,6 +4,7 @@ const Customer = require("../models/customer");
 const Expert = require("../models/expert");
 const pool = require('../config/database');
 const path = require('path'); // Import path module
+const fs = require('fs'); // Import fs module
 
 // ➕ NEW: import Training model untuk auto-create training
 const Training = require("../models/trainingModel");
@@ -12,7 +13,9 @@ const createOpti = async (req, res) => {
   try {
     const optiData = { ...req.body };
     if (req.file) {
-      optiData.proposalOpti = req.file.filename;
+      console.log("createOpti - req.file.filename (raw):", req.file.filename);
+      optiData.proposalOpti = path.basename(req.file.filename);
+      console.log("createOpti - optiData.proposalOpti (processed):", optiData.proposalOpti);
     }
 
     const customer = await Customer.findById(optiData.idCustomer);
@@ -125,8 +128,34 @@ const updateOpti = async (req, res) => {
   try {
     const { id } = req.params;
     const optiData = { ...req.body };
+
+    // 1. Get existing Opti data to check for old proposal file
+    const existingOpti = await Opti.findById(id);
+    if (!existingOpti) {
+      return res.status(404).json({ error: "Opportunity not found" });
+    }
+
+    // 2. Handle new file upload and old file deletion
     if (req.file) {
-      optiData.proposalOpti = req.file.filename;
+      console.log("updateOpti - req.file.filename (raw):", req.file.filename);
+      optiData.proposalOpti = path.basename(req.file.filename);
+      console.log("updateOpti - optiData.proposalOpti (processed):", optiData.proposalOpti);
+
+      // If there was an old proposal file, delete it
+      if (existingOpti.proposalOpti) {
+        const oldFilePath = path.join(__dirname, '..', 'uploads', 'proposals', existingOpti.proposalOpti);
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting old proposal file:", oldFilePath, err);
+            // Continue with update even if old file deletion fails
+          } else {
+            console.log("Old proposal file deleted:", oldFilePath);
+          }
+        });
+      }
+    } else {
+      // If no new file is uploaded, retain the existing proposalOpti
+      optiData.proposalOpti = existingOpti.proposalOpti;
     }
 
     const affectedRows = await Opti.update(id, optiData);
