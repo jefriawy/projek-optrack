@@ -1,3 +1,4 @@
+// src/components/OptiDetail.jsx
 import React from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OptiDetailPdf from "./OptiDetailPdf";
@@ -11,13 +12,27 @@ import {
 } from "react-icons/fa";
 import pdfIcon from "../iconres/pdf.png";
 
+// Fallback daftar tipe training (sinkronkan dengan tabel 'typetraining')
+const TYPE_TRAININGS = [
+  { id: 1, name: "Default Training" },
+  { id: 2, name: "Public Training" },
+  { id: 3, name: "Inhouse Training" },
+  { id: 4, name: "Online Training" },
+];
+
+// Helper: nilai tanggal yang buruk
+const isBadDate = (v) =>
+  !v || v === "0000-00-00 00:00:00" || v === "0000-00-00T00:00";
+
 const OptiDetail = ({ opti }) => {
   if (!opti) return null;
 
-  // Helper functions for formatting
+  // ---- formatting helpers
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("id-ID", {
+    if (!dateString || isBadDate(dateString)) return "N/A";
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return "N/A";
+    return d.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -25,9 +40,10 @@ const OptiDetail = ({ opti }) => {
   };
 
   const formatDateTime = (dateTimeString) => {
-    if (!dateTimeString) return "N/A";
-    // Menggunakan timezone Asia/Jakarta untuk memastikan waktu sesuai
-    return new Date(dateTimeString).toLocaleString("id-ID", {
+    if (!dateTimeString || isBadDate(dateTimeString)) return "N/A";
+    const d = new Date(dateTimeString);
+    if (Number.isNaN(d.getTime())) return "N/A";
+    return d.toLocaleString("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -56,33 +72,45 @@ const OptiDetail = ({ opti }) => {
 
   const statusInfo = getStatusInfo(opti.statOpti);
 
-  // --- Conditional Detail Component ---
+  // ---- detail khusus per jenis
   const SpecificDetails = () => {
-    // PERBAIKAN: Logika diubah agar lebih toleran
     if (opti.jenisOpti === "Training") {
+      // Ambil nama tipe dari API jika ada, kalau tidak ada pakai mapping berdasarkan idTypeTraining
+      const typeName =
+        opti.nmTypeTraining ||
+        TYPE_TRAININGS.find(
+          (t) => Number(t.id) === Number(opti.idTypeTraining)
+        )?.name ||
+        "-";
+
+      const mulai = formatDateTime(opti.startTraining);
+      const selesai = formatDateTime(opti.endTraining);
+      const lokasi = opti.placeTraining || "-";
+
       return (
         <div className="mt-6 p-4 border rounded-lg bg-gray-50">
           <h3 className="flex items-center text-md font-semibold mb-3 text-gray-700">
-            <FaChalkboardTeacher className="mr-2 text-blue-500" /> Detail
-            Training
+            <FaChalkboardTeacher className="mr-2 text-blue-500" />
+            Detail Training
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <p>
-              <strong>Tipe:</strong> {opti.nmTypeTraining || "-"}
+              <strong>Tipe:</strong> {typeName}
             </p>
             <p>
-              <strong>Mulai:</strong> {formatDateTime(opti.startTraining)}
+              <strong>Mulai:</strong> {mulai}
             </p>
             <p>
-              <strong>Selesai:</strong> {formatDateTime(opti.endTraining)}
+              <strong>Selesai:</strong> {selesai}
             </p>
             <p>
-              <strong>Lokasi:</strong> {opti.placeTraining || "-"}
+              <strong>Lokasi:</strong> {lokasi}
             </p>
           </div>
         </div>
       );
     }
+
     if (opti.jenisOpti === "Project") {
       return (
         <div className="mt-6 p-4 border rounded-lg bg-gray-50">
@@ -100,7 +128,7 @@ const OptiDetail = ({ opti }) => {
         </div>
       );
     }
-    // Jika tidak ada data detail yang relevan
+
     return null;
   };
 
@@ -113,7 +141,7 @@ const OptiDetail = ({ opti }) => {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Kolom Kiri: Informasi Utama */}
+        {/* Informasi Utama */}
         <div>
           <h2 className="flex items-center text-lg font-semibold mb-3 border-b pb-2">
             <FaInfoCircle className="mr-2" /> Informasi Utama
@@ -131,7 +159,7 @@ const OptiDetail = ({ opti }) => {
           </div>
         </div>
 
-        {/* Kolom Kanan: Informasi Bisnis */}
+        {/* Informasi Bisnis */}
         <div>
           <h2 className="flex items-center text-lg font-semibold mb-3 border-b pb-2">
             <FaBriefcase className="mr-2" /> Informasi Bisnis
@@ -160,6 +188,7 @@ const OptiDetail = ({ opti }) => {
 
       <SpecificDetails />
 
+      {/* Kebutuhan */}
       <div className="my-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileAlt className="mr-2" /> Kebutuhan Klien
@@ -169,6 +198,7 @@ const OptiDetail = ({ opti }) => {
         </p>
       </div>
 
+      {/* Proposal */}
       <div className="mb-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileDownload className="mr-2" /> Dokumen Proposal
@@ -180,14 +210,15 @@ const OptiDetail = ({ opti }) => {
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
-            <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" /> Unduh
-            Dokumen
+            <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
+            Unduh Dokumen
           </a>
         ) : (
           <p className="text-gray-500 text-sm">Tidak ada dokumen proposal.</p>
         )}
       </div>
 
+      {/* Export PDF */}
       <PDFDownloadLink
         document={<OptiDetailPdf opti={opti} />}
         fileName={`Detail_Opportunity_${opti.nmOpti}.pdf`}

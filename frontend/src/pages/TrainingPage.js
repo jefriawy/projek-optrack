@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== Helpers ===== */
+/* ===== Helpers (date-based fallback) ===== */
 const getBadge = (start, end) => {
   if (!end) return { text: "Open", cls: "bg-emerald-500 text-white" };
   const now = new Date();
@@ -35,6 +35,24 @@ const diffDays = (start, end) => {
   return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
 };
 
+/* ===== Map status OPTI -> badge ===== */
+const getOptiStatusBadge = (stat) => {
+  switch (stat) {
+    case "Follow Up":
+      return { text: "Follow Up", cls: "bg-blue-500 text-white" };
+    case "On-Progress":
+      return { text: "On-Progress", cls: "bg-yellow-500 text-black" };
+    case "Success":
+      return { text: "Success", cls: "bg-emerald-600 text-white" };
+    case "Failed":
+      return { text: "Failed", cls: "bg-red-600 text-white" };
+    case "Just Get Info":
+      return { text: "Just Get Info", cls: "bg-gray-400 text-white" };
+    default:
+      return null;
+  }
+};
+
 /* ===== Inline Icons (ringan) ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -51,14 +69,13 @@ const IconUsers = ({ className = "w-4 h-4" }) => (
     <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
   </svg>
 );
-
 const IconMap = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3"/>
   </svg>
 );
 
-/* ===== Simple Modal Component ===== */
+/* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children, footer }) => {
   if (!open) return null;
   return (
@@ -102,7 +119,7 @@ const TrainingPage = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState("");
 
-  // Fetch list
+  // Fetch list (now includes statOpti)
   useEffect(() => {
     if (!user?.token) {
       setLoading(false);
@@ -136,7 +153,7 @@ const TrainingPage = () => {
     const q = (query || "").toLowerCase();
     return list.filter((t) => {
       const name = (t.nmTraining || "").toLowerCase();
-      const cust = (t.corpCustomer || t.nmCustomer || "").toLowerCase();
+      const cust = (t.corpCustomer || "").toLowerCase();
       const place = (t.placeTraining || "").toLowerCase();
       return name.includes(q) || cust.includes(q) || place.includes(q);
     });
@@ -197,10 +214,9 @@ const TrainingPage = () => {
         Tambah Training
       </button>
 
-      {/* Card Section Header like mock */}
+      {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50 text-lg font-semibold">
-          <IconCalendar className="w-5 h-5" />
           Jadwal Training
         </div>
 
@@ -209,24 +225,23 @@ const TrainingPage = () => {
           {!loading && err && <div className="text-center text-red-600 py-10">{err}</div>}
 
           {!loading && !err && filtered.map((t, idx) => {
-            const badge = getBadge(t.startTraining, t.endTraining);
+            // <- status mengikuti OPTI jika ada; kalau tidak, fallback ke date-based
+            const badge = getOptiStatusBadge(t.statOpti) || getBadge(t.startTraining, t.endTraining);
             return (
               <div
                 key={t.idTraining || idx}
                 className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
               >
-                {/* top row: title + status badge */}
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
-                    <div className="text-xs text-gray-500">by sales kayaknya</div>
+                    <div className="text-xs text-gray-500">{t.corpCustomer || "by sales kayaknya"}</div>
                   </div>
                   <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>
-                    Status ({badge.text})
+                    {badge.text}
                   </span>
                 </div>
 
-                {/* middle rows */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
                   <div className="flex items-center gap-2">
                     <IconCalendar />
@@ -242,7 +257,6 @@ const TrainingPage = () => {
                   </div>
                 </div>
 
-                {/* detail button full width */}
                 <div className="mt-3">
                   <button
                     type="button"
@@ -267,7 +281,7 @@ const TrainingPage = () => {
         open={open}
         onClose={() => setOpen(false)}
         title={detail?.nmTraining || "Training"}
-        badge={getBadge(detail?.startTraining, detail?.endTraining)}
+        badge={getOptiStatusBadge(detail?.statOpti) || getBadge(detail?.startTraining, detail?.endTraining)}
         footer={
           <>
             <button className="px-4 py-2 rounded-md border hover:bg-gray-100" onClick={() => alert("Mulai Training")}>
@@ -287,7 +301,6 @@ const TrainingPage = () => {
 
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
-            {/* top summary */}
             <div className="grid grid-cols-1 gap-6">
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
@@ -312,11 +325,8 @@ const TrainingPage = () => {
                   </div>
                 </div>
               </div>
-
-             
             </div>
 
-            {/* notes / dokumen */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-gray-500 mb-2">Catatan</div>
@@ -340,36 +350,6 @@ const TrainingPage = () => {
                 )}
               </div>
             </div>
-
-            {/* peserta (opsional) */}
-            {"participants" in detail && (
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-3">Peserta ({detail.participants.length})</div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="text-left border-b">
-                        <th className="py-2">Nama</th>
-                        <th className="py-2">Email</th>
-                        <th className="py-2">Telepon</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.participants.map((p, i) => (
-                        <tr key={i} className="border-b">
-                          <td className="py-2">{p.nama || "-"}</td>
-                          <td className="py-2">{p.email || "-"}</td>
-                          <td className="py-2">{p.mobile || "-"}</td>
-                        </tr>
-                      ))}
-                      {detail.participants.length === 0 && (
-                        <tr><td colSpan={3} className="py-3 text-gray-500">Belum ada peserta.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </Modal>

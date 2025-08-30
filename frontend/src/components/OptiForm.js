@@ -14,46 +14,107 @@ const TYPE_TRAININGS = [
   { id: 4, name: "Online Training" },
 ];
 
-const validationSchema = Yup.object({
-  nmOpti: Yup.string().required("Nama Opti wajib diisi"),
-  idCustomer: Yup.number()
-    .typeError("Pilih perusahaan")
-    .required("Perusahaan wajib dipilih"),
-  idSumber: Yup.number()
-    .typeError("Pilih sumber")
-    .required("Sumber wajib dipilih"),
-  statOpti: Yup.string().required("Status Opti wajib diisi"),
-  datePropOpti: Yup.date().required("Tanggal wajib diisi"),
-  jenisOpti: Yup.string()
-    .oneOf(["Training", "Project", "Outsource"])
-    .required("Jenis Opti wajib diisi"),
-  idExpert: Yup.number()
-    .typeError("Pilih expert")
-    .when("jenisOpti", {
-      is: "Training",
-      then: (s) => s.required("Expert wajib dipilih untuk Training"),
-      otherwise: (s) => s.nullable(),
-    }),
-  idTypeTraining: Yup.number()
-    .typeError("Pilih tipe training")
-    .when("jenisOpti", {
-      is: "Training",
-      then: (s) => s.required("Tipe training wajib dipilih"),
-      otherwise: (s) => s.nullable(),
-    }),
-  startTraining: Yup.string().nullable(),
-  endTraining: Yup.string().nullable(),
-  placeTraining: Yup.string().nullable(),
-  contactOpti: Yup.string().nullable(),
-  emailOpti: Yup.string().email("Email tidak valid").nullable(),
-  mobileOpti: Yup.string().nullable(),
-  kebutuhan: Yup.string().nullable(),
-});
+/* =========================
+   Helpers normalisasi waktu
+   ========================= */
+const normalizeMySQLDateTimeToLocal = (val) => {
+  if (!val) return "";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return val.slice(0, 16);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(val)) {
+    const [d, t] = val.split(" ");
+    const [hh, mm] = t.split(":");
+    return `${d}T${hh.padStart(2, "0")}:${mm.padStart(2, "0")}`;
+  }
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${h}:${mi}`;
+  }
+  return "";
+};
+const normalizeDateOnly = (val) => {
+  if (!val) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  if (/^\d{4}-\d{2}-\d{2}\b/.test(val)) return val.slice(0, 10);
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+  return "";
+};
+const normalizeInitialData = (data) => {
+  if (!data) return {};
+  return {
+    ...data,
+    datePropOpti: normalizeDateOnly(data.datePropOpti),
+    startTraining: normalizeMySQLDateTimeToLocal(data.startTraining),
+    endTraining: normalizeMySQLDateTimeToLocal(data.endTraining),
+    idTypeTraining:
+      data.idTypeTraining === null || data.idTypeTraining === undefined
+        ? ""
+        : Number(data.idTypeTraining),
+  };
+};
 
-const OptiForm = ({ initialData, onSubmit, onClose }) => {
+/* =========================
+   Yup Schema (dinamis by role)
+   ========================= */
+const emptyToNullNumber = (value, originalValue) => {
+  // Saat select masih "", jangan lempar typeError – ubah jadi null
+  if (originalValue === "" || originalValue === undefined) return null;
+  const n = Number(originalValue);
+  return Number.isNaN(n) ? null : n;
+};
+const getValidationSchema = (role) =>
+  Yup.object({
+    nmOpti: Yup.string().required("Nama Opti wajib diisi"),
+    idCustomer: Yup.number().typeError("Pilih perusahaan").required("Perusahaan wajib dipilih"),
+    idSumber: Yup.number().typeError("Pilih sumber").required("Sumber wajib dipilih"),
+    statOpti: Yup.string().required("Status Opti wajib diisi"),
+    datePropOpti: Yup.string().required("Tanggal wajib diisi"),
+    jenisOpti: Yup.string()
+      .oneOf(["Training", "Project", "Outsource"])
+      .required("Jenis Opti wajib diisi"),
+
+    // >>>> Perbaikan utama: transform "" -> null dan wajib hanya jika bukan Sales
+    idExpert: Yup.number()
+      .transform(emptyToNullNumber)
+      .nullable()
+      .when("jenisOpti", (jenisOpti, schema) => {
+        if (jenisOpti === "Training" && role !== "Sales") {
+          return schema.required("Expert wajib dipilih untuk Training");
+        }
+        return schema; // untuk Sales -> tidak wajib
+      }),
+
+    idTypeTraining: Yup.number()
+      .typeError("Pilih tipe training")
+      .when("jenisOpti", {
+        is: "Training",
+        then: (s) => s.required("Tipe training wajib dipilih"),
+        otherwise: (s) => s.nullable(),
+      }),
+    startTraining: Yup.string().nullable(),
+    endTraining: Yup.string().nullable(),
+    placeTraining: Yup.string().nullable(),
+    contactOpti: Yup.string().nullable(),
+    emailOpti: Yup.string().email("Email tidak valid").nullable(),
+    mobileOpti: Yup.string().nullable(),
+    kebutuhan: Yup.string().nullable(),
+  });
+
+/* =========================
+   Komponen Form
+   ========================= */
+const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const { user } = useContext(AuthContext);
-
-  const safeInitialData = initialData ?? {};
 
   const baseState = {
     nmOpti: "",
@@ -73,14 +134,12 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     placeTraining: "",
   };
 
+  const seed = normalizeInitialData(initialData);
   const [formData, setFormData] = useState({
     ...baseState,
-    ...safeInitialData,
-    statOpti:
-      user?.role === "Sales"
-        ? "Just Get Info"
-        : safeInitialData.statOpti || baseState.statOpti,
-    datePropOpti: safeInitialData.datePropOpti || baseState.datePropOpti,
+    ...seed,
+    statOpti: user?.role === "Sales" ? "Just Get Info" : seed.statOpti || baseState.statOpti,
+    datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
 
   const [errors, setErrors] = useState({});
@@ -107,14 +166,11 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
   }, [user?.token]);
 
   useEffect(() => {
-    const safe = initialData ?? {};
+    const safe = normalizeInitialData(initialData);
     setFormData((prev) => ({
       ...baseState,
       ...safe,
-      statOpti:
-        user?.role === "Sales"
-          ? "Just Get Info"
-          : safe.statOpti || baseState.statOpti,
+      statOpti: user?.role === "Sales" ? "Just Get Info" : safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,7 +188,13 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
   const handleFileChange = (e) => setProposalFile(e.target.files[0] || null);
 
   const handleReset = () => {
-    setFormData({ ...baseState });
+    const safe = normalizeInitialData(initialData);
+    setFormData({
+      ...baseState,
+      ...safe,
+      statOpti: user?.role === "Sales" ? "Just Get Info" : safe.statOpti || baseState.statOpti,
+      datePropOpti: safe.datePropOpti || baseState.datePropOpti,
+    });
     setProposalFile(null);
     setErrors({});
   };
@@ -141,7 +203,10 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-      await validationSchema.validate(payload, { abortEarly: false });
+
+      // gunakan schema yang mempertimbangkan role
+      const schema = getValidationSchema(user?.role);
+      await schema.validate(payload, { abortEarly: false });
 
       const fd = new FormData();
       Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
@@ -155,23 +220,8 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     }
   };
 
-  // --- PERBAIKAN DI SINI ---
-  // Fungsi ini akan memformat tanggal dan waktu sesuai zona waktu lokal pengguna,
-  // bukan mengubahnya ke UTC.
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-  // --- AKHIR PERBAIKAN ---
+  const isExpertRequired =
+    formData.jenisOpti === "Training" && (user?.role || "") !== "Sales";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -187,9 +237,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             placeholder="Masukkan nama opportunity"
             className={inputClass}
           />
-          {errors.nmOpti && (
-            <p className="text-red-600 text-sm">{errors.nmOpti}</p>
-          )}
+          {errors.nmOpti && <p className="text-red-600 text-sm">{errors.nmOpti}</p>}
         </div>
 
         {/* Kontak */}
@@ -216,9 +264,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             placeholder="contoh@email.com"
             className={inputClass}
           />
-          {errors.emailOpti && (
-            <p className="text-red-600 text-sm">{errors.emailOpti}</p>
-          )}
+          {errors.emailOpti && <p className="text-red-600 text-sm">{errors.emailOpti}</p>}
         </div>
 
         {/* Mobile */}
@@ -248,20 +294,20 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             <option value="Project">Project</option>
             <option value="Outsource">Outsource</option>
           </select>
-          {errors.jenisOpti && (
-            <p className="text-red-600 text-sm">{errors.jenisOpti}</p>
-          )}
+          {errors.jenisOpti && <p className="text-red-600 text-sm">{errors.jenisOpti}</p>}
         </div>
 
         {/* Expert */}
         <div>
-          <label className="block text-sm font-medium mb-1">Expert *</label>
+          <label className="block text-sm font-medium mb-1">
+            Expert {isExpertRequired ? "*" : ""}
+          </label>
           <select
             name="idExpert"
             value={formData.idExpert || ""}
             onChange={handleChange}
             className={inputClass}
-            disabled={formData.jenisOpti !== "Training"}
+            disabled={formData.jenisOpti !== "Training" || user?.role === "Sales"}
           >
             <option value="">Pilih Expert</option>
             {experts.map((ex) => (
@@ -270,16 +316,17 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               </option>
             ))}
           </select>
-          {errors.idExpert && (
-            <p className="text-red-600 text-sm">{errors.idExpert}</p>
+          {user?.role === "Sales" && (
+            <p className="text-xs text-gray-500 mt-1">
+              Hanya Head of Sales yang bisa memilih expert.
+            </p>
           )}
+          {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
         </div>
 
         {/* Status Opti */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Status Opti *
-          </label>
+          <label className="block text-sm font-medium mb-1">Status Opti *</label>
           <select
             name="statOpti"
             value={formData.statOpti || ""}
@@ -294,9 +341,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             <option value="Failed">Failed</option>
             <option value="Just Get Info">Just Get Info</option>
           </select>
-          {errors.statOpti && (
-            <p className="text-red-600 text-sm">{errors.statOpti}</p>
-          )}
+          {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
         </div>
 
         {/* Sumber */}
@@ -309,22 +354,22 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             className={inputClass}
           >
             <option value="">Pilih sumber opportunity</option>
-            {sumber.map((s) => (
-              <option key={s.idSumber} value={s.idSumber}>
-                {s.nmSumber}
-              </option>
-            ))}
+            {sumber.length === 0 ? (
+              <option value="" disabled>(Belum ada data sumber)</option>
+            ) : (
+              sumber.map((s) => (
+                <option key={s.idSumber} value={s.idSumber}>
+                  {s.nmSumber}
+                </option>
+              ))
+            )}
           </select>
-          {errors.idSumber && (
-            <p className="text-red-600 text-sm">{errors.idSumber}</p>
-          )}
+          {errors.idSumber && <p className="text-red-600 text-sm">{errors.idSumber}</p>}
         </div>
 
         {/* Proposal file */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">
-            Proposal Opti
-          </label>
+          <label className="block text-sm font-medium mb-1">Proposal Opti</label>
           <input
             type="file"
             name="proposalOpti"
@@ -344,9 +389,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             onChange={handleChange}
             className={inputClass}
           />
-          {errors.datePropOpti && (
-            <p className="text-red-600 text-sm">{errors.datePropOpti}</p>
-          )}
+          {errors.datePropOpti && <p className="text-red-600 text-sm">{errors.datePropOpti}</p>}
         </div>
 
         {/* Perusahaan */}
@@ -365,9 +408,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               </option>
             ))}
           </select>
-          {errors.idCustomer && (
-            <p className="text-red-600 text-sm">{errors.idCustomer}</p>
-          )}
+          {errors.idCustomer && <p className="text-red-600 text-sm">{errors.idCustomer}</p>}
         </div>
 
         {/* Deskripsi */}
@@ -383,14 +424,11 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
           />
         </div>
 
-        {/* ====== Tambahan khusus jika Training ====== */}
+        {/* ====== Khusus Training ====== */}
         {formData.jenisOpti === "Training" && (
           <>
-            {/* Type Training */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Tipe Training *
-              </label>
+              <label className="block text-sm font-medium mb-1">Tipe Training *</label>
               <select
                 name="idTypeTraining"
                 value={formData.idTypeTraining || ""}
@@ -409,39 +447,30 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               )}
             </div>
 
-            {/* Start */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Mulai Training
-              </label>
+              <label className="block text-sm font-medium mb-1">Mulai Training</label>
               <input
                 type="datetime-local"
                 name="startTraining"
-                value={formatDateForInput(formData.startTraining)}
+                value={formData.startTraining || ""}
                 onChange={handleChange}
                 className={inputClass}
               />
             </div>
 
-            {/* End */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Selesai Training
-              </label>
+              <label className="block text-sm font-medium mb-1">Selesai Training</label>
               <input
                 type="datetime-local"
                 name="endTraining"
-                value={formatDateForInput(formData.endTraining)}
+                value={formData.endTraining || ""}
                 onChange={handleChange}
                 className={inputClass}
               />
             </div>
 
-            {/* Place */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">
-                Tempat / Platform
-              </label>
+              <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
               <input
                 type="text"
                 name="placeTraining"
