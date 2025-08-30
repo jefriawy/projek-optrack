@@ -7,6 +7,7 @@ const path = require('path'); // Import path module
 
 // ➕ NEW: import Training model untuk auto-create training
 const Training = require("../models/trainingModel");
+const { generateUserId } = require("../utils/idGenerator");
 
 const createOpti = async (req, res) => {
   try {
@@ -14,6 +15,9 @@ const createOpti = async (req, res) => {
     if (req.file) {
       optiData.proposalOpti = req.file.filename;
     }
+
+    // generate idOpti
+    optiData.idOpti = await generateUserId("Opti");
 
     const customer = await Customer.findById(optiData.idCustomer);
     if (!customer || !customer.idSales) {
@@ -25,12 +29,15 @@ const createOpti = async (req, res) => {
 
     // ⬇️ Auto-create training ketika jenisOpti = 'Training'
     if (optiData.jenisOpti === "Training") {
+      // generate idTraining for the auto-created training
+      const autoTrainingId = await generateUserId("Training");
       await Training.createTraining({
+        idTraining: autoTrainingId,
         nmTraining: optiData.nmOpti,                // pakai nama dari Opti
         idTypeTraining: optiData.idTypeTraining || 1,
         startTraining: optiData.startTraining || null,
         endTraining: optiData.endTraining || null,
-        idExpert: optiData.idExpert,                // sudah disimpan di tabel opti:contentReference[oaicite:4]{index=4}
+        idExpert: optiData.idExpert,                // sudah disimpan di tabel opti
         placeTraining: optiData.placeTraining || null,
         examTraining: optiData.examTraining || 0,
         examDateTraining: optiData.examDateTraining || null,

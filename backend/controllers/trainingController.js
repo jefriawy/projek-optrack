@@ -1,5 +1,6 @@
 // backend/controllers/trainingController.js
 const Training = require("../models/trainingModel");
+const { generateUserId } = require("../utils/idGenerator");
 
 // GET /api/training  (Admin/Expert)
 // Mengambil semua training (sudah ada)
@@ -32,7 +33,9 @@ const getTrainingById = async (req, res) => {
 // Buat training manual (sudah ada)
 const createTraining = async (req, res) => {
   try {
-    const id = await Training.createTraining(req.body);
+    // generate idTraining and attach to payload
+    const payload = { ...req.body, idTraining: await generateUserId("Training") };
+    const id = await Training.createTraining(payload);
     res.status(201).json({ message: "Training created", id });
   } catch (err) {
     console.error("Error creating training:", err);

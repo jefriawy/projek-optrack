@@ -13,25 +13,12 @@ const getOutsourceById = async (id) => {
 };
 
 // Create outsource
-const createOutsource = async (data) => {
-  const {
-    nmOutsource,
-    idExpert,
-    idCustomer,
-    startOutsource,
-    endOutsource,
-    descriptionOutsource,
-  } = data;
-
-  const [result] = await db.query(
-    `INSERT INTO outsource 
-     (nmOutsource, idExpert, idCustomer, startOutsource, endOutsource, descriptionOutsource)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [nmOutsource, idExpert, idCustomer, startOutsource, endOutsource, descriptionOutsource]
-  );
-
-  return result.insertId;
-};
+async function createOutsource(data) {
+  const { idOutsource, nmOutsource /*, ... */ } = data;
+  const query = `INSERT INTO outsource (idOutsource, nmOutsource /*, ... */) VALUES (?, ?)`;
+  await pool.query(query, [idOutsource, nmOutsource]);
+  return idOutsource;
+}
 
 // Update outsource
 const updateOutsource = async (id, data) => {
