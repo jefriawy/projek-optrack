@@ -1,46 +1,24 @@
 // backend/models/opti.js
-// backend/models/opti.js
 const pool = require("../config/database");
 
 const Opti = {
   async create(optiData, idSales) {
     const {
+      idOpti,
       nmOpti,
-      contactOpti,
-      mobileOpti,
-      emailOpti,
-      statOpti,
-      propOpti,
-      datePropOpti,
       idCustomer,
-      kebutuhan,
-      idSumber,
-      jenisOpti,
-      idExpert, // Diubah dari namaExpert
-      proposalOpti,
+      idExpert = null,
+      jenisOpti = null,
+      proposalOpti = null,
+      // ...other fields...
     } = optiData;
 
-    const [result] = await pool.query(
-      `INSERT INTO opti (nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, propOpti, datePropOpti, idCustomer, kebutuhan, idSumber, idSales, jenisOpti, idExpert, proposalOpti)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        nmOpti,
-        contactOpti,
-        mobileOpti,
-        emailOpti,
-        statOpti,
-        propOpti,
-        datePropOpti,
-        idCustomer,
-        kebutuhan,
-        idSumber,
-        idSales,
-        jenisOpti,
-        idExpert, // Diubah dari namaExpert
-        proposalOpti,
-      ]
-    );
-    return { idOpti: result.insertId, ...optiData, idSales };
+    const query = `INSERT INTO opti
+      (idOpti, nmOpti, idCustomer, idExpert, jenisOpti, proposalOpti, idSales /*, ... */)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const params = [idOpti, nmOpti, idCustomer, idExpert, jenisOpti, proposalOpti, idSales];
+    const [result] = await pool.query(query, params);
+    return idOpti;
   },
 
   async findAllPaginated(searchTerm, limit, offset, user) {

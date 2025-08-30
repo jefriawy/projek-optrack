@@ -1,10 +1,14 @@
 // backend/controllers/customerController.js
 const Customer = require("../models/customer");
 const pool = require("../config/database");
+const { generateUserId } = require("../utils/idGenerator");
 
 const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
+    // generate idCustomer
+    customerData.idCustomer = await generateUserId("Customer");
+
     const userId = req.user.id;
     console.log(
       "Creating customer with data:",

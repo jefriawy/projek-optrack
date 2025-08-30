@@ -8,6 +8,11 @@ const roleToCode = {
   "Head Sales": "02",
   Sales: "03",
   Expert: "04",
+  Customer: "05",
+  Opti: "06",
+  Training: "07",
+  Project: "08",
+  Outsource: "09",
 };
 
 // Mapping dari role ke informasi tabel
@@ -16,6 +21,11 @@ const roleToTableInfo = {
   "Head Sales": { tableName: "sales", idColumn: "idSales" },
   Sales: { tableName: "sales", idColumn: "idSales" },
   Expert: { tableName: "expert", idColumn: "idExpert" },
+  Customer: { tableName: "customer", idColumn: "idCustomer" },
+  Opti: { tableName: "opti", idColumn: "idOpti" },
+  Training: { tableName: "training", idColumn: "idTraining" },
+  Project: { tableName: "project", idColumn: "idProject" },
+  Outsource: { tableName: "outsource", idColumn: "idOutsource" },
 };
 
 // Mapping dari jenis file ke kode numerik
@@ -57,7 +67,8 @@ async function generateUserId(role) {
   }
 
   const paddedIncrement = increment.toString().padStart(3, "0");
-  return Number(`${prefix}${paddedIncrement}`);
+  // return string to preserve leading zeros and allow VARCHAR id columns
+  return `${prefix}${paddedIncrement}`;
 }
 
 /**
