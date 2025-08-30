@@ -42,6 +42,9 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
                 Perusahaan
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sales
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -64,6 +67,9 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {customer.corpCustomer || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {customer.nmSales || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {customer.emailCustomer}
@@ -99,7 +105,7 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                 >
                   No customers match the current filters.

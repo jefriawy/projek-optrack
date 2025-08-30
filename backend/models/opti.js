@@ -48,7 +48,8 @@ const Opti = {
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
-      LEFT JOIN expert e ON o.idExpert = e.idExpert -- Ditambahkan
+      LEFT JOIN expert e ON o.idExpert = e.idExpert
+      LEFT JOIN sales sl ON o.idSales = sl.idSales -- Ditambahkan
     `;
     const params = [];
     let whereClauses = [];
@@ -87,7 +88,8 @@ const Opti = {
         c.nmCustomer,
         c.corpCustomer,
         s.nmSumber,
-        e.nmExpert -- Ditambahkan
+        e.nmExpert,
+        sl.nmSales -- Ditambahkan
       ${baseQuery}
       ORDER BY o.datePropOpti DESC
       LIMIT ? OFFSET ?
@@ -105,11 +107,12 @@ const Opti = {
 
   async findById(idOpti) {
     const query = `
-      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert -- Ditambahkan
+      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales -- Ditambahkan
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
-      LEFT JOIN expert e ON o.idExpert = e.idExpert -- Ditambahkan
+      LEFT JOIN expert e ON o.idExpert = e.idExpert
+      LEFT JOIN sales sl ON o.idSales = sl.idSales -- Ditambahkan
       WHERE o.idOpti = ?
     `;
     const [rows] = await pool.query(query, [idOpti]);

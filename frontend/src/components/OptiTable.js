@@ -1,5 +1,7 @@
 // frontend/src/components/OptiTable.js
-import React from "react";
+import pdfIcon from '../iconres/pdf.png';
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   const formatDate = (dateString) => {
@@ -45,10 +47,19 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                 NAMA CUSTOMER
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                NAMA SALES
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                NAMA EXPERT
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 TANGGAL
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 STATUS OPTI
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                DOKUMEN
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 AKSI
@@ -69,6 +80,12 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                     {opti.nmCustomer || "-"}
                   </td>
                   <td className="px-6 py-4 text-gray-700">
+                    {opti.nmSales || "-"}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {opti.nmExpert || "-"}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
                     {formatDate(opti.datePropOpti)}
                   </td>
                   <td className="px-6 py-4">
@@ -79,6 +96,21 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                     >
                       {opti.statOpti || "-"}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {console.log("OptiTable - opti.proposalPath:", opti.proposalPath)}
+                    {opti.proposalPath ? (
+                      <a
+                        href={`${API_BASE}/${opti.proposalPath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        <img src={pdfIcon} alt="PDF Icon" className="w-6 h-6" />
+                      </a>
+                    ) : (
+                      "-"
+                    )}
                   </td>
                   <td className="px-6 py-4 flex gap-2">
                     <button
@@ -99,7 +131,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="9"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   Belum ada data opportunity. Klik "Tambah Opti" untuk memulai.
@@ -133,7 +165,28 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   <strong>Customer:</strong> {opti.nmCustomer || "-"}
                 </p>
                 <p className="text-sm text-gray-500">
+                  <strong>Sales:</strong> {opti.nmSales || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  <strong>Expert:</strong> {opti.nmExpert || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
                   <strong>Tanggal:</strong> {formatDate(opti.datePropOpti)}
+                </p>
+                                <p className="text-sm text-gray-500">
+                  <strong>Dokumen:</strong>
+                  {opti.proposalPath ? (
+                    <a
+                      href={`${API_BASE}/${opti.proposalPath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline ml-1"
+                    >
+                      <img src={pdfIcon} alt="PDF Icon" className="w-6 h-6" />
+                    </a>
+                  ) : (
+                    "-"
+                  )}
                 </p>
               </div>
               <div className="mt-4 flex justify-end">
@@ -151,7 +204,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                 </button>
               </div>
             </div>
-          ))
+          )) 
         ) : (
           <div className="text-center text-gray-500 mt-4">
             Belum ada data opportunity. Klik "Tambah Opti" untuk memulai.

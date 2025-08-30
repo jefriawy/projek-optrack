@@ -328,7 +328,7 @@ const TrainingPage = () => {
                 <div className="text-sm text-gray-500 mb-2">Dokumen</div>
                 {detail.proposalOpti ? (
                   <a
-                    href={`${API_BASE}/${detail.proposalOpti}`}
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\/]/).pop()}`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm text-blue-600 hover:underline"

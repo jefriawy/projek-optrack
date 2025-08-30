@@ -2,7 +2,8 @@
 import React from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import OptiDetailPdf from './OptiDetailPdf';
-import { FaDownload, FaUser, FaInfoCircle, FaFileAlt } from 'react-icons/fa';
+import { FaDownload, FaUser, FaInfoCircle, FaFileAlt, FaFileDownload } from 'react-icons/fa';
+import pdfIcon from '../iconres/pdf.png';
 
 const OptiDetail = ({ opti }) => {
   if (!opti) return null;
@@ -47,6 +48,8 @@ const OptiDetail = ({ opti }) => {
           <p><strong>Kontak PIC</strong> : {opti.contactOpti || "-"}</p>
           <p><strong>No. Handphone</strong> : {opti.mobileOpti || "-"}</p>
           <p><strong>Email</strong> : {opti.emailOpti || "-"}</p>
+          <p><strong>Sales</strong> : {opti.salesName || "-"}</p>
+          <p><strong>Expert</strong> : {opti.expertName || "-"}</p>
         </div>
       </div>
 
@@ -76,6 +79,25 @@ const OptiDetail = ({ opti }) => {
         <p className="text-gray-700 whitespace-pre-wrap">
           {opti.kebutuhan || "Tidak ada kebutuhan."}
         </p>
+      </div>
+
+      {/* Document Download Link */}
+      <div className="mb-8">
+        <h2 className="flex items-center text-lg font-semibold mb-2">
+          <FaFileDownload className="mr-2" /> Dokumen Proposal (Debug: {opti.proposalPath ? opti.proposalPath : "No Path"})
+        </h2>
+        {opti.proposalPath ? (
+          <a
+            href={`http://localhost:5000/${opti.proposalPath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline flex items-center"
+          >
+            <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" /> Unduh Dokumen
+          </a>
+        ) : (
+          <p className="text-gray-500">Tidak ada dokumen proposal.</p>
+        )}
       </div>
 
       {/* Tombol Export */}

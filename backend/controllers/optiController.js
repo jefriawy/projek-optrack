@@ -3,6 +3,7 @@ const Opti = require("../models/opti");
 const Customer = require("../models/customer");
 const Expert = require("../models/expert");
 const pool = require('../config/database');
+const path = require('path'); // Import path module
 
 // ➕ NEW: import Training model untuk auto-create training
 const Training = require("../models/trainingModel");
@@ -11,7 +12,7 @@ const createOpti = async (req, res) => {
   try {
     const optiData = { ...req.body };
     if (req.file) {
-      optiData.proposalOpti = req.file.path;
+      optiData.proposalOpti = req.file.filename;
     }
 
     const customer = await Customer.findById(optiData.idCustomer);
@@ -59,8 +60,15 @@ const getOptis = async (req, res) => {
       user
     );
 
+    // Transform proposalOpti to proposalPath for frontend
+    const transformedOptis = optis.map(opti => ({
+      ...opti,
+      proposalPath: opti.proposalOpti ? `uploads/proposals/${opti.proposalOpti}` : null,
+      proposalOpti: undefined // Remove the original field if not needed
+    }));
+
     res.json({
-      data: optis,
+      data: transformedOptis,
       totalCount,
       totalPages: Math.ceil(totalCount / limit),
       currentPage: page,
@@ -101,7 +109,13 @@ const getOptiById = async (req, res) => {
     if (!opti) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
-    res.json(opti);
+    // Transform proposalOpti to proposalPath for frontend
+    const transformedOpti = {
+      ...opti,
+      proposalPath: opti.proposalOpti ? `uploads/proposals/${opti.proposalOpti}` : null,
+      proposalOpti: undefined // Remove the original field if not needed
+    };
+    res.json(transformedOpti);
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
@@ -112,7 +126,7 @@ const updateOpti = async (req, res) => {
     const { id } = req.params;
     const optiData = { ...req.body };
     if (req.file) {
-      optiData.proposalOpti = req.file.path;
+      optiData.proposalOpti = req.file.filename;
     }
 
     const affectedRows = await Opti.update(id, optiData);
