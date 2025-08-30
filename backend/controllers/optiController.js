@@ -1,3 +1,4 @@
+// backend/controllers/OptiController.js
 const Opti = require("../models/opti");
 const Customer = require("../models/customer");
 const Expert = require("../models/expert");
@@ -8,55 +9,71 @@ const fs = require("fs");
 const Training = require("../models/trainingModel");
 const { generateUserId } = require("../utils/idGenerator");
 
+// helper: ubah ""/undefined -> null
+const toNull = (v) => (v === "" || v === undefined ? null : v);
+
+/* =========================
+ * CREATE
+ * =======================*/
 const createOpti = async (req, res) => {
   try {
-    const optiData = { ...req.body };
-    if (req.file) {
-      optiData.proposalOpti = path.basename(req.file.filename);
-    }
+    const b = { ...req.body };
 
-    optiData.idOpti = await generateUserId("Opti");
-
-    const customer = await Customer.findById(optiData.idCustomer);
+    // validasi customer & sales
+    const customer = await Customer.findById(Number(b.idCustomer));
     if (!customer || !customer.idSales) {
       return res
         .status(400)
         .json({ error: "Customer atau Sales terkait tidak ditemukan." });
     }
 
-    // Simpan data opti terlebih dahulu
+    const idOpti = await generateUserId("Opti");
+    const optiData = {
+      idOpti,
+      nmOpti: b.nmOpti,
+      idCustomer: Number(b.idCustomer),
+      contactOpti: toNull(b.contactOpti),
+      emailOpti: toNull(b.emailOpti),
+      mobileOpti: toNull(b.mobileOpti),
+      statOpti: b.statOpti,
+      datePropOpti: b.datePropOpti, // YYYY-MM-DD
+      idSumber: Number(b.idSumber),
+      kebutuhan: toNull(b.kebutuhan),
+      jenisOpti: b.jenisOpti, // Training | Project | Outsource
+      idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+      proposalOpti: req.file ? path.basename(req.file.filename) : null,
+    };
+
+    // Simpan OPPORTUNITY utama
     await Opti.create(optiData, customer.idSales);
 
-    // Jika jenisnya training, buat entri training yang terhubung
+    // Jika Training -> buat entri training yang terhubung dg idOpti barusan
     if (optiData.jenisOpti === "Training") {
-      const autoTrainingId = await generateUserId("Training");
       await Training.createTraining({
-        idTraining: autoTrainingId,
-        idOpti: optiData.idOpti, // <-- PERBAIKAN KRUSIAL: Menyertakan idOpti
-        nmTraining: optiData.nmOpti,
-        idTypeTraining: optiData.idTypeTraining || 1,
-        startTraining: optiData.startTraining || null,
-        endTraining: optiData.endTraining || null,
-        idExpert: optiData.idExpert,
-        placeTraining: optiData.placeTraining || null,
-        examTraining: optiData.examTraining || 0,
-        examDateTraining: optiData.examDateTraining || null,
-        idCustomer: optiData.idCustomer,
+        idTraining: await generateUserId("Training"),
+        idOpti, // RELASI WAJIB
+        nmTraining: b.nmOpti,
+        idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+        startTraining: toNull(b.startTraining),
+        endTraining: toNull(b.endTraining),
+        idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+        placeTraining: toNull(b.placeTraining),
+        examTraining: b.examTraining ? Number(b.examTraining) : 0,
+        examDateTraining: toNull(b.examDateTraining),
+        idCustomer: Number(b.idCustomer),
       });
     }
 
-    res
-      .status(201)
-      .json({
-        message: "Opportunity created",
-        data: { idOpti: optiData.idOpti },
-      });
+    res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
     console.error("Error creating opportunity:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });
   }
 };
 
+/* =========================
+ * LIST (paginated)
+ * =======================*/
 const getOptis = async (req, res) => {
   try {
     const searchTerm = req.query.search;
@@ -92,8 +109,12 @@ const getOptis = async (req, res) => {
   }
 };
 
+/* =========================
+ * FORM OPTIONS (customers/sumber/experts)
+ * =======================*/
 const getFormOptions = async (req, res) => {
   try {
+    // Customers
     let customers;
     if (req.user.role === "Sales") {
       const idSales = req.user.id;
@@ -110,44 +131,110 @@ const getFormOptions = async (req, res) => {
     } else {
       customers = await Customer.findAll();
     }
-    const sumber = await Opti.findSumberOptions();
+
+    // Sumber → ambil langsung dari tabel (pasti ada kalau DB berisi)
+    const [sumberRows] = await pool.query(
+      "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
+    );
+
+    // Experts
     const experts = await Expert.findAll();
-    res.json({ customers, sumber, experts });
+
+    res.json({
+      customers,
+      sumber: sumberRows ?? [],
+      experts,
+    });
   } catch (error) {
     console.error("Error fetching form options:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
+/* =========================
+ * DETAIL (JOIN lengkap)
+ * =======================*/
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
-    const opti = await Opti.findById(id);
-    if (!opti) {
+
+    // JOIN lengkap: opti + customer + sumber + sales + expert + training + typetraining + project
+    const [rows] = await pool.query(
+      `SELECT
+         o.*,
+         c.corpCustomer,
+         s.nmSumber,
+         sl.nmSales,
+         e.nmExpert,
+         tr.idTraining,
+         tr.idTypeTraining,
+         tr.startTraining,
+         tr.endTraining,
+         tr.placeTraining,
+         tt.nmTypeTraining,
+         p.idProject,
+         p.startProject,
+         p.endProject
+       FROM opti o
+       LEFT JOIN customer      c  ON c.idCustomer      = o.idCustomer
+       LEFT JOIN sumber        s  ON s.idSumber        = o.idSumber
+       LEFT JOIN sales         sl ON sl.idSales        = o.idSales
+       LEFT JOIN expert        e  ON e.idExpert        = o.idExpert
+       LEFT JOIN training      tr ON tr.idOpti         = o.idOpti
+       LEFT JOIN typetraining  tt ON tt.idTypeTraining = tr.idTypeTraining
+       LEFT JOIN project       p  ON p.idOpti          = o.idOpti
+       WHERE o.idOpti = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!rows || !rows.length) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
+
+    const opti = rows[0];
     const transformedOpti = {
       ...opti,
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
-      proposalOpti: undefined,
     };
+    delete transformedOpti.proposalOpti;
+
     res.json(transformedOpti);
   } catch (error) {
+    console.error("Error fetching opportunity detail:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
+/* =========================
+ * UPDATE
+ * =======================*/
 const updateOpti = async (req, res) => {
   try {
     const { id } = req.params;
-    const optiData = { ...req.body };
+    const b = { ...req.body };
 
     const existingOpti = await Opti.findById(id);
     if (!existingOpti) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
+
+    const optiData = {
+      nmOpti: b.nmOpti,
+      idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
+      contactOpti: toNull(b.contactOpti),
+      emailOpti: toNull(b.emailOpti),
+      mobileOpti: toNull(b.mobileOpti),
+      statOpti: b.statOpti || existingOpti.statOpti,
+      datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
+      idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
+      kebutuhan: toNull(b.kebutuhan),
+      jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
+      idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+      proposalOpti: existingOpti.proposalOpti,
+    };
 
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
@@ -159,24 +246,36 @@ const updateOpti = async (req, res) => {
           "proposals",
           existingOpti.proposalOpti
         );
-        fs.unlink(oldFilePath, (err) => {
-          if (err)
-            console.error(
-              "Error deleting old proposal file:",
-              oldFilePath,
-              err
-            );
-          else console.log("Old proposal file deleted:", oldFilePath);
-        });
+        fs.unlink(oldFilePath, () => {});
       }
-    } else {
-      optiData.proposalOpti = existingOpti.proposalOpti;
     }
 
     const affectedRows = await Opti.update(id, optiData);
-    if (affectedRows === 0) {
+    if (!affectedRows) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
+
+    // Jika Training dan ada field terkait di body → update tabel training juga
+    if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
+      await pool.query(
+        `UPDATE training 
+           SET idTypeTraining = COALESCE(?, idTypeTraining),
+               startTraining  = COALESCE(?, startTraining),
+               endTraining    = COALESCE(?, endTraining),
+               placeTraining  = COALESCE(?, placeTraining),
+               idExpert       = COALESCE(?, idExpert)
+         WHERE idOpti = ?`,
+        [
+          b.idTypeTraining ?? null,
+          toNull(b.startTraining),
+          toNull(b.endTraining),
+          toNull(b.placeTraining),
+          toNull(b.idExpert) ? Number(b.idExpert) : null,
+          id,
+        ]
+      );
+    }
+
     res.json({ message: "Opportunity updated" });
   } catch (error) {
     console.error("Error updating opportunity:", error);
