@@ -52,9 +52,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 NAMA EXPERT
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                TANGGAL
-              </th>
+              
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 STATUS OPTI
               </th>
@@ -85,9 +83,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   <td className="px-6 py-4 text-gray-700">
                     {opti.nmExpert || "-"}
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
-                    {formatDate(opti.datePropOpti)}
-                  </td>
+                  
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(

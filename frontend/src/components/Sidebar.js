@@ -11,7 +11,7 @@ import outsourceIcon from "../iconres/outsouce.png";
 import userManageIcon from "../iconres/usermanage2.png";
 import optiIcon from "../iconres/opti2.png";
 import customerIcon from "../iconres/customer2.png";
-import settingIcon from "../iconres/setting2.png";
+
 import logoutIcon from "../iconres/logout2.png";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
@@ -122,4 +122,4 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   );
 };
 
-export default Sidebar;
+export default Sidebar;

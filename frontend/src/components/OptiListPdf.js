@@ -13,19 +13,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#cccccc",
   },
   tableHeader: { backgroundColor: "#f2f2f2", fontFamily: "Helvetica-Bold" },
-  tableCol: { width: "25%", padding: 5 },
+  tableCol: { width: "33.33%", padding: 5 },
   tableCell: { margin: 5, fontSize: 9 },
 });
 
-// Format tanggal manual agar kompatibel dengan React PDF
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const d = new Date(dateString);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+
 
 // Mapping status lama ke status baru
 const getDisplayStatus = (status) => {
@@ -61,9 +53,7 @@ const OptiListPdf = ({ optis }) => (
           <View style={styles.tableCol}>
             <Text style={styles.tableCell}>Customer</Text>
           </View>
-          <View style={styles.tableCol}>
-            <Text style={styles.tableCell}>Tanggal</Text>
-          </View>
+          
           <View style={styles.tableCol}>
             <Text style={styles.tableCell}>Status</Text>
           </View>
@@ -77,11 +67,7 @@ const OptiListPdf = ({ optis }) => (
               <View style={styles.tableCol}>
                 <Text style={styles.tableCell}>{opti.nmCustomer}</Text>
               </View>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>
-                  {formatDate(opti.datePropOpti)}
-                </Text>
-              </View>
+              
               <View style={styles.tableCol}>
                 <Text style={styles.tableCell}>{getDisplayStatus(opti.statOpti)}</Text>
               </View>
