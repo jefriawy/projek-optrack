@@ -1,4 +1,4 @@
-// backend/models/trainingModel.js
+const pool = require("../config/database");
 const db = require("../config/database");
 
 // Get all training
@@ -9,7 +9,9 @@ const getAllTraining = async () => {
 
 // Get training by ID
 const getTrainingById = async (id) => {
-  const [rows] = await db.query("SELECT * FROM training WHERE idTraining = ?", [id]);
+  const [rows] = await db.query("SELECT * FROM training WHERE idTraining = ?", [
+    id,
+  ]);
   return rows[0];
 };
 
@@ -17,6 +19,7 @@ const getTrainingById = async (id) => {
 async function createTraining(data) {
   const {
     idTraining,
+    idOpti, // <-- Menambahkan idOpti
     nmTraining,
     idTypeTraining = 1,
     startTraining = null,
@@ -29,9 +32,21 @@ async function createTraining(data) {
   } = data;
 
   const query = `INSERT INTO training
-    (idTraining, nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  const params = [idTraining, nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer];
+    (idTraining, idOpti, nmTraining, idTypeTraining, startTraining, endTraining, idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`; // <-- Menambahkan '?' untuk idOpti
+  const params = [
+    idTraining,
+    idOpti,
+    nmTraining,
+    idTypeTraining,
+    startTraining,
+    endTraining,
+    idExpert,
+    placeTraining,
+    examTraining,
+    examDateTraining,
+    idCustomer,
+  ]; // <-- Menambahkan idOpti ke parameter
   await pool.query(query, params);
   return idTraining;
 }
@@ -74,11 +89,13 @@ const updateTraining = async (id, data) => {
 
 // Delete training
 const deleteTraining = async (id) => {
-  const [result] = await db.query("DELETE FROM training WHERE idTraining = ?", [id]);
+  const [result] = await db.query("DELETE FROM training WHERE idTraining = ?", [
+    id,
+  ]);
   return result.affectedRows;
 };
 
-// ➕ NEW: Get all training owned by specific expert
+// NEW: Get all training owned by specific expert
 const getByExpertId = async (idExpert) => {
   const [rows] = await db.query(
     `SELECT t.*, c.nmCustomer, c.corpCustomer
@@ -97,5 +114,5 @@ module.exports = {
   createTraining,
   updateTraining,
   deleteTraining,
-  getByExpertId, // export baru
+  getByExpertId,
 };

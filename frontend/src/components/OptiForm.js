@@ -16,11 +16,17 @@ const TYPE_TRAININGS = [
 
 const validationSchema = Yup.object({
   nmOpti: Yup.string().required("Nama Opti wajib diisi"),
-  idCustomer: Yup.number().typeError("Pilih perusahaan").required("Perusahaan wajib dipilih"),
-  idSumber: Yup.number().typeError("Pilih sumber").required("Sumber wajib dipilih"),
+  idCustomer: Yup.number()
+    .typeError("Pilih perusahaan")
+    .required("Perusahaan wajib dipilih"),
+  idSumber: Yup.number()
+    .typeError("Pilih sumber")
+    .required("Sumber wajib dipilih"),
   statOpti: Yup.string().required("Status Opti wajib diisi"),
   datePropOpti: Yup.date().required("Tanggal wajib diisi"),
-  jenisOpti: Yup.string().oneOf(["Training", "Project", "Outsource"]).required("Jenis Opti wajib diisi"),
+  jenisOpti: Yup.string()
+    .oneOf(["Training", "Project", "Outsource"])
+    .required("Jenis Opti wajib diisi"),
   idExpert: Yup.number()
     .typeError("Pilih expert")
     .when("jenisOpti", {
@@ -47,7 +53,6 @@ const validationSchema = Yup.object({
 const OptiForm = ({ initialData, onSubmit, onClose }) => {
   const { user } = useContext(AuthContext);
 
-  // ⬇️ Penting: koalese null/undefined → {}
   const safeInitialData = initialData ?? {};
 
   const baseState = {
@@ -62,7 +67,6 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     kebutuhan: "",
     jenisOpti: "",
     idExpert: "",
-    // khusus Training:
     idTypeTraining: "",
     startTraining: "",
     endTraining: "",
@@ -75,7 +79,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     statOpti:
       user?.role === "Sales"
         ? "Just Get Info"
-        : (safeInitialData.statOpti || baseState.statOpti),
+        : safeInitialData.statOpti || baseState.statOpti,
     datePropOpti: safeInitialData.datePropOpti || baseState.datePropOpti,
   });
 
@@ -85,7 +89,6 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
   const [experts, setExperts] = useState([]);
   const [proposalFile, setProposalFile] = useState(null);
 
-  // fetch options for customers/sumber/experts
   useEffect(() => {
     const run = async () => {
       if (!user?.token) return;
@@ -103,7 +106,6 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     run();
   }, [user?.token]);
 
-  // kalau initialData berubah (termasuk null → data, dll)
   useEffect(() => {
     const safe = initialData ?? {};
     setFormData((prev) => ({
@@ -112,7 +114,7 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
       statOpti:
         user?.role === "Sales"
           ? "Just Get Info"
-          : (safe.statOpti || baseState.statOpti),
+          : safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -153,11 +155,23 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
     }
   };
 
-  const formatDateInput = (v) => {
-    if (!v) return "";
-    const d = new Date(v);
-    return isNaN(d) ? "" : d.toISOString().slice(0, 16);
+  // --- PERBAIKAN DI SINI ---
+  // Fungsi ini akan memformat tanggal dan waktu sesuai zona waktu lokal pengguna,
+  // bukan mengubahnya ke UTC.
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
+  // --- AKHIR PERBAIKAN ---
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -173,7 +187,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             placeholder="Masukkan nama opportunity"
             className={inputClass}
           />
-          {errors.nmOpti && <p className="text-red-600 text-sm">{errors.nmOpti}</p>}
+          {errors.nmOpti && (
+            <p className="text-red-600 text-sm">{errors.nmOpti}</p>
+          )}
         </div>
 
         {/* Kontak */}
@@ -200,7 +216,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             placeholder="contoh@email.com"
             className={inputClass}
           />
-          {errors.emailOpti && <p className="text-red-600 text-sm">{errors.emailOpti}</p>}
+          {errors.emailOpti && (
+            <p className="text-red-600 text-sm">{errors.emailOpti}</p>
+          )}
         </div>
 
         {/* Mobile */}
@@ -230,7 +248,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             <option value="Project">Project</option>
             <option value="Outsource">Outsource</option>
           </select>
-          {errors.jenisOpti && <p className="text-red-600 text-sm">{errors.jenisOpti}</p>}
+          {errors.jenisOpti && (
+            <p className="text-red-600 text-sm">{errors.jenisOpti}</p>
+          )}
         </div>
 
         {/* Expert */}
@@ -250,12 +270,16 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               </option>
             ))}
           </select>
-          {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
+          {errors.idExpert && (
+            <p className="text-red-600 text-sm">{errors.idExpert}</p>
+          )}
         </div>
 
         {/* Status Opti */}
         <div>
-          <label className="block text-sm font-medium mb-1">Status Opti *</label>
+          <label className="block text-sm font-medium mb-1">
+            Status Opti *
+          </label>
           <select
             name="statOpti"
             value={formData.statOpti || ""}
@@ -270,7 +294,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             <option value="Failed">Failed</option>
             <option value="Just Get Info">Just Get Info</option>
           </select>
-          {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
+          {errors.statOpti && (
+            <p className="text-red-600 text-sm">{errors.statOpti}</p>
+          )}
         </div>
 
         {/* Sumber */}
@@ -289,12 +315,16 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               </option>
             ))}
           </select>
-          {errors.idSumber && <p className="text-red-600 text-sm">{errors.idSumber}</p>}
+          {errors.idSumber && (
+            <p className="text-red-600 text-sm">{errors.idSumber}</p>
+          )}
         </div>
 
         {/* Proposal file */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Proposal Opti</label>
+          <label className="block text-sm font-medium mb-1">
+            Proposal Opti
+          </label>
           <input
             type="file"
             name="proposalOpti"
@@ -314,7 +344,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
             onChange={handleChange}
             className={inputClass}
           />
-          {errors.datePropOpti && <p className="text-red-600 text-sm">{errors.datePropOpti}</p>}
+          {errors.datePropOpti && (
+            <p className="text-red-600 text-sm">{errors.datePropOpti}</p>
+          )}
         </div>
 
         {/* Perusahaan */}
@@ -333,7 +365,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               </option>
             ))}
           </select>
-          {errors.idCustomer && <p className="text-red-600 text-sm">{errors.idCustomer}</p>}
+          {errors.idCustomer && (
+            <p className="text-red-600 text-sm">{errors.idCustomer}</p>
+          )}
         </div>
 
         {/* Deskripsi */}
@@ -354,7 +388,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
           <>
             {/* Type Training */}
             <div>
-              <label className="block text-sm font-medium mb-1">Tipe Training *</label>
+              <label className="block text-sm font-medium mb-1">
+                Tipe Training *
+              </label>
               <select
                 name="idTypeTraining"
                 value={formData.idTypeTraining || ""}
@@ -363,19 +399,25 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
               >
                 <option value="">Pilih tipe training</option>
                 {TYPE_TRAININGS.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
                 ))}
               </select>
-              {errors.idTypeTraining && <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>}
+              {errors.idTypeTraining && (
+                <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>
+              )}
             </div>
 
             {/* Start */}
             <div>
-              <label className="block text-sm font-medium mb-1">Mulai Training</label>
+              <label className="block text-sm font-medium mb-1">
+                Mulai Training
+              </label>
               <input
                 type="datetime-local"
                 name="startTraining"
-                value={formatDateInput(formData.startTraining)}
+                value={formatDateForInput(formData.startTraining)}
                 onChange={handleChange}
                 className={inputClass}
               />
@@ -383,11 +425,13 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
 
             {/* End */}
             <div>
-              <label className="block text-sm font-medium mb-1">Selesai Training</label>
+              <label className="block text-sm font-medium mb-1">
+                Selesai Training
+              </label>
               <input
                 type="datetime-local"
                 name="endTraining"
-                value={formatDateInput(formData.endTraining)}
+                value={formatDateForInput(formData.endTraining)}
                 onChange={handleChange}
                 className={inputClass}
               />
@@ -395,7 +439,9 @@ const OptiForm = ({ initialData, onSubmit, onClose }) => {
 
             {/* Place */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
+              <label className="block text-sm font-medium mb-1">
+                Tempat / Platform
+              </label>
               <input
                 type="text"
                 name="placeTraining"

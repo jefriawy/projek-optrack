@@ -1,4 +1,3 @@
-// backend/models/opti.js
 const pool = require("../config/database");
 
 const Opti = {
@@ -6,19 +5,39 @@ const Opti = {
     const {
       idOpti,
       nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
       idCustomer,
+      idSumber,
+      kebutuhan,
+      jenisOpti,
       idExpert = null,
-      jenisOpti = null,
       proposalOpti = null,
-      // ...other fields...
     } = optiData;
-
     const query = `INSERT INTO opti
-      (idOpti, nmOpti, idCustomer, idExpert, jenisOpti, proposalOpti, idSales /*, ... */)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    const params = [idOpti, nmOpti, idCustomer, idExpert, jenisOpti, proposalOpti, idSales];
-    const [result] = await pool.query(query, params);
-    return idOpti;
+      (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti, idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [
+      idOpti,
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      idSales,
+      jenisOpti,
+      idExpert,
+      proposalOpti,
+    ];
+    await pool.query(query, params);
+    return { idOpti };
   },
 
   async findAllPaginated(searchTerm, limit, offset, user) {
@@ -27,54 +46,39 @@ const Opti = {
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
       LEFT JOIN expert e ON o.idExpert = e.idExpert
-      LEFT JOIN sales sl ON o.idSales = sl.idSales -- Ditambahkan
+      LEFT JOIN sales sl ON o.idSales = sl.idSales
     `;
     const params = [];
     let whereClauses = [];
-
     if (searchTerm) {
       whereClauses.push(`c.corpCustomer LIKE ?`);
       params.push(`%${searchTerm}%`);
     }
-
     if (user && user.role === "Sales") {
-      // user.id is expected to be idSales (from token). Verifikasi keberadaan dan gunakan langsung.
       const idSales = user.id;
-      const [salesRow] = await pool.query("SELECT idSales FROM sales WHERE idSales = ?", [idSales]);
+      const [salesRow] = await pool.query(
+        "SELECT idSales FROM sales WHERE idSales = ?",
+        [idSales]
+      );
       if (salesRow.length > 0) {
         whereClauses.push(`o.idSales = ?`);
         params.push(idSales);
       } else {
-        // Sales tidak ditemukan di tabel sales -> kembalikan kosong
         return [[], 0];
       }
     }
-
     if (whereClauses.length > 0) {
       baseQuery += ` WHERE ${whereClauses.join(" AND ")}`;
     }
-
-    // Query untuk menghitung total data
     const countQuery = `SELECT COUNT(*) as totalCount ${baseQuery}`;
     const [countRows] = await pool.query(countQuery, params);
     const totalCount = countRows[0].totalCount;
-
-    // Query untuk mengambil data dengan pagination
     const dataQuery = `
-      SELECT
-        o.*,
-        c.nmCustomer,
-        c.corpCustomer,
-        s.nmSumber,
-        e.nmExpert,
-        sl.nmSales -- Ditambahkan
-      ${baseQuery}
-      ORDER BY o.datePropOpti DESC
-      LIMIT ? OFFSET ?
+      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales
+      ${baseQuery} ORDER BY o.datePropOpti DESC LIMIT ? OFFSET ?
     `;
     const dataParams = [...params, limit, offset];
     const [dataRows] = await pool.query(dataQuery, dataParams);
-
     return [dataRows, totalCount];
   },
 
@@ -84,13 +88,32 @@ const Opti = {
   },
 
   async findById(idOpti) {
+    // --- KUERI INI DIPERBAIKI SECARA TOTAL ---
+    // Kueri ini sekarang secara eksplisit menggabungkan semua tabel yang relevan
+    // untuk memastikan semua detail (training, project, etc.) ikut terambil.
     const query = `
-      SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales -- Ditambahkan
+      SELECT
+        o.*,
+        c.corpCustomer,
+        s.nmSumber,
+        e.nmExpert,
+        sl.nmSales,
+        t.idTraining,
+        t.startTraining,
+        t.endTraining,
+        t.placeTraining,
+        tt.nmTypeTraining,
+        p.idProject,
+        p.startProject,
+        p.endProject
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber s ON o.idSumber = s.idSumber
+      LEFT JOIN sales sl ON o.idSales = sl.idSales
       LEFT JOIN expert e ON o.idExpert = e.idExpert
-      LEFT JOIN sales sl ON o.idSales = sl.idSales -- Ditambahkan
+      LEFT JOIN training t ON o.idOpti = t.idOpti
+      LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
+      LEFT JOIN project p ON o.idOpti = p.idOpti
       WHERE o.idOpti = ?
     `;
     const [rows] = await pool.query(query, [idOpti]);
@@ -104,30 +127,32 @@ const Opti = {
       mobileOpti,
       emailOpti,
       statOpti,
-      propOpti,
       datePropOpti,
       idCustomer,
       idSumber,
       kebutuhan,
       jenisOpti,
-      idExpert, // Diubah dari namaExpert
+      idExpert,
       proposalOpti,
     } = optiData;
     const [result] = await pool.query(
-      `UPDATE opti SET nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, propOpti = ?, datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?, jenisOpti = ?, idExpert = ?, proposalOpti = ? WHERE idOpti = ?`,
+      `UPDATE opti SET 
+        nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, 
+        datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?, 
+        jenisOpti = ?, idExpert = ?, proposalOpti = ? 
+      WHERE idOpti = ?`,
       [
         nmOpti,
         contactOpti,
         mobileOpti,
         emailOpti,
         statOpti,
-        propOpti,
         datePropOpti,
         idCustomer,
         idSumber,
         kebutuhan,
         jenisOpti,
-        idExpert, // Diubah dari namaExpert
+        idExpert,
         proposalOpti,
         idOpti,
       ]
@@ -137,4 +162,3 @@ const Opti = {
 };
 
 module.exports = Opti;
-
