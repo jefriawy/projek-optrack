@@ -36,6 +36,7 @@ const statusInfo = getStatusText(idStatValue);
           <p><strong>Nama</strong> : {customer.nmCustomer}</p>
           <p><strong>Email</strong> : {customer.emailCustomer}</p>
           <p><strong>Phone</strong> : {customer.mobileCustomer || "-"}</p>
+          <p><strong>Sales</strong> : {customer.nmSales || "-"}</p>
         </div>
       </div>
 

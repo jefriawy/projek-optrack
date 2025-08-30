@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Waktu pembuatan: 28 Agu 2025 pada 14.16
+-- Host: 127.0.0.1:4306
+-- Waktu pembuatan: 29 Agu 2025 pada 14.30
 -- Versi server: 10.4.32-MariaDB
--- Versi PHP: 8.2.12
+-- Versi PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -62,6 +62,17 @@ CREATE TABLE `customer` (
   `tglInput` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `customer`
+--
+
+INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCustomer`, `addrCustomer`, `corpCustomer`, `idStatCustomer`, `descCustomer`, `idSales`, `tglInput`) VALUES
+(1, 'Linda', '0812123314', 'lin@gmail.com', 'Jl.Kedaung', 'MamaSuka', 1, 'Perusahaan Makanan', 2503001, '2025-08-28 22:00:21'),
+(2, 'Jefri', '080808080', 'jef@gmail.com', 'Jlaan Jefri bahagia', 'Jefrigusgus', 1, 'saukjxhsakj', 2503001, '2025-08-29 18:46:36'),
+(3, 'Rusdi', '089090192', 'Rus@gmail.com', 'Jalan Rush', 'MamaSuka', 1, 'Jukisab', 2503001, '2025-08-29 18:47:40'),
+(4, 'Rendy', '9089089', 'Ren@gmail.com', 'Jalan Bahagia2', 'RenRenDuck', 1, 'hjbhjgbxs', 2503002, '2025-08-29 18:59:37'),
+(5, 'Agus', '2137982179', 'gus@gmail.com', 'jalan Jalan jalan', 'GusAway', 1, 'nsdlknclk', 2503002, '2025-08-29 19:00:13');
+
 -- --------------------------------------------------------
 
 --
@@ -84,7 +95,8 @@ CREATE TABLE `expert` (
 --
 
 INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`) VALUES
-(2504001, 'expert', '081396187461', 'expert@gmail.com', '$2b$10$HYzGgqTmmxrCISASYQsP.ekUyoX9kGI8rSUbk0ecl6eFdzCD6KkGO', 2, 'ada', 'Expert 1');
+(2504001, 'expert', '081396187461', 'expert@gmail.com', '$2b$10$HYzGgqTmmxrCISASYQsP.ekUyoX9kGI8rSUbk0ecl6eFdzCD6KkGO', 2, 'ada', 'Expert 1'),
+(2504002, 'Joko', '213452315', 'joko@gmail.com', '$2b$10$coO5pnUQZ299.rfHR8q4YeuC2vVThe2iQz0Y1EqYgTfCX1bRru3xm', 4, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -109,6 +121,20 @@ CREATE TABLE `opti` (
   `idExpert` int(11) DEFAULT NULL,
   `proposalOpti` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `opti`
+--
+
+INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `propOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `proposalOpti`) VALUES
+(2, 'Pelatihan Web Dasar', 'Rahma', '08124521231', 'rahma@gmail.com', 'Just Get Info', NULL, '2025-08-28', 1, 'xsax', 1, 2503001, 'Training', NULL, NULL),
+(3, 'Pelatihan Satpam', 'diana', '0876271823', 'diana@gmail.com', 'Just Get Info', NULL, '2025-08-28', 1, 'sadaxsaxads', 1, 2503001, 'Training', 2504001, NULL),
+(4, 'Pelatihan Satpam', 'diana', '0876271823', 'diana@gmail.com', 'Just Get Info', NULL, '2025-08-28', 1, 'sadaxsaxads', 1, 2503001, 'Training', 2504001, NULL),
+(5, 'Potong Rambut', 'Munir', '085817165543', 'munir@gmail.com', 'Just Get Info', NULL, '2025-08-28', 1, '', 1, 2503001, 'Training', 2504001, NULL),
+(6, 'Pelatihan Satpamsaxsax', 'Barber', '9098769021', 'barber@gmail.com', 'Just Get Info', '', '2025-08-28', 1, 'sasad', 1, 2503001, 'Training', 2504001, 'C:\\Magang\\cp3\\projek-optrack\\backend\\uploads\\proposals\\1756404858468.pdf'),
+(7, 'Project Masa depan', 'Julian', '9890890908', 'Juli@gmail.com', 'Just Get Info', NULL, '2025-08-29', 2, 'gbkjsabxkjsanx', 1, 2503001, 'Training', 2504002, NULL),
+(8, 'Web Maju', 'Hasan', '9080890809', 'Has@gmail.com', 'Just Get Info', NULL, '2025-08-29', 2, 'khsakjdh', 1, 2503001, 'Training', 2504002, 'C:\\Magang\\cp3\\projek-optrack\\backend\\uploads\\proposals\\1756468383813.pdf'),
+(9, 'Halusinasi', 'Jeki', '907756477', 'Jke@gmail.com', 'Just Get Info', NULL, '2025-08-29', 4, 'dfzgvdsfvdv', 1, 2503002, 'Training', 2504001, NULL);
 
 -- --------------------------------------------------------
 
@@ -178,7 +204,8 @@ CREATE TABLE `sales` (
 
 INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `password`, `descSales`, `role`) VALUES
 (2502001, 'Head of Sales', '0812736183', 'hof@gmail.com', '$2b$10$ffOrRnvb4hfSNrVw1pcBbu.b.uBtEJUU/PV9OfezxZB9Z3Y/dbHzu', 'Head Sales 1', 'Head Sales'),
-(2503001, 'sales', '09182183129', 'sales@gmail.com', '$2b$10$OoYVuSAqyovNm.NLiFlvxetFsm.e/Nv9J.FAas8alhtLhdvYZeOl.', 'sales 1', 'Sales');
+(2503001, 'sales', '09182183129', 'sales@gmail.com', '$2b$10$OoYVuSAqyovNm.NLiFlvxetFsm.e/Nv9J.FAas8alhtLhdvYZeOl.', 'sales 1', 'Sales'),
+(2503002, 'Sales2', '218397219', 'sales2@gmail.com', '$2b$10$eq1jm5JWGBnOXcP29y8Ow.YUR3Uk4s2TtKXKmsuSmYj7yTA3PLmGq', 'dsfsddcdsaf', 'Sales');
 
 -- --------------------------------------------------------
 
@@ -270,6 +297,17 @@ CREATE TABLE `training` (
   `idCustomer` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `training`
+--
+
+INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTraining`, `endTraining`, `idExpert`, `placeTraining`, `examTraining`, `examDateTraining`, `idCustomer`) VALUES
+(3, 'Potong Rambut', 1, '2025-08-29', '2025-10-29', 2504001, 'Jakarta International Stadium', '0', NULL, 1),
+(4, 'Pelatihan Satpam', 2, '2025-08-29', '2025-11-29', 2504001, 'Jakarta International Stadium', '0', NULL, 1),
+(5, 'Project Masa depan', 2, '2025-08-29', '2025-11-28', 2504002, 'JIZ', '0', NULL, 2),
+(6, 'Web Maju', 4, '2025-08-29', '2025-12-26', 2504002, 'Surabaya', '0', NULL, 2),
+(7, 'Halusinasi', 2, '2025-08-29', '2025-09-15', 2504001, 'PUBG Landmark', '0', NULL, 4);
+
 -- --------------------------------------------------------
 
 --
@@ -282,6 +320,16 @@ CREATE TABLE `typetraining` (
   `statTypeTraining` varchar(100) DEFAULT NULL,
   `descTypeTraining` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `typetraining`
+--
+
+INSERT INTO `typetraining` (`idTypeTraining`, `nmTypeTraining`, `statTypeTraining`, `descTypeTraining`) VALUES
+(1, 'Default Training', NULL, NULL),
+(2, 'Public Training', NULL, NULL),
+(3, 'Inhouse Training', NULL, NULL),
+(4, 'Online Training', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -420,19 +468,19 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT untuk tabel `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `idCustomer` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idCustomer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT untuk tabel `expert`
 --
 ALTER TABLE `expert`
-  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2504002;
+  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2504003;
 
 --
 -- AUTO_INCREMENT untuk tabel `opti`
 --
 ALTER TABLE `opti`
-  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `outsource`
@@ -456,7 +504,7 @@ ALTER TABLE `proposal`
 -- AUTO_INCREMENT untuk tabel `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `idSales` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2503002;
+  MODIFY `idSales` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2503003;
 
 --
 -- AUTO_INCREMENT untuk tabel `skill`
@@ -480,13 +528,13 @@ ALTER TABLE `sumber`
 -- AUTO_INCREMENT untuk tabel `training`
 --
 ALTER TABLE `training`
-  MODIFY `idTraining` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT untuk tabel `typetraining`
 --
 ALTER TABLE `typetraining`
-  MODIFY `idTypeTraining` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idTypeTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
