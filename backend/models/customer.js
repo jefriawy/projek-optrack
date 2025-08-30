@@ -2,31 +2,36 @@
 const pool = require("../config/database");
 
 const Customer = {
-  async create(customerData, idSales, connection = pool) {
+  async create(customerData, idSales) {
+    // pastikan customerData.idCustomer sudah di-generate sebelum dipanggil
     const {
+      idCustomer,
+      nmCustomer,
+      mobileCustomer = null,
+      emailCustomer,
+      addrCustomer = null,
+      corpCustomer = null,
+      idStatCustomer = 1,
+      descCustomer = null,
+    } = customerData;
+
+    const query = `INSERT INTO customer
+      (idCustomer, nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idSales, idStatCustomer, descCustomer)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [
+      idCustomer,
       nmCustomer,
       mobileCustomer,
       emailCustomer,
       addrCustomer,
       corpCustomer,
+      idSales,
       idStatCustomer,
       descCustomer,
-    } = customerData;
-    const [result] = await connection.query(
-      `INSERT INTO customer (nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idStatCustomer, descCustomer, idSales)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        nmCustomer,
-        mobileCustomer || null,
-        emailCustomer,
-        addrCustomer || null,
-        corpCustomer || null,
-        idStatCustomer,
-        descCustomer || null,
-        idSales,
-      ]
-    );
-    return { idCustomer: result.insertId, ...customerData, idSales };
+    ];
+    const [result] = await pool.query(query, params);
+    // kembalikan id yang kita set (jika ingin konsisten)
+    return idCustomer;
   },
 
   async findBySalesId(idSales, statusFilter, searchTerm) {
