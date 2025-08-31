@@ -150,8 +150,8 @@ const ExpertDashboard = () => {
             <tbody>
               {history.map((h) => (
                 <tr key={h.id} className="border-b">
-                  <td className="p-2">{h.name}</td>
-                  <td className="p-2">{h.start}</td>
+                    <td className="p-2">{h.name}</td>
+                    <td className="p-2">{h.end ? new Date(h.end).toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                   <td className="p-2">
                     <span
                       className={`px-2 py-1 rounded text-xs sm:text-sm ${getStatusColor(
