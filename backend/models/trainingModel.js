@@ -93,7 +93,7 @@ async function deleteTraining(idTraining) {
   return r.affectedRows;
 }
 
-// LIST untuk expert login –> sertakan statOpti agar badge sama dgn Opportunity
+// ambil training berdasarkan idExpert (implementasi sudah dibutuhkan)
 async function getByExpertId(expertId) {
   const [rows] = await pool.query(
     `SELECT 
@@ -113,17 +113,39 @@ async function getByExpertId(expertId) {
   return rows;
 }
 
-// opsional helper
-async function getByOptiIdWithType(idOpti) {
+// ambil training berdasarkan idSales (via opti.idSales)
+async function getBySalesId(salesId) {
   const [rows] = await pool.query(
-    `SELECT tr.*, tt.nmTypeTraining
-       FROM training tr
-       LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
-      WHERE tr.idOpti = ?
-      LIMIT 1`,
-    [idOpti]
+    `SELECT 
+        tr.*,
+        tt.nmTypeTraining,
+        o.statOpti,
+        o.nmOpti,
+        c.corpCustomer
+     FROM training tr
+     LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
+     LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
+     LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
+     WHERE o.idSales = ?
+     ORDER BY tr.startTraining DESC`,
+    [salesId]
   );
-  return rows[0] || null;
+  return rows;
+}
+
+// NEW: ambil semua training untuk sebuah opti (dengan nama type)
+async function getByOptiIdWithType(optiId) {
+  const [rows] = await pool.query(
+    `SELECT
+       tr.*,
+       tt.nmTypeTraining
+     FROM training tr
+     LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
+     WHERE tr.idOpti = ?
+     ORDER BY tr.startTraining DESC`,
+    [optiId]
+  );
+  return rows;
 }
 
 module.exports = {
@@ -134,4 +156,5 @@ module.exports = {
   deleteTraining,
   getByExpertId,
   getByOptiIdWithType,
+  getBySalesId,
 };

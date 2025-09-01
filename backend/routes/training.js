@@ -5,7 +5,8 @@ const trainingController = require("../controllers/trainingController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // khusus EXPERT: hanya training miliknya (Training Page)
-router.get("/mine", authMiddleware(["Expert"]), trainingController.getMyTrainings);
+// => izinkan juga Sales supaya user Sales dapat melihat daftar training terkait
+router.get("/mine", authMiddleware(["Expert", "Sales"]), trainingController.getMyTrainings);
 
 // existing endpoints
 router.get("/", authMiddleware(["Admin", "Expert"]), trainingController.getTraining);

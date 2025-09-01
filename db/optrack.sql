@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1:4306
--- Waktu pembuatan: 29 Agu 2025 pada 14.30
--- Versi server: 10.4.32-MariaDB
--- Versi PHP: 8.0.30
+-- Host: 127.0.0.1
+-- Generation Time: Sep 01, 2025 at 09:33 AM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `admin`
+-- Table structure for table `admin`
 --
 
 CREATE TABLE `admin` (
@@ -36,7 +36,7 @@ CREATE TABLE `admin` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `admin`
+-- Dumping data for table `admin`
 --
 
 INSERT INTO `admin` (`idAdmin`, `nmAdmin`, `mobileAdmin`, `emailAdmin`, `password`) VALUES
@@ -46,7 +46,7 @@ INSERT INTO `admin` (`idAdmin`, `nmAdmin`, `mobileAdmin`, `emailAdmin`, `passwor
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `customer`
+-- Table structure for table `customer`
 --
 
 CREATE TABLE `customer` (
@@ -63,7 +63,7 @@ CREATE TABLE `customer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `customer`
+-- Dumping data for table `customer`
 --
 
 INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCustomer`, `addrCustomer`, `corpCustomer`, `idStatCustomer`, `descCustomer`, `idSales`, `tglInput`) VALUES
@@ -76,7 +76,7 @@ INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCust
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `expert`
+-- Table structure for table `expert`
 --
 
 CREATE TABLE `expert` (
@@ -91,7 +91,7 @@ CREATE TABLE `expert` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `expert`
+-- Dumping data for table `expert`
 --
 
 INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`) VALUES
@@ -101,7 +101,7 @@ INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `pa
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `opti`
+-- Table structure for table `opti`
 --
 
 CREATE TABLE `opti` (
@@ -123,7 +123,7 @@ CREATE TABLE `opti` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `opti`
+-- Dumping data for table `opti`
 --
 
 INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `propOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `proposalOpti`) VALUES
@@ -134,12 +134,15 @@ INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`
 (6, 'Pelatihan Satpamsaxsax', 'Barber', '9098769021', 'barber@gmail.com', 'Just Get Info', '', '2025-08-28', 1, 'sasad', 1, 2503001, 'Training', 2504001, 'C:\\Magang\\cp3\\projek-optrack\\backend\\uploads\\proposals\\1756404858468.pdf'),
 (7, 'Project Masa depan', 'Julian', '9890890908', 'Juli@gmail.com', 'Just Get Info', NULL, '2025-08-29', 2, 'gbkjsabxkjsanx', 1, 2503001, 'Training', 2504002, NULL),
 (8, 'Web Maju', 'Hasan', '9080890809', 'Has@gmail.com', 'Just Get Info', NULL, '2025-08-29', 2, 'khsakjdh', 1, 2503001, 'Training', 2504002, 'C:\\Magang\\cp3\\projek-optrack\\backend\\uploads\\proposals\\1756468383813.pdf'),
-(9, 'Halusinasi', 'Jeki', '907756477', 'Jke@gmail.com', 'Just Get Info', NULL, '2025-08-29', 4, 'dfzgvdsfvdv', 1, 2503002, 'Training', 2504001, NULL);
+(9, 'Halusinasi', 'Jeki', '907756477', 'Jke@gmail.com', 'Just Get Info', NULL, '2025-08-29', 4, 'dfzgvdsfvdv', 1, 2503002, 'Training', 2504001, NULL),
+(10, 'Pelatihan angkat beban', 'Agung', '0899887766', 'Agung@gmail.com', 'Just Get Info', NULL, '2025-08-30', 3, 'angkat beban', 1, 2503001, 'Training', 2504002, 'C:\\Users\\USER\\OneDrive\\Dokumen\\Tugas Kuliah\\magang\\progress optrack\\part4\\projek-optrack\\backend\\uploads\\proposals\\1756557376110.pdf'),
+(2506001, 'pelatihan tembak', 'prabo', '089988776655', 'prabo@gmail.com', 'Just Get Info', NULL, '2025-08-30', 3, 'tembak tembak', 1, 2503001, 'Training', 2504002, '1756567514715.pdf'),
+(2506002, 'pelatihan basket', 'jordan', '08982737', 'jordan@gmail.com', 'Just Get Info', NULL, '2025-09-01', 3, 'basket', 3, 2503001, 'Training', NULL, '1756705994959.pdf');
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `outsource`
+-- Table structure for table `outsource`
 --
 
 CREATE TABLE `outsource` (
@@ -148,13 +151,16 @@ CREATE TABLE `outsource` (
   `qtyOutsource` int(11) DEFAULT NULL,
   `descOutsource` text DEFAULT NULL,
   `idSkill` int(11) DEFAULT NULL,
-  `idCustomer` int(11) DEFAULT NULL
+  `idCustomer` int(11) DEFAULT NULL,
+  `idOpti` int(11) DEFAULT NULL,
+  `startOutsource` datetime DEFAULT NULL,
+  `endOutsource` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `project`
+-- Table structure for table `project`
 --
 
 CREATE TABLE `project` (
@@ -163,6 +169,7 @@ CREATE TABLE `project` (
   `startProject` date DEFAULT NULL,
   `endProject` date DEFAULT NULL,
   `idCustomer` int(11) DEFAULT NULL,
+  `idOpti` int(11) DEFAULT NULL,
   `idSales` int(11) DEFAULT NULL,
   `idExpert` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -170,7 +177,7 @@ CREATE TABLE `project` (
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `proposal`
+-- Table structure for table `proposal`
 --
 
 CREATE TABLE `proposal` (
@@ -185,7 +192,7 @@ CREATE TABLE `proposal` (
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `sales`
+-- Table structure for table `sales`
 --
 
 CREATE TABLE `sales` (
@@ -199,7 +206,7 @@ CREATE TABLE `sales` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `sales`
+-- Dumping data for table `sales`
 --
 
 INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `password`, `descSales`, `role`) VALUES
@@ -210,7 +217,7 @@ INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `passwor
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `skill`
+-- Table structure for table `skill`
 --
 
 CREATE TABLE `skill` (
@@ -221,7 +228,7 @@ CREATE TABLE `skill` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `skill`
+-- Dumping data for table `skill`
 --
 
 INSERT INTO `skill` (`idSkill`, `nmSkill`, `statSkill`, `descSkill`) VALUES
@@ -239,7 +246,7 @@ INSERT INTO `skill` (`idSkill`, `nmSkill`, `statSkill`, `descSkill`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `statcustomer`
+-- Table structure for table `statcustomer`
 --
 
 CREATE TABLE `statcustomer` (
@@ -249,7 +256,7 @@ CREATE TABLE `statcustomer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `statcustomer`
+-- Dumping data for table `statcustomer`
 --
 
 INSERT INTO `statcustomer` (`idStatCustomer`, `nmStatCustomer`, `descStatCustomer`) VALUES
@@ -260,7 +267,7 @@ INSERT INTO `statcustomer` (`idStatCustomer`, `nmStatCustomer`, `descStatCustome
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `sumber`
+-- Table structure for table `sumber`
 --
 
 CREATE TABLE `sumber` (
@@ -270,7 +277,7 @@ CREATE TABLE `sumber` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `sumber`
+-- Dumping data for table `sumber`
 --
 
 INSERT INTO `sumber` (`idSumber`, `nmSumber`, `descSumber`) VALUES
@@ -281,37 +288,41 @@ INSERT INTO `sumber` (`idSumber`, `nmSumber`, `descSumber`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `training`
+-- Table structure for table `training`
 --
 
 CREATE TABLE `training` (
   `idTraining` int(11) NOT NULL,
   `nmTraining` varchar(255) DEFAULT NULL,
   `idTypeTraining` int(11) DEFAULT NULL,
-  `startTraining` date DEFAULT NULL,
-  `endTraining` date DEFAULT NULL,
+  `startTraining` datetime DEFAULT NULL,
+  `endTraining` datetime DEFAULT NULL,
   `idExpert` int(11) DEFAULT NULL,
   `placeTraining` varchar(255) DEFAULT NULL,
   `examTraining` varchar(255) DEFAULT NULL,
   `examDateTraining` date DEFAULT NULL,
-  `idCustomer` int(11) DEFAULT NULL
+  `idCustomer` int(11) DEFAULT NULL,
+  `idOpti` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `training`
+-- Dumping data for table `training`
 --
 
-INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTraining`, `endTraining`, `idExpert`, `placeTraining`, `examTraining`, `examDateTraining`, `idCustomer`) VALUES
-(3, 'Potong Rambut', 1, '2025-08-29', '2025-10-29', 2504001, 'Jakarta International Stadium', '0', NULL, 1),
-(4, 'Pelatihan Satpam', 2, '2025-08-29', '2025-11-29', 2504001, 'Jakarta International Stadium', '0', NULL, 1),
-(5, 'Project Masa depan', 2, '2025-08-29', '2025-11-28', 2504002, 'JIZ', '0', NULL, 2),
-(6, 'Web Maju', 4, '2025-08-29', '2025-12-26', 2504002, 'Surabaya', '0', NULL, 2),
-(7, 'Halusinasi', 2, '2025-08-29', '2025-09-15', 2504001, 'PUBG Landmark', '0', NULL, 4);
+INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTraining`, `endTraining`, `idExpert`, `placeTraining`, `examTraining`, `examDateTraining`, `idCustomer`, `idOpti`) VALUES
+(3, 'Potong Rambut', 1, '2025-08-29 00:00:00', '2025-10-29 00:00:00', 2504001, 'Jakarta International Stadium', '0', NULL, 1, NULL),
+(4, 'Pelatihan Satpam', 2, '2025-08-29 00:00:00', '2025-11-29 00:00:00', 2504001, 'Jakarta International Stadium', '0', NULL, 1, NULL),
+(5, 'Project Masa depan', 2, '2025-08-29 00:00:00', '2025-11-28 00:00:00', 2504002, 'JIZ', '0', NULL, 2, NULL),
+(6, 'Web Maju', 4, '2025-08-29 00:00:00', '2025-12-26 00:00:00', 2504002, 'Surabaya', '0', NULL, 2, NULL),
+(7, 'Halusinasi', 2, '2025-08-29 00:00:00', '2025-09-15 00:00:00', 2504001, 'PUBG Landmark', '0', NULL, 4, NULL),
+(8, 'Pelatihan angkat beban', 2, '2025-09-10 00:00:00', '2025-11-30 00:00:00', 2504002, 'GYM', '0', NULL, 3, NULL),
+(2507002, 'pelatihan tembak', 2, '2025-08-31 13:00:00', '2025-10-30 13:00:00', 2504002, 'lapangan tembak', '0', NULL, 3, NULL),
+(2507003, 'pelatihan basket', 2, '2025-09-02 13:00:00', '2025-12-31 13:00:00', NULL, 'lapangan', '0', NULL, 3, 2506002);
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `typetraining`
+-- Table structure for table `typetraining`
 --
 
 CREATE TABLE `typetraining` (
@@ -322,7 +333,7 @@ CREATE TABLE `typetraining` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `typetraining`
+-- Dumping data for table `typetraining`
 --
 
 INSERT INTO `typetraining` (`idTypeTraining`, `nmTypeTraining`, `statTypeTraining`, `descTypeTraining`) VALUES
@@ -331,36 +342,19 @@ INSERT INTO `typetraining` (`idTypeTraining`, `nmTypeTraining`, `statTypeTrainin
 (3, 'Inhouse Training', NULL, NULL),
 (4, 'Online Training', NULL, NULL);
 
--- --------------------------------------------------------
-
---
--- Struktur dari tabel `users`
---
-
-CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `role` enum('Sales','Admin','Expert','Head Sales') NOT NULL,
-  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `mobile` varchar(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indeks untuk tabel `admin`
+-- Indexes for table `admin`
 --
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`idAdmin`),
   ADD UNIQUE KEY `emailAdmin` (`emailAdmin`);
 
 --
--- Indeks untuk tabel `customer`
+-- Indexes for table `customer`
 --
 ALTER TABLE `customer`
   ADD PRIMARY KEY (`idCustomer`),
@@ -368,14 +362,14 @@ ALTER TABLE `customer`
   ADD KEY `idSales` (`idSales`);
 
 --
--- Indeks untuk tabel `expert`
+-- Indexes for table `expert`
 --
 ALTER TABLE `expert`
   ADD PRIMARY KEY (`idExpert`),
   ADD KEY `idSkill` (`idSkill`);
 
 --
--- Indeks untuk tabel `opti`
+-- Indexes for table `opti`
 --
 ALTER TABLE `opti`
   ADD PRIMARY KEY (`idOpti`),
@@ -385,176 +379,172 @@ ALTER TABLE `opti`
   ADD KEY `idExpert` (`idExpert`);
 
 --
--- Indeks untuk tabel `outsource`
+-- Indexes for table `outsource`
 --
 ALTER TABLE `outsource`
   ADD PRIMARY KEY (`idOutsource`),
   ADD KEY `idSkill` (`idSkill`),
-  ADD KEY `idCustomer` (`idCustomer`);
+  ADD KEY `idCustomer` (`idCustomer`),
+  ADD KEY `fk_outsource_opti_idx` (`idOpti`);
 
 --
--- Indeks untuk tabel `project`
+-- Indexes for table `project`
 --
 ALTER TABLE `project`
   ADD PRIMARY KEY (`idProject`),
   ADD KEY `idCustomer` (`idCustomer`),
   ADD KEY `idSales` (`idSales`),
-  ADD KEY `idExpert` (`idExpert`);
+  ADD KEY `idExpert` (`idExpert`),
+  ADD KEY `fk_project_opti_idx` (`idOpti`);
 
 --
--- Indeks untuk tabel `proposal`
+-- Indexes for table `proposal`
 --
 ALTER TABLE `proposal`
   ADD PRIMARY KEY (`idProposal`),
   ADD KEY `idCustomer` (`idCustomer`);
 
 --
--- Indeks untuk tabel `sales`
+-- Indexes for table `sales`
 --
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`idSales`);
 
 --
--- Indeks untuk tabel `skill`
+-- Indexes for table `skill`
 --
 ALTER TABLE `skill`
   ADD PRIMARY KEY (`idSkill`);
 
 --
--- Indeks untuk tabel `statcustomer`
+-- Indexes for table `statcustomer`
 --
 ALTER TABLE `statcustomer`
   ADD PRIMARY KEY (`idStatCustomer`);
 
 --
--- Indeks untuk tabel `sumber`
+-- Indexes for table `sumber`
 --
 ALTER TABLE `sumber`
   ADD PRIMARY KEY (`idSumber`);
 
 --
--- Indeks untuk tabel `training`
+-- Indexes for table `training`
 --
 ALTER TABLE `training`
   ADD PRIMARY KEY (`idTraining`),
   ADD KEY `idTypeTraining` (`idTypeTraining`),
   ADD KEY `idExpert` (`idExpert`),
-  ADD KEY `idCustomer` (`idCustomer`);
+  ADD KEY `idCustomer` (`idCustomer`),
+  ADD KEY `fk_training_opti_idx` (`idOpti`);
 
 --
--- Indeks untuk tabel `typetraining`
+-- Indexes for table `typetraining`
 --
 ALTER TABLE `typetraining`
   ADD PRIMARY KEY (`idTypeTraining`);
 
 --
--- Indeks untuk tabel `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
-
---
--- AUTO_INCREMENT untuk tabel yang dibuang
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT untuk tabel `admin`
+-- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
   MODIFY `idAdmin` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2501002;
 
 --
--- AUTO_INCREMENT untuk tabel `customer`
+-- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
   MODIFY `idCustomer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT untuk tabel `expert`
+-- AUTO_INCREMENT for table `expert`
 --
 ALTER TABLE `expert`
   MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2504003;
 
 --
--- AUTO_INCREMENT untuk tabel `opti`
+-- AUTO_INCREMENT for table `opti`
 --
 ALTER TABLE `opti`
-  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2506003;
 
 --
--- AUTO_INCREMENT untuk tabel `outsource`
+-- AUTO_INCREMENT for table `outsource`
 --
 ALTER TABLE `outsource`
   MODIFY `idOutsource` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT untuk tabel `project`
+-- AUTO_INCREMENT for table `project`
 --
 ALTER TABLE `project`
   MODIFY `idProject` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT untuk tabel `proposal`
+-- AUTO_INCREMENT for table `proposal`
 --
 ALTER TABLE `proposal`
   MODIFY `idProposal` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT untuk tabel `sales`
+-- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
   MODIFY `idSales` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2503003;
 
 --
--- AUTO_INCREMENT untuk tabel `skill`
+-- AUTO_INCREMENT for table `skill`
 --
 ALTER TABLE `skill`
   MODIFY `idSkill` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT untuk tabel `statcustomer`
+-- AUTO_INCREMENT for table `statcustomer`
 --
 ALTER TABLE `statcustomer`
   MODIFY `idStatCustomer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT untuk tabel `sumber`
+-- AUTO_INCREMENT for table `sumber`
 --
 ALTER TABLE `sumber`
   MODIFY `idSumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT untuk tabel `training`
+-- AUTO_INCREMENT for table `training`
 --
 ALTER TABLE `training`
-  MODIFY `idTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `idTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2507004;
 
 --
--- AUTO_INCREMENT untuk tabel `typetraining`
+-- AUTO_INCREMENT for table `typetraining`
 --
 ALTER TABLE `typetraining`
   MODIFY `idTypeTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
+-- Constraints for dumped tables
 --
 
 --
--- Ketidakleluasaan untuk tabel `customer`
+-- Constraints for table `customer`
 --
 ALTER TABLE `customer`
   ADD CONSTRAINT `customer_ibfk_1` FOREIGN KEY (`idStatCustomer`) REFERENCES `statcustomer` (`idStatCustomer`),
   ADD CONSTRAINT `customer_ibfk_2` FOREIGN KEY (`idSales`) REFERENCES `sales` (`idSales`);
 
 --
--- Ketidakleluasaan untuk tabel `expert`
+-- Constraints for table `expert`
 --
 ALTER TABLE `expert`
   ADD CONSTRAINT `expert_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill` (`idSkill`);
 
 --
--- Ketidakleluasaan untuk tabel `opti`
+-- Constraints for table `opti`
 --
 ALTER TABLE `opti`
   ADD CONSTRAINT `opti_ibfk_1` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`),
@@ -563,30 +553,33 @@ ALTER TABLE `opti`
   ADD CONSTRAINT `opti_ibfk_4` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`);
 
 --
--- Ketidakleluasaan untuk tabel `outsource`
+-- Constraints for table `outsource`
 --
 ALTER TABLE `outsource`
+  ADD CONSTRAINT `fk_outsource_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `outsource_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill` (`idSkill`),
   ADD CONSTRAINT `outsource_ibfk_2` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);
 
 --
--- Ketidakleluasaan untuk tabel `project`
+-- Constraints for table `project`
 --
 ALTER TABLE `project`
+  ADD CONSTRAINT `fk_project_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `project_ibfk_1` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`),
   ADD CONSTRAINT `project_ibfk_2` FOREIGN KEY (`idSales`) REFERENCES `sales` (`idSales`),
   ADD CONSTRAINT `project_ibfk_3` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`);
 
 --
--- Ketidakleluasaan untuk tabel `proposal`
+-- Constraints for table `proposal`
 --
 ALTER TABLE `proposal`
   ADD CONSTRAINT `proposal_ibfk_1` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);
 
 --
--- Ketidakleluasaan untuk tabel `training`
+-- Constraints for table `training`
 --
 ALTER TABLE `training`
+  ADD CONSTRAINT `fk_training_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `training_ibfk_1` FOREIGN KEY (`idTypeTraining`) REFERENCES `typetraining` (`idTypeTraining`),
   ADD CONSTRAINT `training_ibfk_2` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`),
   ADD CONSTRAINT `training_ibfk_3` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);

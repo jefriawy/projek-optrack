@@ -73,15 +73,23 @@ const deleteTraining = async (req, res) => {
   }
 };
 
-// ➕ NEW: GET /api/training/mine  (Expert)
-// daftar training milik expert yang sedang login
+// ➕ NEW: GET /api/training/mine  (Expert or Sales)
+// daftar training milik expert yang sedang login (juga untuk Sales: training terkait sales)
 const getMyTrainings = async (req, res) => {
   try {
-    const expertId = req.user.id; // diisi oleh authMiddleware dari token login:contentReference[oaicite:2]{index=2}
-    const data = await Training.getByExpertId(expertId);
+    const { role, id } = req.user;
+    let data;
+    if (role === "Expert") {
+      data = await Training.getByExpertId(id);
+    } else if (role === "Sales") {
+      // ambil training yg terkait dengan sales (join via opti.idSales)
+      data = await Training.getBySalesId(id);
+    } else {
+      return res.status(403).json({ error: "Unauthorized access" });
+    }
     res.json(data);
   } catch (err) {
-    console.error("Error fetching training for expert:", err);
+    console.error("Error fetching training for user:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
