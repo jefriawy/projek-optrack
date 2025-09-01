@@ -1,12 +1,12 @@
-// frontend/src/components/SalesTable.js
+// frontend/src/components/ExpertTable.js
 import React, { useState } from "react";
 import { FaDownload, FaEye, FaCommentDots } from "react-icons/fa";
-import SalesDetail from "./SalesDetail";
+import ExpertDetail from "./ExpertDetail";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import SalesListPdf from "./SalesListPdf"; // Asumsi Anda akan membuat komponen ini
+import ExpertListPdf from "./ExpertListPdf";
 
-const SalesTable = ({ sales }) => {
-  const [selectedSales, setSelectedSales] = useState(null);
+const ExpertTable = ({ experts }) => {
+  const [selectedExpert, setSelectedExpert] = useState(null);
   return (
     <div>
       {/* Table for medium and larger screens */}
@@ -24,40 +24,44 @@ const SalesTable = ({ sales }) => {
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                Total Customer
+                Total Project
               </th>
-              
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                Status
+              </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                 Aksi
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {sales.length > 0 ? (
-              sales.map((item) => (
-                <tr key={item.idSales}>
+            {experts.length > 0 ? (
+              experts.map((item) => (
+                <tr key={item.idExpert}>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                    {item.nmSales}
+                    {item.nmExpert}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {item.mobileSales || "-"}
+                    {item.mobileExpert || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {item.emailSales || "-"}
+                    {item.emailExpert || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {item.totalCustomer || 0}
+                    {item.totalProjects || "0"}
                   </td>
-                  
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                    {item.statExpert || "-"}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap flex gap-2">
                     <button
-                      onClick={() => setSelectedSales(item)}
+                      onClick={() => setSelectedExpert(item)}
                       className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
                     >
                       VIEW
                     </button>
                     <button
-                      onClick={() => window.open(`https://wa.me/${item.mobileSales}`, '_blank')}
+                      onClick={() => window.open(`https://wa.me/${item.mobileExpert}`, '_blank')}
                       className="px-4 py-1 rounded bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition"
                     >
                       CHAT
@@ -68,7 +72,7 @@ const SalesTable = ({ sales }) => {
             ) : (
               <tr>
                 <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                  Tidak ada data sales.
+                  Tidak ada data expert.
                 </td>
               </tr>
             )}
@@ -78,33 +82,35 @@ const SalesTable = ({ sales }) => {
 
       {/* Cards for small screens */}
       <div className="md:hidden">
-        {sales.length > 0 ? (
-          sales.map((item) => (
-            <div key={item.idSales} className="bg-white rounded-lg shadow-md mb-4 p-4">
+        {experts.length > 0 ? (
+          experts.map((item) => (
+            <div key={item.idExpert} className="bg-white rounded-lg shadow-md mb-4 p-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-lg font-bold text-gray-900">{item.nmSales}</p>
-                  <p className="text-sm text-gray-500">{item.mobileSales || "-"}</p>
+                  <p className="text-lg font-bold text-gray-900">{item.nmExpert}</p>
+                  <p className="text-sm text-gray-500">{item.mobileExpert || "-"}</p>
                 </div>
-                
               </div>
               <div className="mt-4">
                 <p className="text-sm text-gray-500">
-                  <strong>Email:</strong> {item.emailSales || "-"}
+                  <strong>Email:</strong> {item.emailExpert || "-"}
                 </p>
                 <p className="text-sm text-gray-500">
-                  <strong>Total Customer:</strong> {item.totalCustomer || 0}
+                  <strong>Total Project:</strong> {item.totalProjects || 0}
+                </p>
+                <p className="text-sm text-gray-500">
+                  <strong>Status:</strong> {item.statExpert || "-"}
                 </p>
               </div>
               <div className="mt-4 flex justify-end">
                 <button
-                  onClick={() => setSelectedSales(item)}
+                  onClick={() => setSelectedExpert(item)}
                   className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
                 >
                   VIEW
                 </button>
                 <button
-                  onClick={() => window.open(`https://wa.me/${item.mobileSales}`, '_blank')}
+                  onClick={() => window.open(`https://wa.me/${item.mobileExpert}`, '_blank')}
                   className="px-4 py-1 rounded bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition"
                 >
                   CHAT
@@ -114,16 +120,16 @@ const SalesTable = ({ sales }) => {
           ))
         ) : (
           <div className="text-center text-gray-500 mt-4">
-            Tidak ada data sales.
+            Tidak ada data expert.
           </div>
         )}
       </div>
-      {/* Modal Detail Sales */}
-      {selectedSales && (
-        <SalesDetail sales={selectedSales} onClose={() => setSelectedSales(null)} />
+      {/* Modal Detail Expert */}
+      {selectedExpert && (
+        <ExpertDetail expert={selectedExpert} onClose={() => setSelectedExpert(null)} />
       )}
     </div>
   );
 };
 
-export default SalesTable;
+export default ExpertTable;

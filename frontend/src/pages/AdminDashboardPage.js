@@ -14,6 +14,10 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+import barGraphIcon from '../iconres/bar-graph.png';
+import pieChartIcon from '../iconres/pie-chart.png';
 
 ChartJS.register(
   CategoryScale,
@@ -22,7 +26,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  ChartDataLabels // Register the datalabels plugin
 );
 
 const AdminDashboardPage = () => {
@@ -30,13 +35,13 @@ const AdminDashboardPage = () => {
   const [userCounts, setUserCounts] = useState({
     Sales: 0,
     'Head Sales': 0,
-    Trainer: 0,
+    Admin: 0,
     Expert: 0,
     Semua: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [hoveredCard, setHoveredCard] = useState(null); // New state for hover
+  const [showPieChart, setShowPieChart] = useState(false); // New state for chart toggle
 
   useEffect(() => {
     const fetchUserCounts = async () => {
@@ -52,7 +57,7 @@ const AdminDashboardPage = () => {
         const counts = {
           Sales: 0,
           'Head Sales': 0,
-          Trainer: 0,
+          Admin: 0,
           Expert: 0,
           Semua: users.length,
         };
@@ -86,31 +91,31 @@ const AdminDashboardPage = () => {
   const roleCards = [
     { name: "Sales", count: userCounts.Sales, link: "/sales" },
     { name: "Head Sales", count: userCounts['Head Sales'], link: "/sales" },
+    { name: "Admin", count: userCounts.Admin, link: "/users" },
     { name: "Expert", count: userCounts.Expert, link: "/expert" },
     { name: "Semua", count: userCounts.Semua, link: "/users" },
   ];
 
   const chartData = {
-    labels: Object.keys(userCounts).filter(role => role !== 'Semua'),
+    labels: ['Sales', 'Head Sales', 'Admin', 'Expert'],
     datasets: [
       {
         label: 'Jumlah Pengguna',
-        data: Object.keys(userCounts)
-          .filter(role => role !== 'Semua')
-          .map(role => userCounts[role]),
+        data: [userCounts.Sales, userCounts['Head Sales'], userCounts.Admin, userCounts.Expert],
         backgroundColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
+          'rgba(40, 205, 100, 0.6)',
+          'rgba(65, 140, 255, 0.6)',
+          'rgba(240, 185, 15, 0.6)',
+          'rgba(175, 95, 255, 0.6)',
         ],
         borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
+          'rgba(40, 205, 100, 1)',
+          'rgba(65, 140, 255, 1)',
+          'rgba(240, 185, 15, 1)',
+          'rgba(175, 95, 255, 1)',
         ],
         borderWidth: 1,
+        datalabels: { display: false },
       },
     ],
   };
@@ -120,14 +125,18 @@ const AdminDashboardPage = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
+        display: false,
       },
       title: {
         display: true,
-        text: 'Jumlah Pengguna Berdasarkan Peran',
+        text: `Jumlah Pengguna: ${userCounts.Semua}`,
       },
     },
     scales: {
+      x: { // Add x-axis configuration
+        barPercentage: 0.8, // Adjust bar width
+        categoryPercentage: 0.8, // Adjust bar width
+      },
       y: {
         beginAtZero: true,
         ticks: {
@@ -137,153 +146,105 @@ const AdminDashboardPage = () => {
     },
   };
 
-  const roleColors = {
-    'Sales': {
-      background: 'rgba(255, 99, 132, 0.6)',
-      border: 'rgba(255, 99, 132, 1)',
-    },
-    'Head Sales': {
-      background: 'rgba(54, 162, 235, 0.6)',
-      border: 'rgba(54, 162, 235, 1)',
-    },
-    'Trainer': {
-      background: 'rgba(255, 206, 86, 0.6)',
-      border: 'rgba(255, 206, 86, 1)',
-    },
-    'Expert': {
-      background: 'rgba(75, 192, 192, 0.6)',
-      border: 'rgba(75, 192, 192, 1)',
-    },
+  // Function to generate pie chart data for all users
+  const generateOverallPieChartData = () => {
+    const labels = Object.keys(userCounts).filter(role => role !== 'Semua');
+    const data = labels.map(role => userCounts[role]);
+    const backgroundColors = [
+          'rgba(40, 205, 100, 0.6)',
+          'rgba(65, 140, 255, 0.6)',
+          'rgba(240, 185, 15, 0.6)',
+          'rgba(175, 95, 255, 0.6)',
+        ];
+    const borderColors = [
+          'rgba(40, 205, 100, 1)',
+          'rgba(65, 140, 255, 1)',
+          'rgba(240, 185, 15, 1)',
+          'rgba(175, 95, 255, 1)',
+        ];
+    return {
+      labels: labels,
+      datasets: [
+        {
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+        },
+      ],
+    };
   };
 
-  // Function to generate pie chart data for a specific role
-  const generatePieChartData = (roleName, roleCount) => {
-    if (roleName === 'Semua') {
-      const labels = Object.keys(userCounts).filter(role => role !== 'Semua');
-      const data = labels.map(role => userCounts[role]);
-      const backgroundColors = [
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(75, 192, 192, 0.6)',
-      ];
-      const borderColors = [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-      ];
-      return {
-        labels: labels,
-        datasets: [
-          {
-            data: data,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1,
-          },
-        ],
-      };
-    } else {
-      const totalUsers = userCounts.Semua;
-      const otherRolesCount = totalUsers - roleCount;
-      const roleColor = roleColors[roleName] || { background: 'rgba(200, 200, 200, 0.6)', border: 'rgba(200, 200, 200, 1)' };
-
-      return {
-        labels: [roleName, 'Peran Lain'],
-        datasets: [
-          {
-            data: [roleCount, otherRolesCount],
-            backgroundColor: [
-              roleColor.background,
-              'rgba(200, 200, 200, 0.6)',
-            ],
-            borderColor: [
-              roleColor.border,
-              'rgba(200, 200, 200, 1)',
-            ],
-            borderWidth: 1,
-          },
-        ],
-      };
-    }
-  };
-
-  const pieChartOptions = {
+  const overallPieChartOptions = {
     responsive: true,
-    maintainAspectRatio: false, // Allow chart to be smaller than its container
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false, // Hide legend for small pie charts
+        position: 'top',
       },
       title: {
-        display: false, // Hide title for small pie charts
+        display: true,
+        text: `Jumlah Pengguna: ${userCounts.Semua}`,
       },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            let label = context.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed !== null) {
-              label += context.parsed;
-            }
-            return label;
-          }
-        }
-      }
-    },
-    animation: {
-      animateRotate: true, // Enable rotation animation
-      animateScale: true,  // Enable scaling animation
+      datalabels: {
+        color: '#fff',
+        formatter: (value, context) => {
+          const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+          return `${percentage}%`;
+        },
+      },
     },
   };
 
   return (
-    <div className="flex-grow p-8 bg-gray-100 w-full max-w-full overflow-hidden">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">📊 Dashboard Admin</h1>
-      </header>
+    <div className="flex-grow bg-gray-100 w-full max-w-full overflow-hidden">
+      <div className="max-w-screen-xl mx-auto px-4 py-8">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-center py-4 bg-white shadow-md rounded-xl mb-8">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">📊 Dashboard Admin</h1>
+        </header>
 
-      {/* Bar Chart */}
-      <div className="mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-md">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4">Statistik Pengguna</h2>
-        <div className="h-80 sm:h-96">
-          <Bar data={chartData} options={chartOptions} />
-        </div>
-      </div>
-
-      {/* Role Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {roleCards.map((card) => (
-          <Link
-            key={card.name}
-            to={card.link}
-            className="block" // Make the Link a block element to contain the card
+        {/* Chart Container */}
+        <div className="mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-md relative h-[400px] md:h-[500px] lg:h-[600px]">
+          <div
+            className="absolute top-4 right-4 flex items-center w-20 h-10 rounded-full p-1 cursor-pointer transition-colors duration-300 ease-in-out"
+            onClick={() => setShowPieChart(!showPieChart)}
+            style={{ backgroundColor: showPieChart ? '#9CA3AF' : '#E5E7EB' }} // Dynamic background for the track
           >
+            {/* Sliding thumb */}
             <div
-              className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden h-32 sm:h-40"
-              onMouseEnter={() => setHoveredCard(card.name)}
-              onMouseLeave={() => setHoveredCard(null)}
+              className={`w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-transform duration-300 ease-in-out ${showPieChart ? 'transform translate-x-10 bg-white' : 'bg-white'}`}
             >
-              {/* Text content */}
-              <div className={`transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-2">{card.name}</h2>
-                <p className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">{card.count}</p>
-              </div>
-
-              {/* Pie chart overlay */}
-              <div
-                className={`absolute inset-0 flex items-center justify-center w-full h-full transition-opacity duration-300 ${hoveredCard === card.name ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-                <div className="w-24 h-24 sm:w-32 sm:h-32">
-                  <Pie data={generatePieChartData(card.name, card.count)} options={pieChartOptions} />
-                </div>
-              </div>
+              {showPieChart ? (
+                <img src={pieChartIcon} alt="Pie Chart" className="w-6 h-6" /> // Pie chart icon
+              ) : (
+                <img src={barGraphIcon} alt="Bar Chart" className="w-6 h-6" /> // Bar chart icon
+              )}
             </div>
-          </Link>
-        ))}
+          </div>
+          <div className="w-full h-full flex flex-col">
+            {showPieChart ? (
+              <>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">Pie Chart</h2>
+                <p className="text-gray-600 text-sm mb-4">
+                </p>
+                <div className="flex-grow">
+                  <Pie data={generateOverallPieChartData()} options={overallPieChartOptions} height="100%" width="100%" />
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">Bar Chart</h2>
+                <p className="text-gray-600 text-sm mb-4">
+                </p>
+                <div className="flex-grow">
+                  <Bar data={chartData} options={chartOptions} height="100%" width="100%" />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

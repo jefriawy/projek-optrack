@@ -4,9 +4,11 @@ const pool = require("../config/database");
 const Expert = {
   async findAll() {
     const [rows] = await pool.query(
-      `SELECT idExpert, nmExpert, mobileExpert, emailExpert, idSkill, statExpert
-       FROM expert
-       ORDER BY nmExpert ASC`
+      `SELECT e.idExpert, e.nmExpert, e.mobileExpert, e.emailExpert, e.idSkill, e.statExpert, COUNT(o.idOpti) AS totalProjects
+       FROM expert e
+       LEFT JOIN opti o ON e.idExpert = o.idExpert
+       GROUP BY e.idExpert, e.nmExpert, e.mobileExpert, e.emailExpert, e.idSkill, e.statExpert
+       ORDER BY e.nmExpert ASC`
     );
     return rows;
   },

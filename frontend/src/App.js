@@ -21,6 +21,7 @@ import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
 import ExpertDashboard from "./pages/ExpertDashboard";
+import ExpertPage from "./pages/ExpertPage";
 import "./App.css";
 
 const AppRoutes = () => {
@@ -93,7 +94,7 @@ const AppRoutes = () => {
         path="/expert"
         element={
           <Layout>
-            <TrainingPage />
+            <ExpertPage />
           </Layout>
         }
       />

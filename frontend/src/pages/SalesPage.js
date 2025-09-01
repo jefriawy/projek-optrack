@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import SalesTable from '../components/SalesTable';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import CombinedSalesPdf from '../components/CombinedSalesPdf';
 
 const SalesPage = () => {
   const { user, loading } = useContext(AuthContext);
@@ -51,7 +53,16 @@ const SalesPage = () => {
 
       {/* Content */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Data Sales</h2>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Data Sales</h2>
+            <PDFDownloadLink
+                document={<CombinedSalesPdf headSales={headSalesData} sales={salesData} />}
+                fileName="sales_report.pdf"
+                className="px-3 py-1 rounded bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition flex items-center justify-center"
+              >
+                {({ loading }) => (loading ? "..." : "Export PDF")}
+              </PDFDownloadLink>
+        </div>
         <p className="text-gray-500 mb-6">Laporan Data Sales</p>
 
         {/* Head of Sales */}
