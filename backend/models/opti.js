@@ -1,8 +1,10 @@
+// backend/models/opti.js
+
 const pool = require("../config/database");
 
 const Opti = {
-  // CREATE: gunakan idOpti yang kamu kirim dari controller (bukan auto inc)
-  async create(optiData, idSales) {
+  // CREATE: Modifikasi untuk menerima 'connection' opsional
+  async create(optiData, idSales, connection = pool) {
     const {
       idOpti,
       nmOpti,
@@ -18,21 +20,31 @@ const Opti = {
       idExpert = null,
       proposalOpti = null,
     } = optiData;
-
     const query = `
       INSERT INTO opti
       (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
        idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
     const params = [
-      idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti,
+      idOpti,
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      idSales,
+      jenisOpti,
+      idExpert,
+      proposalOpti,
     ];
-
-    await pool.query(query, params);
-    return { idOpti }; // konsisten dengan controller yang pakai idOpti manual
+    // Gunakan 'connection' (jika ada) atau 'pool' (default) untuk menjalankan query
+    await connection.query(query, params);
+    return { idOpti };
   },
 
   async findAllPaginated(searchTerm, limit, offset, user) {
@@ -75,7 +87,8 @@ const Opti = {
       SELECT o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales
       ${baseQuery}
       ORDER BY o.datePropOpti DESC
-      LIMIT ? OFFSET ?
+      LIMIT ?
+      OFFSET ?
     `;
     const dataParams = [...params, limit, offset];
     const [dataRows] = await pool.query(dataQuery, dataParams);
@@ -135,7 +148,6 @@ const Opti = {
       idExpert,
       proposalOpti,
     } = optiData;
-
     const [result] = await pool.query(
       `UPDATE opti SET 
         nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?, 
@@ -143,9 +155,19 @@ const Opti = {
         jenisOpti = ?, idExpert = ?, proposalOpti = ?
        WHERE idOpti = ?`,
       [
-        nmOpti, contactOpti, mobileOpti, emailOpti, statOpti,
-        datePropOpti, idCustomer, idSumber, kebutuhan,
-        jenisOpti, idExpert, proposalOpti, idOpti,
+        nmOpti,
+        contactOpti,
+        mobileOpti,
+        emailOpti,
+        statOpti,
+        datePropOpti,
+        idCustomer,
+        idSumber,
+        kebutuhan,
+        jenisOpti,
+        idExpert,
+        proposalOpti,
+        idOpti,
       ]
     );
     return result.affectedRows;
