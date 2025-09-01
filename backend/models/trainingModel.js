@@ -1,16 +1,26 @@
 // backend/models/trainingModel.js
+
 const pool = require("../config/database");
 
-// CREATE: wajib sertakan idOpti agar relasi terbentuk
-async function createTraining(p) {
-  const [r] = await pool.query(
+// CREATE: Modifikasi untuk menerima 'connection' opsional
+async function createTraining(p, connection = pool) {
+  const [r] = await connection.query(
     `INSERT INTO training
      (idTraining, idOpti, nmTraining, idTypeTraining, startTraining, endTraining,
       idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
      VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
     [
-      p.idTraining, p.idOpti, p.nmTraining, p.idTypeTraining, p.startTraining, p.endTraining,
-      p.idExpert, p.placeTraining, p.examTraining, p.examDateTraining, p.idCustomer,
+      p.idTraining,
+      p.idOpti,
+      p.nmTraining,
+      p.idTypeTraining,
+      p.startTraining,
+      p.endTraining,
+      p.idExpert,
+      p.placeTraining,
+      p.examTraining,
+      p.examDateTraining,
+      p.idCustomer,
     ]
   );
   return r.insertId;
@@ -60,21 +70,26 @@ async function updateTraining(idTraining, p) {
        idCustomer = COALESCE(?, idCustomer)
      WHERE idTraining = ?`,
     [
-      p.idOpti ?? null, p.nmTraining ?? null, p.idTypeTraining ?? null,
-      p.startTraining ?? null, p.endTraining ?? null,
-      p.idExpert ?? null, p.placeTraining ?? null,
-      p.examTraining ?? null, p.examDateTraining ?? null,
-      p.idCustomer ?? null, idTraining,
+      p.idOpti ?? null,
+      p.nmTraining ?? null,
+      p.idTypeTraining ?? null,
+      p.startTraining ?? null,
+      p.endTraining ?? null,
+      p.idExpert ?? null,
+      p.placeTraining ?? null,
+      p.examTraining ?? null,
+      p.examDateTraining ?? null,
+      p.idCustomer ?? null,
+      idTraining,
     ]
   );
   return r.affectedRows;
 }
 
 async function deleteTraining(idTraining) {
-  const [r] = await pool.query(
-    `DELETE FROM training WHERE idTraining = ?`,
-    [idTraining]
-  );
+  const [r] = await pool.query(`DELETE FROM training WHERE idTraining = ?`, [
+    idTraining,
+  ]);
   return r.affectedRows;
 }
 
@@ -89,8 +104,8 @@ async function getByExpertId(expertId) {
         c.corpCustomer
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
-     LEFT JOIN opti o          ON o.idOpti        = tr.idOpti
-     LEFT JOIN customer c      ON c.idCustomer    = tr.idCustomer
+     LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
+     LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
      WHERE tr.idExpert = ?
      ORDER BY tr.startTraining DESC`,
     [expertId]

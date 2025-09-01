@@ -78,9 +78,8 @@ const OptiDetail = ({ opti }) => {
       // Ambil nama tipe dari API jika ada, kalau tidak ada pakai mapping berdasarkan idTypeTraining
       const typeName =
         opti.nmTypeTraining ||
-        TYPE_TRAININGS.find(
-          (t) => Number(t.id) === Number(opti.idTypeTraining)
-        )?.name ||
+        TYPE_TRAININGS.find((t) => Number(t.id) === Number(opti.idTypeTraining))
+          ?.name ||
         "-";
 
       const mulai = formatDateTime(opti.startTraining);

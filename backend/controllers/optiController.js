@@ -1,11 +1,11 @@
-// backend/controllers/OptiController.js
+// backend/controllers/optiController.js
+
 const Opti = require("../models/opti");
 const Customer = require("../models/customer");
 const Expert = require("../models/expert");
 const pool = require("../config/database");
 const path = require("path");
 const fs = require("fs");
-
 const Training = require("../models/trainingModel");
 const { generateUserId } = require("../utils/idGenerator");
 
@@ -13,15 +13,16 @@ const { generateUserId } = require("../utils/idGenerator");
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
 /* =========================
- * CREATE
+ * CREATE (Dengan Transaksi Database)
  * =======================*/
 const createOpti = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const b = { ...req.body };
-
-    // validasi customer & sales
     const customer = await Customer.findById(Number(b.idCustomer));
     if (!customer || !customer.idSales) {
+      await connection.rollback();
       return res
         .status(400)
         .json({ error: "Customer atau Sales terkait tidak ditemukan." });
@@ -36,38 +37,43 @@ const createOpti = async (req, res) => {
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
       statOpti: b.statOpti,
-      datePropOpti: b.datePropOpti, // YYYY-MM-DD
+      datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
-      jenisOpti: b.jenisOpti, // Training | Project | Outsource
+      jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       proposalOpti: req.file ? path.basename(req.file.filename) : null,
     };
 
-    // Simpan OPPORTUNITY utama
-    await Opti.create(optiData, customer.idSales);
+    await Opti.create(optiData, customer.idSales, connection);
 
-    // Jika Training -> buat entri training yang terhubung dg idOpti barusan
     if (optiData.jenisOpti === "Training") {
-      await Training.createTraining({
-        idTraining: await generateUserId("Training"),
-        idOpti, // RELASI WAJIB
-        nmTraining: b.nmOpti,
-        idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-        startTraining: toNull(b.startTraining),
-        endTraining: toNull(b.endTraining),
-        idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
-        placeTraining: toNull(b.placeTraining),
-        examTraining: b.examTraining ? Number(b.examTraining) : 0,
-        examDateTraining: toNull(b.examDateTraining),
-        idCustomer: Number(b.idCustomer),
-      });
+      await Training.createTraining(
+        {
+          idTraining: await generateUserId("Training"),
+          idOpti,
+          nmTraining: b.nmOpti,
+          idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+          startTraining: toNull(b.startTraining),
+          endTraining: toNull(b.endTraining),
+          idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+          placeTraining: toNull(b.placeTraining),
+          examTraining: b.examTraining ? Number(b.examTraining) : 0,
+          examDateTraining: toNull(b.examDateTraining),
+          idCustomer: Number(b.idCustomer),
+        },
+        connection
+      );
     }
 
+    await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
+    await connection.rollback();
     console.error("Error creating opportunity:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });
+  } finally {
+    connection.release();
   }
 };
 
@@ -88,7 +94,6 @@ const getOptis = async (req, res) => {
       offset,
       user
     );
-
     const transformedOptis = optis.map((opti) => ({
       ...opti,
       proposalPath: opti.proposalOpti
@@ -96,7 +101,6 @@ const getOptis = async (req, res) => {
         : null,
       proposalOpti: undefined,
     }));
-
     res.json({
       data: transformedOptis,
       totalCount,
@@ -114,7 +118,6 @@ const getOptis = async (req, res) => {
  * =======================*/
 const getFormOptions = async (req, res) => {
   try {
-    // Customers
     let customers;
     if (req.user.role === "Sales") {
       const idSales = req.user.id;
@@ -132,14 +135,10 @@ const getFormOptions = async (req, res) => {
       customers = await Customer.findAll();
     }
 
-    // Sumber → ambil langsung dari tabel (pasti ada kalau DB berisi)
     const [sumberRows] = await pool.query(
       "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
     );
-
-    // Experts
     const experts = await Expert.findAll();
-
     res.json({
       customers,
       sumber: sumberRows ?? [],
@@ -157,8 +156,6 @@ const getFormOptions = async (req, res) => {
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // JOIN lengkap: opti + customer + sumber + sales + expert + training + typetraining + project
     const [rows] = await pool.query(
       `SELECT
          o.*,
@@ -187,7 +184,6 @@ const getOptiById = async (req, res) => {
        LIMIT 1`,
       [id]
     );
-
     if (!rows || !rows.length) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
@@ -235,7 +231,6 @@ const updateOpti = async (req, res) => {
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       proposalOpti: existingOpti.proposalOpti,
     };
-
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
       if (existingOpti.proposalOpti) {
@@ -255,7 +250,6 @@ const updateOpti = async (req, res) => {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
-    // Jika Training dan ada field terkait di body → update tabel training juga
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
       await pool.query(
         `UPDATE training 
