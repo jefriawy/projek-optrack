@@ -159,7 +159,20 @@ const UserManagement = () => {
     }
   };
 
-  // Note: Update functionality is not implemented in this refactor
+  const getRoleClass = (role) => {
+    switch (role) {
+      case 'Sales':
+        return 'bg-green-100 text-green-800';
+      case 'Head Sales':
+        return 'bg-blue-100 text-blue-800';
+      case 'Admin':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Expert':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <>
@@ -205,7 +218,7 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">{u.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{u.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' : u.role === 'Head Sales' ? 'bg-yellow-100 text-yellow-800' : u.role === 'Sales' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleClass(u.role)}`}>
                       {u.role}
                     </span>
                   </td>
