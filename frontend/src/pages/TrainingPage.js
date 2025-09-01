@@ -47,7 +47,7 @@ const getOptiStatusBadge = (stat) => {
     case "Failed":
       return { text: "Failed", cls: "bg-red-600 text-white" };
     case "Just Get Info":
-      return { text: "Just Get Info", cls: "bg-gray-400 text-white" };
+      return { text: "Just Get Info", cls: "bg-orange-100 text-orange-800" };
     default:
       return null;
   }
