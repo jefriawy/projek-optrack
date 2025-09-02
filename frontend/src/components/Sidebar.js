@@ -38,7 +38,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: homeIcon, name: "Home", link: "/" },
       { icon: optiIcon, name: "Opti", link: "/opti" },
       { icon: customerIcon, name: "Customer", link: "/customer" },
-      { icon: trainerIcon, name: "Trainer", link: "/training" },
+      { icon: trainerIcon, name: "Training", link: "/training" },
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];

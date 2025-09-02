@@ -28,9 +28,13 @@ async function createTraining(p, connection = pool) {
 
 async function getAllTraining() {
   const [rows] = await pool.query(
-    `SELECT tr.*, tt.nmTypeTraining
+    `SELECT tr.*, tt.nmTypeTraining, o.nmOpti, o.statOpti, s.nmSales, e.nmExpert, c.corpCustomer
        FROM training tr
        LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
+       LEFT JOIN opti o ON o.idOpti = tr.idOpti
+       LEFT JOIN sales s ON s.idSales = o.idSales
+       LEFT JOIN expert e ON e.idExpert = tr.idExpert
+       LEFT JOIN customer c ON c.idCustomer = tr.idCustomer
      ORDER BY tr.startTraining DESC`
   );
   return rows;

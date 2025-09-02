@@ -84,6 +84,8 @@ const getMyTrainings = async (req, res) => {
     } else if (role === "Sales") {
       // ambil training yg terkait dengan sales (join via opti.idSales)
       data = await Training.getBySalesId(id);
+    } else if (role === "Head Sales") {
+      data = await Training.getAllTraining();
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
     }

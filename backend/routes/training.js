@@ -6,11 +6,11 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 // khusus EXPERT: hanya training miliknya (Training Page)
 // => izinkan juga Sales supaya user Sales dapat melihat daftar training terkait
-router.get("/mine", authMiddleware(["Expert", "Sales"]), trainingController.getMyTrainings);
+router.get("/mine", authMiddleware(["Expert", "Sales", "Head Sales"]), trainingController.getMyTrainings);
 
 // existing endpoints
 router.get("/", authMiddleware(["Admin", "Expert"]), trainingController.getTraining);
-router.get("/:id", authMiddleware(["Admin", "Expert"]), trainingController.getTrainingById);
+router.get("/:id", authMiddleware(["Admin", "Expert", "Sales", "Head Sales"]), trainingController.getTrainingById);
 router.post("/", authMiddleware(["Admin"]), trainingController.createTraining);
 router.put("/:id", authMiddleware(["Admin"]), trainingController.updateTraining);
 router.delete("/:id", authMiddleware(["Admin"]), trainingController.deleteTraining);

@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
+import pdfIcon from "../iconres/pdf.png";
+
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 /* ===== Helpers (date-based fallback) ===== */
@@ -74,6 +76,8 @@ const IconMap = ({ className = "w-4 h-4" }) => (
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3"/>
   </svg>
 );
+
+
 
 /* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children, footer }) => {
@@ -235,7 +239,9 @@ const TrainingPage = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
-                    <div className="text-xs text-gray-500">{t.corpCustomer || "by sales kayaknya"}</div>
+                    <div className="text-xs text-gray-500">{t.corpCustomer || "-"}</div>
+                    <div className="text-xs text-gray-500">Sales: {t.nmSales || "-"}</div>
+                    <div className="text-xs text-gray-500">Expert: {t.nmExpert || "-"}</div>
                   </div>
                   <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>
                     {badge.text}
@@ -338,12 +344,13 @@ const TrainingPage = () => {
                 <div className="text-sm text-gray-500 mb-2">Dokumen</div>
                 {detail.proposalOpti ? (
                   <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\/]/).pop()}`}
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\]?[\]?\[\/]/).pop()}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm text-black hover:underline flex items-center gap-2"
                   >
-                    Lihat Proposal / Dokumen
+                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
+                    <span>{detail.proposalOpti.split(/[\]?[\]?\[\/]/).pop()}</span>
                   </a>
                 ) : (
                   <div className="text-sm text-gray-700">Belum ada dokumen.</div>
