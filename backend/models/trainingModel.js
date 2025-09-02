@@ -125,10 +125,14 @@ async function getBySalesId(salesId) {
         tt.nmTypeTraining,
         o.statOpti,
         o.nmOpti,
+        s.nmSales,
+        e.nmExpert,
         c.corpCustomer
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
+     LEFT JOIN sales s          ON s.idSales       = o.idSales
+     LEFT JOIN expert e         ON e.idExpert      = tr.idExpert
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
      WHERE o.idSales = ?
      ORDER BY tr.startTraining DESC`,

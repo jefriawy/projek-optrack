@@ -62,19 +62,31 @@ const Opti = {
       whereClauses.push(`c.corpCustomer LIKE ?`);
       params.push(`%${searchTerm}%`);
     }
+
+    // Filter berdasarkan role
     if (user && user.role === "Sales") {
-      const idSales = user.id;
-      const [salesRow] = await pool.query(
-        "SELECT idSales FROM sales WHERE idSales = ?",
-        [idSales]
+      whereClauses.push(`o.idSales = ?`);
+      params.push(user.id);
+    } else if (user && user.role === "Head Sales") {
+      // Head Sales melihat semua opportunity dari timnya
+      const [teamMembers] = await pool.query(
+        "SELECT idSales FROM sales WHERE idHeadSales = ?",
+        [user.id]
       );
-      if (salesRow.length > 0) {
-        whereClauses.push(`o.idSales = ?`);
-        params.push(idSales);
+      const teamMemberIds = teamMembers.map(tm => tm.idSales);
+      if (teamMemberIds.length > 0) {
+        // Termasuk opportunity milik Head Sales itu sendiri
+        const allIds = [user.id, ...teamMemberIds];
+        whereClauses.push(`o.idSales IN (?`);
+        params.push(allIds);
       } else {
-        return [[], 0];
+        // Jika tidak punya tim, hanya lihat miliknya sendiri
+        whereClauses.push(`o.idSales = ?`);
+        params.push(user.id);
       }
     }
+    // Admin bisa melihat semua
+
     if (whereClauses.length > 0) {
       baseQuery += ` WHERE ${whereClauses.join(" AND ")}`;
     }
@@ -101,7 +113,7 @@ const Opti = {
   },
 
   // DETAIL: JOIN ke training & typetraining + project
-  async findById(idOpti) {
+  async findById(idOpti, user) {
     const query = `
       SELECT
         o.*,
@@ -130,7 +142,28 @@ const Opti = {
       LIMIT 1
     `;
     const [rows] = await pool.query(query, [idOpti]);
-    return rows[0];
+    const opti = rows[0];
+
+    if (!opti) return null;
+
+    // Otorisasi: Cek apakah user boleh melihat data ini
+    if (user.role === 'Sales' && opti.idSales !== user.id) {
+      return null; // Sales hanya bisa lihat miliknya
+    }
+    if (user.role === 'Head Sales') {
+      const [teamMembers] = await pool.query(
+        "SELECT idSales FROM sales WHERE idHeadSales = ?",
+        [user.id]
+      );
+      const teamMemberIds = teamMembers.map(tm => tm.idSales);
+      // Head Sales bisa lihat miliknya atau timnya
+      if (opti.idSales !== user.id && !teamMemberIds.includes(opti.idSales)) {
+        return null;
+      }
+    }
+    // Admin bisa lihat semua
+
+    return opti;
   },
 
   async update(idOpti, optiData) {

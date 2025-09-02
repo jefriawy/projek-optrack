@@ -240,8 +240,8 @@ const TrainingPage = () => {
                   <div>
                     <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
                     <div className="text-xs text-gray-500">{t.corpCustomer || "-"}</div>
-                    <div className="text-xs text-gray-500">Sales: {t.nmSales || "-"}</div>
-                    <div className="text-xs text-gray-500">Expert: {t.nmExpert || "-"}</div>
+                    <div className="text-xs text-gray-500">Sales: <span className="text-green-600 font-bold">{t.nmSales || "-"}</span></div>
+                    <div className="text-xs text-gray-500">Expert: <span className="text-purple-600 font-bold">{t.nmExpert || "-"}</span></div>
                   </div>
                   <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>
                     {badge.text}
