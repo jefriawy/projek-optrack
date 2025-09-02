@@ -10,6 +10,7 @@ const {
   getFormOptions,
   getOptiById,
   updateOpti,
+  getSalesDashboardData,
 } = require("../controllers/optiController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -30,6 +31,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Rute untuk dasbor sales
+router.get("/dashboard", authMiddleware(["Sales", "Admin", "Head Sales"]), getSalesDashboardData);
 
 // Rute untuk mendapatkan semua data Opti
 router.get("/", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptis);

@@ -1,12 +1,13 @@
 // frontend/App.js
-import React, { useContext } from "react"; // Added useContext
+import React, { useContext, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
-import { AuthProvider, AuthContext } from "./context/AuthContext"; // Added AuthContext
+import { AuthProvider, AuthContext } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import CustomerPage from "././pages/CustomerPage";
 import AddCustomerPage from "./pages/AddCustomerPage";
@@ -14,9 +15,9 @@ import UserManagementPage from "./pages/UserManagementPage";
 import CustomerDetailPage from "./pages/CustomerDetailPage";
 import OptiPage from "./pages/OptiPage";
 import SalesPage from "./pages/SalesPage";
-import HomePage from "./pages/HomePage"; // Import HomePage
+import HomePage from "./pages/HomePage";
 import Layout from "./components/Layout";
-import AdminDashboardPage from "./pages/AdminDashboardPage"; // Pastikan Anda mengimpor komponen ini
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
@@ -25,7 +26,14 @@ import ExpertPage from "./pages/ExpertPage";
 import "./App.css";
 
 const AppRoutes = () => {
-  const { user } = useContext(AuthContext); // Access user context
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user && window.location.pathname !== "/login") {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   return (
     <Routes>
