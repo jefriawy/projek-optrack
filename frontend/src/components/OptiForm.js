@@ -77,7 +77,12 @@ const getValidationSchema = (role) =>
     nmOpti: Yup.string().required("Nama Opti wajib diisi"),
     idCustomer: Yup.number().typeError("Pilih perusahaan").required("Perusahaan wajib dipilih"),
     idSumber: Yup.number().typeError("Pilih sumber").required("Sumber wajib dipilih"),
-    statOpti: Yup.string().required("Status Opti wajib diisi"),
+    statOpti: Yup.string().when([], (__, schema) => {
+      if (role !== "Sales") {
+        return schema.required("Status Opti wajib diisi");
+      }
+      return schema;
+    }),
     datePropOpti: Yup.string().required("Tanggal wajib diisi"),
     jenisOpti: Yup.string()
       .oneOf(["Training", "Project", "Outsource"])
@@ -88,10 +93,10 @@ const getValidationSchema = (role) =>
       .transform(emptyToNullNumber)
       .nullable()
       .when("jenisOpti", (jenisOpti, schema) => {
-        if (jenisOpti === "Training" && role !== "Sales") {
+        if (jenisOpti === "Training") {
           return schema.required("Expert wajib dipilih untuk Training");
         }
-        return schema; // untuk Sales -> tidak wajib
+        return schema;
       }),
 
     idTypeTraining: Yup.number()
@@ -220,8 +225,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     }
   };
 
-  const isExpertRequired =
-    formData.jenisOpti === "Training" && (user?.role || "") !== "Sales";
+  const isExpertRequired = formData.jenisOpti === "Training";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -307,7 +311,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             value={formData.idExpert || ""}
             onChange={handleChange}
             className={inputClass}
-            disabled={formData.jenisOpti !== "Training" || user?.role === "Sales"}
+            disabled={user?.role === "Sales" ? false : formData.jenisOpti !== "Training"}
           >
             <option value="">Pilih Expert</option>
             {experts.map((ex) => (
@@ -316,33 +320,29 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               </option>
             ))}
           </select>
-          {user?.role === "Sales" && (
-            <p className="text-xs text-gray-500 mt-1">
-              Hanya Head of Sales yang bisa memilih expert.
-            </p>
-          )}
           {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
         </div>
 
         {/* Status Opti */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Status Opti *</label>
-          <select
-            name="statOpti"
-            value={formData.statOpti || ""}
-            onChange={handleChange}
-            className={inputClass}
-            disabled={user?.role === "Sales"}
-          >
-            <option value="">Pilih status opportunity</option>
-            <option value="Follow Up">Follow Up</option>
-            <option value="On-Progress">On-Progress</option>
-            <option value="Success">Success</option>
-            <option value="Failed">Failed</option>
-            <option value="Just Get Info">Just Get Info</option>
-          </select>
-          {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
-        </div>
+        {user?.role !== "Sales" && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Status Opti *</label>
+            <select
+              name="statOpti"
+              value={formData.statOpti || ""}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="">Pilih status opportunity</option>
+              <option value="Follow Up">Follow Up</option>
+              <option value="On-Progress">On-Progress</option>
+              <option value="Success">Success</option>
+              <option value="Failed">Failed</option>
+              <option value="Just Get Info">Just Get Info</option>
+            </select>
+            {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
+          </div>
+        )}
 
         {/* Sumber */}
         <div>

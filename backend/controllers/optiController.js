@@ -20,13 +20,28 @@ const createOpti = async (req, res) => {
   try {
     await connection.beginTransaction();
     const b = { ...req.body };
-    const customer = await Customer.findById(Number(b.idCustomer));
-    if (!customer || !customer.idSales) {
-      await connection.rollback();
-      return res
-        .status(400)
-        .json({ error: "Customer atau Sales terkait tidak ditemukan." });
+    const { user } = req; // Ambil user dari request yang sudah di-attach oleh middleware
+
+    // 1. Tentukan idSales berdasarkan role
+    let idSalesForOpti;
+    if (user.role === 'Sales') {
+      idSalesForOpti = user.id; // Sales hanya bisa membuat untuk dirinya sendiri
+    } else {
+      // Untuk Head Sales atau Admin, mereka harus memilih customer,
+      // dan idSales diambil dari customer tersebut.
+      const customer = await Customer.findById(Number(b.idCustomer));
+      if (!customer || !customer.idSales) {
+        await connection.rollback();
+        return res
+          .status(400)
+          .json({ error: "Customer atau Sales terkait tidak ditemukan." });
+      }
+      idSalesForOpti = customer.idSales;
     }
+    
+    // 2. Tentukan statOpti berdasarkan role
+    const statOpti = user.role === 'Sales' ? 'Just Get Info' : b.statOpti;
+
 
     const idOpti = await generateUserId("Opti");
     const optiData = {
@@ -36,7 +51,7 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: b.statOpti,
+      statOpti: statOpti,
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
@@ -45,7 +60,7 @@ const createOpti = async (req, res) => {
       proposalOpti: req.file ? path.basename(req.file.filename) : null,
     };
 
-    await Opti.create(optiData, customer.idSales, connection);
+    await Opti.create(optiData, idSalesForOpti, connection);
 
     if (optiData.jenisOpti === "Training") {
       await Training.createTraining(
@@ -156,39 +171,14 @@ const getFormOptions = async (req, res) => {
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query(
-      `SELECT
-         o.*,
-         c.corpCustomer,
-         s.nmSumber,
-         sl.nmSales,
-         e.nmExpert,
-         tr.idTraining,
-         tr.idTypeTraining,
-         tr.startTraining,
-         tr.endTraining,
-         tr.placeTraining,
-         tt.nmTypeTraining,
-         p.idProject,
-         p.startProject,
-         p.endProject
-       FROM opti o
-       LEFT JOIN customer      c  ON c.idCustomer      = o.idCustomer
-       LEFT JOIN sumber        s  ON s.idSumber        = o.idSumber
-       LEFT JOIN sales         sl ON sl.idSales        = o.idSales
-       LEFT JOIN expert        e  ON e.idExpert        = o.idExpert
-       LEFT JOIN training      tr ON tr.idOpti         = o.idOpti
-       LEFT JOIN typetraining  tt ON tt.idTypeTraining = tr.idTypeTraining
-       LEFT JOIN project       p  ON p.idOpti          = o.idOpti
-       WHERE o.idOpti = ?
-       LIMIT 1`,
-      [id]
-    );
-    if (!rows || !rows.length) {
-      return res.status(404).json({ error: "Opportunity not found" });
+    const { user } = req; // Ambil user dari request
+
+    const opti = await Opti.findById(id, user);
+
+    if (!opti) {
+      return res.status(404).json({ error: "Opportunity not found or not accessible" });
     }
 
-    const opti = rows[0];
     const transformedOpti = {
       ...opti,
       proposalPath: opti.proposalOpti
@@ -208,13 +198,19 @@ const getOptiById = async (req, res) => {
  * UPDATE
  * =======================*/
 const updateOpti = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const b = { ...req.body };
+  const { id } = req.params;
+  const b = { ...req.body };
+  const { user } = req; // Ambil user dari request
 
+  try {
     const existingOpti = await Opti.findById(id);
     if (!existingOpti) {
       return res.status(404).json({ error: "Opportunity not found" });
+    }
+
+    // Otorisasi: Sales hanya bisa mengubah opportunity miliknya
+    if (user.role === 'Sales' && existingOpti.idSales !== user.id) {
+      return res.status(403).json({ error: "Forbidden: You can only update your own opportunities." });
     }
 
     const optiData = {
@@ -223,14 +219,16 @@ const updateOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: b.statOpti || existingOpti.statOpti,
+      // Sales tidak bisa mengubah status, status diambil dari data yang sudah ada
+      statOpti: user.role === 'Sales' ? existingOpti.statOpti : b.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan),
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
-      idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+      idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
       proposalOpti: existingOpti.proposalOpti,
     };
+
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
       if (existingOpti.proposalOpti) {
@@ -241,36 +239,37 @@ const updateOpti = async (req, res) => {
           "proposals",
           existingOpti.proposalOpti
         );
-        fs.unlink(oldFilePath, () => {});
+        fs.unlink(oldFilePath, () => {}); // Hapus file lama
       }
     }
 
     const affectedRows = await Opti.update(id, optiData);
     if (!affectedRows) {
-      return res.status(404).json({ error: "Opportunity not found" });
+      return res.status(404).json({ error: "Opportunity not found during update" });
     }
 
+    // Update tabel terkait jika jenisnya "Training"
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
       await pool.query(
         `UPDATE training 
-           SET idTypeTraining = COALESCE(?, idTypeTraining),
-               startTraining  = COALESCE(?, startTraining),
-               endTraining    = COALESCE(?, endTraining),
-               placeTraining  = COALESCE(?, placeTraining),
-               idExpert       = COALESCE(?, idExpert)
+           SET idTypeTraining = ?,
+               startTraining  = ?,
+               endTraining    = ?,
+               placeTraining  = ?,
+               idExpert       = ?
          WHERE idOpti = ?`,
         [
-          b.idTypeTraining ?? null,
-          toNull(b.startTraining),
-          toNull(b.endTraining),
-          toNull(b.placeTraining),
-          toNull(b.idExpert) ? Number(b.idExpert) : null,
+          b.idTypeTraining ?? existingOpti.idTypeTraining,
+          toNull(b.startTraining) ?? existingOpti.startTraining,
+          toNull(b.endTraining) ?? existingOpti.endTraining,
+          toNull(b.placeTraining) ?? existingOpti.placeTraining,
+          toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
           id,
         ]
       );
     }
 
-    res.json({ message: "Opportunity updated" });
+    res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
     console.error("Error updating opportunity:", error);
     res.status(500).json({ error: "Server error", details: error.message });
