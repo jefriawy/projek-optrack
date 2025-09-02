@@ -276,10 +276,83 @@ const updateOpti = async (req, res) => {
   }
 };
 
+/* =========================
+ * SALES DASHBOARD
+ * =======================*/
+const getSalesDashboardData = async (req, res) => {
+  const { id: idSales } = req.user; // Get sales ID from logged-in user
+
+  try {
+    // 1. Get pipeline stats (count per status)
+    const pipelineQuery = pool.query(
+      `SELECT statOpti, COUNT(*) as count 
+       FROM opti 
+       WHERE idSales = ? 
+       GROUP BY statOpti`,
+      [idSales]
+    );
+
+    // 2. Get performance over time (monthly 'Closed Won' value)
+    const performanceQuery = pool.query(
+      `SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(kebutuhan) as totalValue 
+       FROM opti 
+       WHERE idSales = ? AND statOpti = 'Succed' 
+       GROUP BY month 
+       ORDER BY month ASC`,
+      [idSales]
+    );
+
+    // 3. Get opportunity types breakdown
+    const typesQuery = pool.query(
+      `SELECT jenisOpti, COUNT(*) as count 
+       FROM opti 
+       WHERE idSales = ? 
+       GROUP BY jenisOpti`,
+      [idSales]
+    );
+
+    // 4. Get top 5 open deals
+    const topDealsQuery = pool.query(
+      `SELECT o.nmOpti, c.corpCustomer, o.kebutuhan 
+       FROM opti o
+       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
+       WHERE o.idSales = ? 
+         AND o.statOpti NOT IN ('Closed Won', 'Closed Lost') 
+       ORDER BY o.kebutuhan DESC 
+       LIMIT 5`,
+      [idSales]
+    );
+
+    // Run all queries in parallel
+    const [
+      [pipelineStats],
+      [performanceOverTime],
+      [opportunityTypes],
+      [topOpenDeals],
+    ] = await Promise.all([
+      pipelineQuery,
+      performanceQuery,
+      typesQuery,
+      topDealsQuery,
+    ]);
+
+    res.json({
+      pipelineStats,
+      performanceOverTime,
+      opportunityTypes,
+      topOpenDeals,
+    });
+  } catch (error) {
+    console.error("Error fetching sales dashboard data:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   createOpti,
   getOptis,
   getFormOptions,
   getOptiById,
   updateOpti,
+  getSalesDashboardData,
 };

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const LoginForm = () => {
-  const { login } = useContext(AuthContext);
+  const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +18,14 @@ const LoginForm = () => {
     
     try {
       await login(email, password);
-      navigate("/customer");
+      // After successful login, the 'user' object from AuthContext will be updated.
+      // We can then use it for redirection.
+      // The 'user' object here will reflect the state *after* the login function completes.
+      if (user && user.role === 'Sales') { // Check the user role
+        navigate("/"); // Redirect Sales to homepage
+      } else {
+        navigate("/customer"); // Redirect others to customer page
+      }
     } catch (err) {
       setError(err || "An error occurred. Please try again.");
     } finally {
