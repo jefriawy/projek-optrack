@@ -1,58 +1,31 @@
+// frontend/src/components/SalesPipelineChart.js
 import React from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const SalesPipelineChart = ({ data }) => {
   const options = {
-    indexAxis: 'y', // This makes the bar chart horizontal
-    elements: {
-      bar: {
-        borderWidth: 2,
-      },
-    },
+    indexAxis: 'y',
     responsive: true,
+    elements: { bar: { borderWidth: 1, maxBarThickness: 36 } },
     plugins: {
-      legend: {
-        display: false, // We can hide the legend if there's only one dataset
-      },
-      title: {
-        display: true,
-        text: 'Current Sales Pipeline by Status',
-      },
-      tooltip: {
-        enabled: false,
-      },
-      datalabels: {
-        display: false,
-      },
+      legend: { display: false },
+      title: { display: true, text: 'Current Sales Pipeline by Status' },
+      tooltip: { enabled: true },
+    },
+    scales: {
+      x: { beginAtZero: true, ticks: { precision: 0 } },
     },
   };
 
   const chartData = {
-    labels: data.map(item => item.statOpti),
+    labels: (data || []).map(i => i.statOpti),
     datasets: [
       {
         label: 'Opportunities',
-        data: data.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
+        data: (data || []).map(i => i.count),
       },
     ],
   };

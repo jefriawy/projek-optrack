@@ -24,7 +24,7 @@ const createOpti = async (req, res) => {
 
     // 1. Tentukan idSales berdasarkan role
     let idSalesForOpti;
-    if (user.role === 'Sales') {
+    if (user.role === "Sales") {
       idSalesForOpti = user.id; // Sales hanya bisa membuat untuk dirinya sendiri
     } else {
       // Untuk Head Sales atau Admin, mereka harus memilih customer,
@@ -38,10 +38,9 @@ const createOpti = async (req, res) => {
       }
       idSalesForOpti = customer.idSales;
     }
-    
-    // 2. Tentukan statOpti berdasarkan role
-    const statOpti = user.role === 'Sales' ? 'Just Get Info' : b.statOpti;
 
+    // 2. Tentukan statOpti berdasarkan role
+    const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
 
     const idOpti = await generateUserId("Opti");
     const optiData = {
@@ -176,7 +175,9 @@ const getOptiById = async (req, res) => {
     const opti = await Opti.findById(id, user);
 
     if (!opti) {
-      return res.status(404).json({ error: "Opportunity not found or not accessible" });
+      return res
+        .status(404)
+        .json({ error: "Opportunity not found or not accessible" });
     }
 
     const transformedOpti = {
@@ -203,14 +204,17 @@ const updateOpti = async (req, res) => {
   const { user } = req; // Ambil user dari request
 
   try {
-    const existingOpti = await Opti.findById(id);
+    // 🔧 FIX: kirim 'user' ke model untuk otorisasi (sebelumnya undefined → crash)
+    const existingOpti = await Opti.findById(id, user);
     if (!existingOpti) {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
     // Otorisasi: Sales hanya bisa mengubah opportunity miliknya
-    if (user.role === 'Sales' && existingOpti.idSales !== user.id) {
-      return res.status(403).json({ error: "Forbidden: You can only update your own opportunities." });
+    if (user.role === "Sales" && existingOpti.idSales !== user.id) {
+      return res.status(403).json({
+        error: "Forbidden: You can only update your own opportunities.",
+      });
     }
 
     const optiData = {
@@ -220,7 +224,7 @@ const updateOpti = async (req, res) => {
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
       // Sales tidak bisa mengubah status, status diambil dari data yang sudah ada
-      statOpti: user.role === 'Sales' ? existingOpti.statOpti : b.statOpti,
+      statOpti: user.role === "Sales" ? existingOpti.statOpti : b.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan),
@@ -239,13 +243,15 @@ const updateOpti = async (req, res) => {
           "proposals",
           existingOpti.proposalOpti
         );
-        fs.unlink(oldFilePath, () => {}); // Hapus file lama
+        fs.unlink(oldFilePath, () => {}); // Hapus file lama (ignore error)
       }
     }
 
     const affectedRows = await Opti.update(id, optiData);
     if (!affectedRows) {
-      return res.status(404).json({ error: "Opportunity not found during update" });
+      return res
+        .status(404)
+        .json({ error: "Opportunity not found during update" });
     }
 
     // Update tabel terkait jika jenisnya "Training"
@@ -272,12 +278,14 @@ const updateOpti = async (req, res) => {
     res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
     console.error("Error updating opportunity:", error);
-    res.status(500).json({ error: "Server error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Server error", details: error.message || String(error) });
   }
 };
 
 /* =========================
- * SALES DASHBOARD
+ * SALES DASHBOARD (untuk Sales individual)
  * =======================*/
 const getSalesDashboardData = async (req, res) => {
   const { id: idSales } = req.user; // Get sales ID from logged-in user

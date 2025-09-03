@@ -23,6 +23,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -40,6 +41,7 @@ app.use("/api/project", projectRoutes);
 app.use("/api/outsource", outsourceRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/dashboard", require("./routes/dashboard"));
 
 // Route to force download for proposal PDFs
 app.get('/uploads/proposals/:filename', (req, res) => {

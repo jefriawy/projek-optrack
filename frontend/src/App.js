@@ -23,6 +23,7 @@ import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import ExpertPage from "./pages/ExpertPage";
+import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import "./App.css";
 
 const AppRoutes = () => {
@@ -82,6 +83,9 @@ const AppRoutes = () => {
           </Layout>
         }
       />
+      <Route 
+      path="/head-of-sales" 
+      element={<HeadOfSalesDashboard />} />
       <Route
         path="/project"
         element={
