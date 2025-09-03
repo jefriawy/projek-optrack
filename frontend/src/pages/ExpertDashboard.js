@@ -1,111 +1,132 @@
-import React, { useEffect, useState, useContext } from "react";
-import Modal from "../components/Modal";
-import { AuthContext } from "../context/AuthContext"; // pastikan path benar
+import React, { useEffect, useState, useMemo, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import axios from 'axios';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+} from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+// Mendaftarkan semua elemen Chart.js yang akan kita gunakan
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+);
 
 const getStatusColor = (status) => {
+  // Fungsi ini digunakan untuk memberikan warna pada chart
   switch (status) {
-    case "Follow Up":
-      return "bg-blue-100 text-blue-800";
-    case "On-Progress":
-      return "bg-yellow-100 text-yellow-800";
-    case "Success":
-      return "bg-green-100 text-green-800";
-    case "Failed":
-      return "bg-red-100 text-red-800";
-    case "Just Get Info":
-      return "bg-orange-100 text-orange-800";
-    default:
-      return "bg-gray-100 text-gray-800";
+    case "Follow Up": return "rgba(54, 162, 235, 0.8)"; // Blue
+    case "On-Progress": return "rgba(255, 206, 86, 0.8)"; // Yellow
+    case "Success": return "rgba(75, 192, 192, 0.8)"; // Green
+    case "Failed": return "rgba(255, 99, 132, 0.8)"; // Red
+    case "Just Get Info": return "rgba(255, 159, 64, 0.8)"; // Orange
+    default: return "rgba(150, 150, 150, 0.8)"; // Gray
   }
 };
 
 const getDeadlineCountdown = (endDate) => {
-  if (!endDate) return "-";
+  if (!endDate) return "Tidak ada deadline";
+  
   const now = new Date();
   const end = new Date(endDate);
-  const diff = end - now;
-  if (diff <= 0) return "Expired";
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) return "Telah berakhir";
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  return `${days > 0 ? `${days} Hari` : ""} ${hours} Jam`.trim();
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  if (days > 0) return `${days} hari lagi`;
+  if (hours > 0) return `${hours} jam lagi`;
+  
+  return "Kurang dari 1 jam";
 };
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const ExpertDashboard = () => {
-  const { user } = useContext(AuthContext); // <-- ambil token/role
+  const { user } = useContext(AuthContext);
   const [totals, setTotals] = useState({ training: 0, project: 0, outsource: 0 });
-  const [history, setHistory] = useState([]);
-  const [type, setType] = useState("training");
-  const [selected, setSelected] = useState(null);
+  const [allActivities, setAllActivities] = useState([]);
+  const [error, setError] = useState(null);
+  const [viewType, setViewType] = useState('Training'); // State baru untuk dropdown
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, user]);
-
-  const safeFetchJson = async (path) => {
-    const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-    const headers = { "Accept": "application/json" };
-    if (user?.token) headers["Authorization"] = `Bearer ${user.token}`;
-    const res = await fetch(url, { headers });
-    const contentType = res.headers.get("content-type") || "";
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`HTTP ${res.status} ${res.statusText}: ${text.slice(0, 300)}`);
-    }
-    if (contentType.includes("application/json")) return res.json();
-    const text = await res.text();
-    throw new Error(`Expected JSON but got: ${text.slice(0, 300)}`);
-  };
-
-  const fetchData = async () => {
-    try {
-      const [trainingRes, projectRes, outsourceRes] = await Promise.all([
-        safeFetchJson("/api/training"),
-        safeFetchJson("/api/project"),
-        safeFetchJson("/api/outsource"),
-      ]);
-
-      setTotals({
-        training: trainingRes.length,
-        project: projectRes.length,
-        outsource: outsourceRes.length,
-      });
-
-      let data = [];
-      if (type === "training") {
-        data = trainingRes.map((t) => ({
-          id: t.idTraining,
-          name: t.nmTraining,
-          start: t.startTraining,
-          end: t.endTraining,
-          expert: t.nmExpert,
-          status: t.statOpti || "Follow Up",
-          type: "Training",
-        }));
-      } else {
-        data = projectRes.map((p) => ({
-          id: p.idProject,
-          name: p.nmProject,
-          start: p.startProject,
-          end: p.endProject,
-          expert: p.nmExpert,
-          status: p.statOpti || "Follow Up",
-          type: "Project",
-        }));
+    const fetchData = async () => {
+      if (!user?.token) return;
+      try {
+        setError(null);
+        const response = await axios.get(`${API_BASE}/api/expert/my-dashboard`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setTotals(response.data.totals);
+        setAllActivities(response.data.activities);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError(err.response?.data?.error || "Gagal memuat data dashboard.");
       }
-      setHistory(data);
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
+    };
+    fetchData();
+  }, [user]);
+
+  const statusCounts = useMemo(() => {
+    if (!allActivities || allActivities.length === 0) return {};
+    return allActivities.reduce((acc, activity) => {
+      const status = activity.status || "Unknown";
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+  }, [allActivities]);
+
+  const chartLabels = Object.keys(statusCounts);
+  const chartDataValues = Object.values(statusCounts);
+  const chartBackgroundColors = chartLabels.map(label => getStatusColor(label));
+
+  const pieChartData = {
+    labels: chartLabels,
+    datasets: [{
+      label: 'Jumlah Aktivitas',
+      data: chartDataValues,
+      backgroundColor: chartBackgroundColors,
+      borderColor: '#ffffff',
+      borderWidth: 2,
+    }],
   };
+  
+  const barChartData = {
+    labels: chartLabels,
+    datasets: [{
+      label: 'Total Aktivitas per Status',
+      data: chartDataValues,
+      backgroundColor: chartBackgroundColors,
+    }],
+  };
+  
+  // Memo diupdate untuk memfilter berdasarkan viewType dari dropdown
+  const onProgressActivities = useMemo(() => {
+    return allActivities.filter(activity => 
+      activity.type === viewType && activity.status === 'On-Progress'
+    );
+  }, [allActivities, viewType]); // Ditambahkan viewType sebagai dependency
+
 
   return (
     <div className="space-y-6">
       {/* Header + Cards */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-lg sm:text-xl font-bold">Dashboard Expert</h1>
+        <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full sm:w-auto">
           <div className="border p-4 rounded-lg text-center bg-white shadow">
             <p className="font-medium text-sm sm:text-base">Total Training</p>
@@ -122,105 +143,78 @@ const ExpertDashboard = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-          <h2 className="font-semibold text-sm sm:text-base">
-            History {type === "training" ? "Training" : "Project"}
-          </h2>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="border rounded px-2 py-1 text-sm"
-          >
-            <option value="training">Training</option>
-            <option value="project">Project</option>
-          </select>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm sm:text-base border-collapse">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">Nama</th>
-                <th className="p-2">Tanggal</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h) => (
-                <tr key={h.id} className="border-b">
-                    <td className="p-2">{h.name}</td>
-                    <td className="p-2">{h.end ? new Date(h.end).toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                  <td className="p-2">
-                    <span
-                      className={`px-2 py-1 rounded text-xs sm:text-sm ${getStatusColor(
-                        h.status
-                      )}`}
-                    >
-                      {h.status}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <button
-                      className="bg-blue-500 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm"
-                      onClick={() => setSelected(h)}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {history.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="p-4 text-center text-gray-500">
-                    No data
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg">{error}</p>}
 
-      {/* Modal Detail */}
-      <Modal
-        isOpen={!!selected}
-        onClose={() => setSelected(null)}
-        title={`${selected?.type} Details`}
-      >
-        {selected && (
-          <div className="space-y-3 text-sm sm:text-base">
-            <div>
-              <p className="font-semibold">{selected.type} Name</p>
-              <p>{selected.name}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Tanggal Deadline</p>
-              <p>{getDeadlineCountdown(selected.end)}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Nama Expert</p>
-              <p>{selected.expert || "-"}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Status</p>
-              <span
-                className={`px-2 py-1 rounded text-xs sm:text-sm ${getStatusColor(
-                  selected.status
-                )}`}
-              >
-                {selected.status}
-              </span>
-            </div>
-            <div className="pt-4">
-              <button className="bg-gray-700 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm">
-                Export to PDF
-              </button>
+      {/* Charts Visualization */}
+      {allActivities.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+            <h2 className="font-semibold text-center mb-4">Distribusi Status Aktivitas</h2>
+            <div className="h-64 md:h-80 w-full flex items-center justify-center">
+              <Pie data={pieChartData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }}/>
             </div>
           </div>
+          <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow">
+            <h2 className="font-semibold text-center mb-4">Jumlah Aktivitas per Status</h2>
+            <div className="h-64 md:h-80 w-full">
+              <Bar data={barChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }}/>
+            </div>
+          </div>
+        </div>
+      ) : (
+        !error && (
+          <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
+            <p>Belum ada aktivitas (Training/Project) yang ditugaskan kepada Anda.</p>
+          </div>
+        )
+      )}
+
+      {/* KOMPONEN BARU: Daftar Aktivitas On-Progress dengan Dropdown */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+          <h2 className="text-lg font-semibold">Aktivitas Berlangsung (On-Progress)</h2>
+          <select 
+            value={viewType} 
+            onChange={e => setViewType(e.target.value)}
+            className="border rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="Training">Training</option>
+            <option value="Project">Project</option>
+            <option value="Outsource">Outsource</option>
+          </select>
+        </div>
+        
+        {viewType === 'Outsource' ? (
+          <p className="text-center text-gray-500 py-4">Tampilan untuk Outsource belum tersedia.</p>
+        ) : onProgressActivities.length > 0 ? (
+          <div className="space-y-4">
+            {onProgressActivities.map((activity) => {
+              // Tentukan warna kartu berdasarkan tipe
+              const cardColor = activity.type === 'Training' 
+                ? "border-yellow-200 bg-yellow-50" 
+                : "border-blue-200 bg-blue-50";
+              const textColor = activity.type === 'Training' 
+                ? "text-yellow-800"
+                : "text-blue-800";
+
+              return (
+                <div key={activity.id} className={`border ${cardColor} p-4 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center`}>
+                  <div>
+                    <p className="font-bold text-gray-800">{activity.name}</p>
+                    <p className="text-sm text-gray-600">Customer: <span className="font-medium">{activity.customerName || 'N/A'}</span></p>
+                  </div>
+                  <div className="mt-2 sm:mt-0 text-left sm:text-right">
+                    <p className={`text-sm font-semibold ${textColor}`}>Deadline</p>
+                    <p className="text-sm text-gray-700">{getDeadlineCountdown(activity.endDate)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-center text-gray-500 py-4">Tidak ada {viewType} yang sedang berlangsung saat ini.</p>
         )}
-      </Modal>
+      </div>
     </div>
   );
 };
