@@ -57,6 +57,7 @@ const createOpti = async (req, res) => {
       jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       proposalOpti: req.file ? path.basename(req.file.filename) : null,
+      valOpti: b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
     };
 
     await Opti.create(optiData, idSalesForOpti, connection);
@@ -180,8 +181,13 @@ const getOptiById = async (req, res) => {
         .json({ error: "Opportunity not found or not accessible" });
     }
 
+    // Pastikan field training selalu ada (meskipun null)
     const transformedOpti = {
       ...opti,
+      idTypeTraining: opti.idTypeTraining ?? null,
+      startTraining: opti.startTraining ?? null,
+      endTraining: opti.endTraining ?? null,
+      placeTraining: opti.placeTraining ?? null,
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
@@ -231,6 +237,7 @@ const updateOpti = async (req, res) => {
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
       proposalOpti: existingOpti.proposalOpti,
+      valOpti: b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : existingOpti.valOpti,
     };
 
     if (req.file) {

@@ -85,9 +85,21 @@ const OptiPage = () => {
     setFormModalOpen(true);
   };
 
-  const handleEditOpti = (opti) => {
-    setEditingOpti(opti);
-    setFormModalOpen(true);
+  const handleEditOpti = async (opti) => {
+    // Ambil detail opti dari API supaya field training ikut
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/api/opti/${opti.idOpti}`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setEditingOpti(response.data);
+      setFormModalOpen(true);
+    } catch (err) {
+      console.error("Error fetching opti detail for edit:", err);
+      alert("Gagal mengambil data detail OPTI untuk edit.");
+    }
   };
 
   // ===== FUNGSI INI DIUBAH TOTAL =====

@@ -51,16 +51,24 @@ const normalizeDateOnly = (val) => {
 };
 const normalizeInitialData = (data) => {
   if (!data) return {};
-  return {
+  // Debug log: lihat data awal dari backend
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] initialData:", data);
+  const norm = {
     ...data,
     datePropOpti: normalizeDateOnly(data.datePropOpti),
-    startTraining: normalizeMySQLDateTimeToLocal(data.startTraining),
-    endTraining: normalizeMySQLDateTimeToLocal(data.endTraining),
+    startTraining: data.startTraining ? normalizeMySQLDateTimeToLocal(data.startTraining) : "",
+    endTraining: data.endTraining ? normalizeMySQLDateTimeToLocal(data.endTraining) : "",
     idTypeTraining:
       data.idTypeTraining === null || data.idTypeTraining === undefined
         ? ""
-        : Number(data.idTypeTraining),
+        : String(data.idTypeTraining),
+    placeTraining: data.placeTraining || "",
   };
+  // Debug log: hasil normalisasi
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] normalized initialData:", norm);
+  return norm;
 };
 
 /* =========================
@@ -113,6 +121,9 @@ const getValidationSchema = (role) =>
     emailOpti: Yup.string().email("Email tidak valid").nullable(),
     mobileOpti: Yup.string().nullable(),
     kebutuhan: Yup.string().nullable(),
+    valOpti: Yup.number()
+      .typeError("Value harus berupa angka")
+      .nullable(),
   });
 
 /* =========================
@@ -133,13 +144,17 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     kebutuhan: "",
     jenisOpti: "",
     idExpert: "",
-    idTypeTraining: "",
-    startTraining: "",
-    endTraining: "",
-    placeTraining: "",
+  idTypeTraining: "",
+  startTraining: "",
+  endTraining: "",
+  placeTraining: "",
+  valOpti: "",
   };
 
   const seed = normalizeInitialData(initialData);
+  // Debug log: seed yang dipakai untuk formData
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] seed for formData:", seed);
   const [formData, setFormData] = useState({
     ...baseState,
     ...seed,
@@ -172,6 +187,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
   useEffect(() => {
     const safe = normalizeInitialData(initialData);
+    // Debug log: setiap kali initialData berubah, update formData
+    // eslint-disable-next-line no-console
+    console.log("[OptiForm] useEffect initialData changed, safe:", safe);
     setFormData((prev) => ({
       ...baseState,
       ...safe,
@@ -411,6 +429,8 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
           {errors.idCustomer && <p className="text-red-600 text-sm">{errors.idCustomer}</p>}
         </div>
 
+
+
         {/* Deskripsi */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Deskripsi</label>
@@ -426,61 +446,86 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
         {/* ====== Khusus Training ====== */}
         {formData.jenisOpti === "Training" && (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-1">Tipe Training *</label>
-              <select
-                name="idTypeTraining"
-                value={formData.idTypeTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              >
-                <option value="">Pilih tipe training</option>
-                {TYPE_TRAININGS.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-              {errors.idTypeTraining && (
-                <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>
-              )}
+          <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              {/* Tipe Training */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Tipe Training *</label>
+                <select
+                  name="idTypeTraining"
+                  value={formData.idTypeTraining || ""}
+                  defaultValue={formData.idTypeTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="">Pilih tipe training</option>
+                  {TYPE_TRAININGS.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.idTypeTraining && (
+                  <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>
+                )}
+              </div>
+              {/* Value */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Value</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
+                  <input
+                    type="number"
+                    name="valOpti"
+                    value={formData.valOpti || ""}
+                    onChange={handleChange}
+                    placeholder="Value"
+                    className={inputClass + ' pl-12'}
+                  />
+                </div>
+                {errors.valOpti && <p className="text-red-600 text-sm">{errors.valOpti}</p>}
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Mulai Training</label>
-              <input
-                type="datetime-local"
-                name="startTraining"
-                value={formData.startTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
+              {/* Mulai Training */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Mulai Training</label>
+                <input
+                  type="datetime-local"
+                  name="startTraining"
+                  value={formData.startTraining || ""}
+                  defaultValue={formData.startTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              {/* Selesai Training */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Selesai Training</label>
+                <input
+                  type="datetime-local"
+                  name="endTraining"
+                  value={formData.endTraining || ""}
+                  defaultValue={formData.endTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Selesai Training</label>
-              <input
-                type="datetime-local"
-                name="endTraining"
-                value={formData.endTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="md:col-span-2">
+            {/* Tempat/Platform tetap di bawah */}
+            <div className="mt-2">
               <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
               <input
                 type="text"
                 name="placeTraining"
                 value={formData.placeTraining || ""}
+                defaultValue={formData.placeTraining || ""}
                 onChange={handleChange}
                 placeholder="Online / alamat / venue"
                 className={inputClass}
               />
             </div>
-          </>
+          </div>
         )}
         {/* ====== END khusus Training ====== */}
       </div>

@@ -18,18 +18,19 @@ const Opti = {
       jenisOpti,
       idExpert = null,
       proposalOpti = null,
+      valOpti = null,
     } = optiData;
 
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti,
+      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
     ];
 
     await connection.query(query, params);
@@ -135,18 +136,19 @@ const Opti = {
       jenisOpti,
       idExpert,
       proposalOpti,
+      valOpti = null,
     } = optiData;
 
     const [result] = await pool.query(
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
-         jenisOpti = ?, idExpert = ?, proposalOpti = ?
+         jenisOpti = ?, idExpert = ?, proposalOpti = ?, valOpti = ?
        WHERE idOpti = ?`,
       [
         nmOpti, contactOpti, mobileOpti, emailOpti, statOpti,
         datePropOpti, idCustomer, idSumber, kebutuhan,
-        jenisOpti, idExpert, proposalOpti, idOpti,
+        jenisOpti, idExpert, proposalOpti, valOpti, idOpti,
       ]
     );
 

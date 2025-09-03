@@ -48,6 +48,7 @@ async function getTrainingById(idTraining) {
         tt.nmTypeTraining,
         o.statOpti,
         o.proposalOpti,
+        o.kebutuhan,
         c.corpCustomer
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining

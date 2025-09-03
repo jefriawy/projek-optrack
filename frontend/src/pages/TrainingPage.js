@@ -335,9 +335,9 @@ const TrainingPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Catatan</div>
+                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
                 <div className="text-sm text-gray-700 leading-6">
-                  {detail.descTraining || "Belum ada catatan."}
+                  {detail.kebutuhan || "Belum ada deskripsi."}
                 </div>
               </div>
               <div className="rounded-lg border p-4">
