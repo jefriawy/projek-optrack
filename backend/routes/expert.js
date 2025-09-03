@@ -1,10 +1,11 @@
+// backend/routes/expert.js
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const { getExperts, createExpertUser } = require("../controllers/expertController");
+const { getExperts, createExpertUser, getMyDashboardData } = require("../controllers/expertController");
 const { body, validationResult } = require("express-validator");
 
-// Middleware untuk validasi input
+// Middleware untuk validasi input (tidak berubah)
 const validateExpertInput = [
   body("nmExpert", "Expert name is required").notEmpty(),
   body("emailExpert", "Please include a valid email").isEmail(),
@@ -18,8 +19,10 @@ const validateExpertInput = [
   },
 ];
 
-router.get("/", authMiddleware(["Expert", "Admin", "Head Sales", "Sales"]), getExperts);
-
+// Route yang sudah ada (tidak berubah)
+router.get("/", authMiddleware(["Admin"]), getExperts);
 router.post("/", authMiddleware(["Admin"]), validateExpertInput, createExpertUser);
+router.get("/my-dashboard", authMiddleware(["Expert"]), getMyDashboardData);
+
 
 module.exports = router;

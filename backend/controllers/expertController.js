@@ -1,7 +1,13 @@
 const Expert = require("../models/expert");
 const bcrypt = require("bcrypt");
 const { generateUserId } = require("../utils/idGenerator");
+const pool = require('../config/database'); // Pastikan path ini benar
 
+/**
+ * @desc    Mengambil semua data expert
+ * @route   GET /api/expert
+ * @access  Private (Admin)
+ */
 const getExperts = async (_req, res) => {
   try {
     const experts = await Expert.findAll();
@@ -12,30 +18,26 @@ const getExperts = async (_req, res) => {
   }
 };
 
+/**
+ * @desc    Membuat user expert baru
+ * @route   POST /api/expert
+ * @access  Private (Admin)
+ */
 const createExpertUser = async (req, res) => {
-  console.log("Attempting to create expert with data:", req.body); // <-- Added for debugging
-
+  console.log("Attempting to create expert with data:", req.body);
   const { nmExpert, emailExpert, password, mobileExpert, idSkill, statExpert, Row } = req.body;
 
-  // Validasi input
   if (!nmExpert || !emailExpert || !password) {
     return res.status(400).json({ error: "Name, email, and password are required." });
   }
 
   try {
-    // Cek email duplikat
     const existingUser = await Expert.findByEmail(emailExpert);
     if (existingUser) {
       return res.status(400).json({ error: "Email already in use." });
     }
-
-    // Generate new user ID
     const newExpertId = await generateUserId('Expert');
-
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Buat user baru
     await Expert.create({
       idExpert: newExpertId,
       nmExpert,
@@ -46,14 +48,85 @@ const createExpertUser = async (req, res) => {
       statExpert,
       Row,
     });
-
     res.status(201).json({ message: "Expert user created successfully", idExpert: newExpertId });
-
   } catch (error) {
-    console.error("Error creating expert user:", error.message); // <-- More specific logging
-    console.error("Full error object:", error); // <-- Added for debugging
+    console.error("Error creating expert user:", error.message);
     res.status(500).json({ error: "Server error while creating expert user.", details: error.sqlMessage });
   }
 };
 
-module.exports = { getExperts, createExpertUser };
+/**
+ * @desc    Mengambil data dashboard untuk expert yang sedang login
+ * @route   GET /api/expert/my-dashboard
+ * @access  Private (Expert)
+ */
+const getMyDashboardData = async (req, res) => {
+  // req.user.id didapat dari middleware otentikasi setelah token diverifikasi
+  const idExpert = req.user.id; 
+
+  if (!idExpert) {
+    return res.status(400).json({ error: 'Expert ID tidak ditemukan dari token.' });
+  }
+
+  let connection;
+  try {
+    connection = await pool.getConnection();
+
+    // 1. Ambil total training dan project yang ditugaskan ke expert ini
+    const [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training WHERE idExpert = ?', [idExpert]);
+    const [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project WHERE idExpert = ?', [idExpert]);
+    
+    // Outsource dihitung semua karena di skema database tidak ada kolom idExpert
+    const [outsourceCount] = await connection.query('SELECT COUNT(*) as count FROM outsource');
+
+    const totals = {
+      training: trainingCount[0].count,
+      project: projectCount[0].count,
+      outsource: outsourceCount[0].count,
+    };
+
+    // 2. Ambil daftar aktivitas (training & project) beserta detailnya
+    const [activities] = await connection.query(`
+      SELECT 
+        'Training' as type, 
+        t.idTraining as id,
+        t.nmTraining as name, 
+        o.statOpti as status, 
+        t.endTraining as endDate, 
+        c.nmCustomer as customerName
+      FROM training t
+      LEFT JOIN opti o ON t.idOpti = o.idOpti
+      LEFT JOIN customer c ON t.idCustomer = c.idCustomer
+      WHERE t.idExpert = ?
+      
+      UNION ALL
+      
+      SELECT 
+        'Project' as type, 
+        p.idProject as id,
+        p.nmProject as name, 
+        o.statOpti as status, 
+        p.endProject as endDate, 
+        c.nmCustomer as customerName
+      FROM project p
+      LEFT JOIN opti o ON p.idOpti = o.idOpti
+      LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+      WHERE p.idExpert = ?
+    `, [idExpert, idExpert]);
+    
+    // Kirim semua data dalam satu respons
+    res.json({ totals, activities });
+
+  } catch (error) {
+    console.error("Error fetching expert dashboard data:", error);
+    res.status(500).json({ error: "Terjadi kesalahan pada server." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+module.exports = { 
+  getExperts, 
+  createExpertUser, 
+  getMyDashboardData 
+};
