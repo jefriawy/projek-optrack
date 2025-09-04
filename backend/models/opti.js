@@ -20,19 +20,29 @@ const Opti = {
       proposalOpti = null,
       valOpti = null,
     } = optiData;
-
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
          idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
     const params = [
-      idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
+      idOpti,
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      idSales,
+      jenisOpti,
+      idExpert,
+      proposalOpti,
+      valOpti,
     ];
-
     await connection.query(query, params);
     return { idOpti };
   },
@@ -45,7 +55,6 @@ const Opti = {
       LEFT JOIN expert e   ON o.idExpert   = e.idExpert
       LEFT JOIN sales  sl  ON o.idSales    = sl.idSales
     `;
-
     const params = [];
     const whereClauses = [];
 
@@ -54,13 +63,10 @@ const Opti = {
       params.push(`%${searchTerm}%`);
     }
 
-    // Filter berdasarkan role
     if (user && user.role === "Sales") {
-      // Sales hanya lihat miliknya
       whereClauses.push(`o.idSales = ?`);
       params.push(user.id);
     }
-    // Head Sales & Admin: akses penuh (tanpa filter tambahan)
 
     if (whereClauses.length > 0) {
       baseQuery += ` WHERE ${whereClauses.join(" AND ")}`;
@@ -84,20 +90,17 @@ const Opti = {
   },
 
   async findSumberOptions() {
-    const [rows] = await pool.query(
-      "SELECT idSumber, nmSumber FROM sumber"
-    );
+    const [rows] = await pool.query("SELECT idSumber, nmSumber FROM sumber");
     return rows;
   },
 
-  // DETAIL: JOIN ke training & typetraining + project
   async findById(idOpti, user) {
     const query = `
       SELECT
         o.*, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales,
         t.idTraining, t.idTypeTraining, t.startTraining, t.endTraining, t.placeTraining,
         tt.nmTypeTraining,
-        p.idProject, p.startProject, p.endProject
+        p.idProject, p.startProject, p.endProject, p.idTypeProject
       FROM opti o
       LEFT JOIN customer     c  ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber       s  ON o.idSumber   = s.idSumber
@@ -114,7 +117,6 @@ const Opti = {
     const opti = rows[0];
     if (!opti) return null;
 
-    // Otorisasi: Sales hanya boleh lihat miliknya; Head Sales & Admin boleh lihat semua
     if (user && user.role === "Sales" && opti.idSales !== user.id) {
       return null;
     }
@@ -122,7 +124,9 @@ const Opti = {
     return opti;
   },
 
-  async update(idOpti, optiData) {
+  // FUNGSI INI DIMODIFIKASI
+  async update(idOpti, optiData, connection = pool) {
+    // Terima 'connection'
     const {
       nmOpti,
       contactOpti,
@@ -139,21 +143,32 @@ const Opti = {
       valOpti = null,
     } = optiData;
 
-    const [result] = await pool.query(
+    // Gunakan 'connection'
+    const [result] = await connection.query(
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
          jenisOpti = ?, idExpert = ?, proposalOpti = ?, valOpti = ?
        WHERE idOpti = ?`,
       [
-        nmOpti, contactOpti, mobileOpti, emailOpti, statOpti,
-        datePropOpti, idCustomer, idSumber, kebutuhan,
-        jenisOpti, idExpert, proposalOpti, valOpti, idOpti,
+        nmOpti,
+        contactOpti,
+        mobileOpti,
+        emailOpti,
+        statOpti,
+        datePropOpti,
+        idCustomer,
+        idSumber,
+        kebutuhan,
+        jenisOpti,
+        idExpert,
+        proposalOpti,
+        valOpti,
+        idOpti,
       ]
     );
-
     return result.affectedRows;
-    },
+  },
 };
 
 module.exports = Opti;

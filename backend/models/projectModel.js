@@ -1,22 +1,68 @@
+// backend/models/projectModel.js
+
 const db = require("../config/database");
 
-// Get all projects
+// Query dasar yang lengkap dengan semua JOIN yang dibutuhkan
+const BASE_QUERY = `
+  SELECT 
+    p.*, 
+    tp.nmTypeProject,
+    o.nmOpti, 
+    o.statOpti, 
+    s.nmSales, 
+    e.nmExpert, 
+    c.corpCustomer,
+    o.kebutuhan,
+    o.proposalOpti
+  FROM project p
+  LEFT JOIN typeproject tp ON tp.idTypeProject = p.idTypeProject
+  LEFT JOIN opti o ON o.idOpti = p.idOpti
+  LEFT JOIN sales s ON o.idSales = s.idSales
+  LEFT JOIN expert e ON e.idExpert = p.idExpert
+  LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+`;
+
+// Get all projects (untuk Admin)
 const getAllProjects = async () => {
-  const [rows] = await db.query("SELECT * FROM project");
+  const [rows] = await db.query(`${BASE_QUERY} ORDER BY p.startProject DESC`);
   return rows;
 };
 
-// Get project by ID
+// Get project by ID (sekarang menggunakan BASE_QUERY)
 const getProjectById = async (id) => {
-  const [rows] = await db.query("SELECT * FROM project WHERE idProject = ?", [id]);
+  const [rows] = await db.query(`${BASE_QUERY} WHERE p.idProject = ?`, [id]);
   return rows[0];
 };
 
 // Create project
-async function createProject(data) {
-  const { idProject, nmProject /*, ... */ } = data;
-  const query = `INSERT INTO project (idProject, nmProject /*, ... */) VALUES (?, ?)`;
-  await pool.query(query, [idProject, nmProject]);
+async function createProject(data, connection = db) {
+  const {
+    idProject,
+    nmProject,
+    idTypeProject,
+    startProject,
+    endProject,
+    idCustomer,
+    idOpti,
+    idSales,
+    idExpert,
+    placeProject,
+  } = data;
+  const query = `INSERT INTO project 
+    (idProject, nmProject, idTypeProject, startProject, endProject, idCustomer, idOpti, idSales, idExpert, placeProject) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  await connection.query(query, [
+    idProject,
+    nmProject,
+    idTypeProject,
+    startProject,
+    endProject,
+    idCustomer,
+    idOpti,
+    idSales,
+    idExpert,
+    placeProject,
+  ]);
   return idProject;
 }
 
@@ -24,28 +70,56 @@ async function createProject(data) {
 const updateProject = async (id, data) => {
   const {
     nmProject,
+    idTypeProject,
     startProject,
     endProject,
     idExpert,
+    placeProject,
     idCustomer,
-    descriptionProject,
   } = data;
-
   const [result] = await db.query(
     `UPDATE project SET 
-     nmProject=?, startProject=?, endProject=?, idExpert=?, idCustomer=?, descriptionProject=?
+     nmProject=?, idTypeProject=?, startProject=?, endProject=?, idExpert=?, placeProject=?, idCustomer=?
      WHERE idProject=?`,
-    [nmProject, startProject, endProject, idExpert, idCustomer, descriptionProject, id]
+    [
+      nmProject,
+      idTypeProject,
+      startProject,
+      endProject,
+      idExpert,
+      placeProject,
+      idCustomer,
+      id,
+    ]
   );
-
   return result.affectedRows;
 };
 
 // Delete project
 const deleteProject = async (id) => {
-  const [result] = await db.query("DELETE FROM project WHERE idProject = ?", [id]);
+  const [result] = await db.query("DELETE FROM project WHERE idProject = ?", [
+    id,
+  ]);
   return result.affectedRows;
 };
+
+// Ambil project berdasarkan idExpert (sekarang menggunakan BASE_QUERY)
+async function getByExpertId(expertId) {
+  const [rows] = await db.query(
+    `${BASE_QUERY} WHERE p.idExpert = ? ORDER BY p.startProject DESC`,
+    [expertId]
+  );
+  return rows;
+}
+
+// Ambil project berdasarkan idSales (sekarang menggunakan BASE_QUERY)
+async function getBySalesId(salesId) {
+  const [rows] = await db.query(
+    `${BASE_QUERY} WHERE o.idSales = ? ORDER BY p.startProject DESC`,
+    [salesId]
+  );
+  return rows;
+}
 
 module.exports = {
   getAllProjects,
@@ -53,4 +127,6 @@ module.exports = {
   createProject,
   updateProject,
   deleteProject,
+  getByExpertId,
+  getBySalesId,
 };
