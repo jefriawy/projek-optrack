@@ -58,9 +58,7 @@ const createOpti = async (req, res) => {
 
     await Opti.create(optiData, idSalesForOpti, connection);
 
-    // LOGIKA UNTUK MEMBUAT TRAINING/PROJECT DIHAPUS DARI SINI
-    // Pembuatan record akan ditangani oleh fungsi updateOpti saat status menjadi 'Success'
-
+    // NOTE: Training/Project dibuat saat update => Success
     await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
@@ -80,7 +78,7 @@ const updateOpti = async (req, res) => {
   const b = { ...req.body };
   const { user } = req;
 
-  const connection = await pool.getConnection(); // Mulai transaksi
+  const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
@@ -94,9 +92,7 @@ const updateOpti = async (req, res) => {
       await connection.rollback();
       return res
         .status(403)
-        .json({
-          error: "Forbidden: You can only update your own opportunities.",
-        });
+        .json({ error: "Forbidden: You can only update your own opportunities." });
     }
 
     const optiData = {
@@ -132,9 +128,9 @@ const updateOpti = async (req, res) => {
       }
     }
 
-    await Opti.update(id, optiData, connection); // Kirim connection ke model
+    await Opti.update(id, optiData, connection);
 
-    // ===== LOGIKA BARU: BUAT TRAINING/PROJECT SAAT STATUS MENJADI SUCCESS =====
+    // ===== Buat Training/Project saat status berubah menjadi Success =====
     if (b.statOpti === "Success" && existingOpti.statOpti !== "Success") {
       const idOpti = id;
 
@@ -144,7 +140,6 @@ const updateOpti = async (req, res) => {
           [idOpti]
         );
         if (trainings.length === 0) {
-          // Hanya buat jika belum ada
           await Training.createTraining(
             {
               idTraining: await generateUserId("Training"),
@@ -171,21 +166,21 @@ const updateOpti = async (req, res) => {
           [idOpti]
         );
         if (projects.length === 0) {
-          // Hanya buat jika belum ada
           await Project.createProject(
             {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              idTypeProject: b.idTypeTraining
-                ? Number(b.idTypeTraining)
+              // ✅ gunakan field Project (bukan training)
+              idTypeProject: b.idTypeProject
+                ? Number(b.idTypeProject)
                 : existingOpti.idTypeProject || 1,
               startProject:
-                toNull(b.startTraining) || toNull(existingOpti.startProject),
+                toNull(b.startProject) || toNull(existingOpti.startProject),
               endProject:
-                toNull(b.endTraining) || toNull(existingOpti.endProject),
+                toNull(b.endProject) || toNull(existingOpti.endProject),
               placeProject:
-                toNull(b.placeTraining) || toNull(existingOpti.placeProject),
+                toNull(b.placeProject) || toNull(existingOpti.placeProject),
               idCustomer: optiData.idCustomer,
               idSales: existingOpti.idSales,
               idExpert: optiData.idExpert,
@@ -196,10 +191,12 @@ const updateOpti = async (req, res) => {
       }
     }
 
-    // Logika untuk update detail training/project yang sudah ada
+    // Optional: sinkron detail training jika ada (tetap seperti milikmu)
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
       await connection.query(
-        `UPDATE training SET idTypeTraining = ?, startTraining  = ?, endTraining = ?, placeTraining  = ?, idExpert = ? WHERE idOpti = ?`,
+        `UPDATE training
+           SET idTypeTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, idExpert = ?
+         WHERE idOpti = ?`,
         [
           b.idTypeTraining ?? existingOpti.idTypeTraining,
           toNull(b.startTraining) ?? existingOpti.startTraining,
@@ -209,22 +206,21 @@ const updateOpti = async (req, res) => {
           id,
         ]
       );
-    } // Bisa ditambahkan 'else if' untuk update project jika diperlukan
+    }
 
-    await connection.commit(); // Commit transaksi
+    await connection.commit();
     res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
-    await connection.rollback(); // Rollback jika ada error
+    await connection.rollback();
     console.error("Error updating opportunity:", error);
     res
       .status(500)
       .json({ error: "Server error", details: error.message || String(error) });
   } finally {
-    connection.release(); // Selalu lepaskan koneksi
+    connection.release();
   }
 };
 
-// ... (sisa kode controller seperti getOptis, getFormOptions, dll. tetap sama) ...
 /* =========================
  * LIST (paginated)
  * =======================*/
@@ -260,6 +256,7 @@ const getOptis = async (req, res) => {
     res.status(500).json({ error: error.sqlMessage || "Server error" });
   }
 };
+
 /* =========================
  * FORM OPTIONS (customers/sumber/experts)
  * =======================*/
@@ -296,13 +293,14 @@ const getFormOptions = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 /* =========================
  * DETAIL (JOIN lengkap)
  * =======================*/
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user } = req; // Ambil user dari request
+    const { user } = req;
 
     const opti = await Opti.findById(id, user);
     if (!opti) {
@@ -329,6 +327,7 @@ const getOptiById = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 /* =========================
  * SALES DASHBOARD
  * =======================*/
@@ -341,7 +340,11 @@ const getSalesDashboardData = async (req, res) => {
       [idSales]
     );
     const performanceQuery = pool.query(
-      `SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(kebutuhan) as totalValue FROM opti WHERE idSales = ? AND statOpti = 'Succed' GROUP BY month ORDER BY month ASC`,
+      `SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(kebutuhan) as totalValue
+         FROM opti
+        WHERE idSales = ? AND statOpti = 'Succed'
+        GROUP BY month
+        ORDER BY month ASC`,
       [idSales]
     );
     const typesQuery = pool.query(
@@ -349,7 +352,12 @@ const getSalesDashboardData = async (req, res) => {
       [idSales]
     );
     const topDealsQuery = pool.query(
-      `SELECT o.nmOpti, c.corpCustomer, o.kebutuhan FROM opti o LEFT JOIN customer c ON o.idCustomer = c.idCustomer WHERE o.idSales = ? AND o.statOpti NOT IN ('Closed Won', 'Closed Lost') ORDER BY o.kebutuhan DESC LIMIT 5`,
+      `SELECT o.nmOpti, c.corpCustomer, o.kebutuhan
+         FROM opti o
+         LEFT JOIN customer c ON o.idCustomer = c.idCustomer
+        WHERE o.idSales = ? AND o.statOpti NOT IN ('Closed Won', 'Closed Lost')
+        ORDER BY o.kebutuhan DESC
+        LIMIT 5`,
       [idSales]
     );
 

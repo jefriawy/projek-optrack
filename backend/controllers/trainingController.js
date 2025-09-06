@@ -1,9 +1,9 @@
 // backend/controllers/trainingController.js
 const Training = require("../models/trainingModel");
 const { generateUserId } = require("../utils/idGenerator");
+const pool = require("../config/database");
 
 // GET /api/training  (Admin/Expert)
-// Mengambil semua training (sudah ada)
 const getTraining = async (_req, res) => {
   try {
     const data = await Training.getAllTraining();
@@ -14,8 +14,7 @@ const getTraining = async (_req, res) => {
   }
 };
 
-// GET /api/training/:id  (Admin/Expert)
-// Ambil training by id (sudah ada)
+// GET /api/training/:id  (Admin/Expert/Sales/Head Sales)
 const getTrainingById = async (req, res) => {
   try {
     const training = await Training.getTrainingById(req.params.id);
@@ -29,11 +28,9 @@ const getTrainingById = async (req, res) => {
   }
 };
 
-// POST /api/training  (Admin)
-// Buat training manual (sudah ada)
+// POST /api/training  (Admin) — buat manual
 const createTraining = async (req, res) => {
   try {
-    // generate idTraining and attach to payload
     const payload = { ...req.body, idTraining: await generateUserId("Training") };
     const id = await Training.createTraining(payload);
     res.status(201).json({ message: "Training created", id });
@@ -44,7 +41,6 @@ const createTraining = async (req, res) => {
 };
 
 // PUT /api/training/:id  (Admin)
-// Update training (sudah ada)
 const updateTraining = async (req, res) => {
   try {
     const affectedRows = await Training.updateTraining(req.params.id, req.body);
@@ -59,7 +55,6 @@ const updateTraining = async (req, res) => {
 };
 
 // DELETE /api/training/:id  (Admin)
-// Hapus training (sudah ada)
 const deleteTraining = async (req, res) => {
   try {
     const affectedRows = await Training.deleteTraining(req.params.id);
@@ -73,28 +68,72 @@ const deleteTraining = async (req, res) => {
   }
 };
 
-// ➕ NEW: GET /api/training/mine  (Expert or Sales)
-// daftar training milik expert yang sedang login (juga untuk Sales: training terkait sales)
+// GET /api/training/mine (Expert/Sales/Head Sales)
+// ⚠️ Hanya kirim training yang parent OPTI-nya sudah Success
 const getMyTrainings = async (req, res) => {
   try {
     const { role, id } = req.user;
-    let data;
+
+    let sql, params;
     if (role === "Expert") {
-      data = await Training.getByExpertId(id);
+      sql = `
+        SELECT 
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+        WHERE t.idExpert = ?
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+      `;
+      params = [id];
     } else if (role === "Sales") {
-      // ambil training yg terkait dengan sales (join via opti.idSales)
-      data = await Training.getBySalesId(id);
+      sql = `
+        SELECT 
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+        WHERE o.idSales = ?
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+      `;
+      params = [id];
     } else if (role === "Head Sales") {
-      data = await Training.getAllTraining();
+      sql = `
+        SELECT 
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+      `;
+      params = [];
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
     }
-    res.json(data);
+
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
   } catch (err) {
     console.error("Error fetching training for user:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 module.exports = {
   getTraining,
@@ -102,5 +141,5 @@ module.exports = {
   createTraining,
   updateTraining,
   deleteTraining,
-  getMyTrainings, // export baru
+  getMyTrainings,
 };

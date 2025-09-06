@@ -1,9 +1,9 @@
 // backend/controllers/projectController.js
-
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
+const pool = require("../config/database");
 
-const getProjects = async (req, res) => {
+const getProjects = async (_req, res) => {
   try {
     const data = await Project.getAllProjects();
     res.json(data);
@@ -59,31 +59,73 @@ const deleteProject = async (req, res) => {
   }
 };
 
-// ====================== FUNGSI INI DIPERBARUI ======================
+// GET /api/project/mine (Expert/Sales/Head Sales)
+// ⚠️ Hanya kirim project yang parent OPTI-nya sudah Success
 const getMyProjects = async (req, res) => {
   try {
     const { role, id } = req.user;
-    let data;
+
+    let sql, params;
     if (role === "Expert") {
-      data = await Project.getByExpertId(id);
+      sql = `
+        SELECT 
+          p.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM project p
+        JOIN opti o   ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
+        WHERE p.idExpert = ?
+        ORDER BY COALESCE(p.endProject, p.startProject) DESC
+      `;
+      params = [id];
     } else if (role === "Sales") {
-      // Hanya untuk Sales
-      data = await Project.getBySalesId(id);
+      sql = `
+        SELECT 
+          p.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM project p
+        JOIN opti o   ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
+        WHERE o.idSales = ?
+        ORDER BY COALESCE(p.endProject, p.startProject) DESC
+      `;
+      params = [id];
     } else if (role === "Head Sales") {
-      // Logika terpisah untuk Head of Sales
-      data = await Project.getAllProjects(); // Ambil semua data proyek
+      sql = `
+        SELECT 
+          p.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM project p
+        JOIN opti o   ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
+        LEFT JOIN sales s    ON s.idSales    = o.idSales
+        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
+        ORDER BY COALESCE(p.endProject, p.startProject) DESC
+      `;
+      params = [];
     } else {
       return res
         .status(403)
         .json({ error: "Unauthorized access for this route" });
     }
-    res.json(data);
+
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
   } catch (err) {
     console.error("Error fetching projects for user:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// ====================== AKHIR PERUBAHAN ======================
 
 module.exports = {
   getProjects,
