@@ -1,19 +1,14 @@
 // src/pages/TrainingPage.js
-import React, { useEffect, useMemo, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== Helpers (date-based fallback) ===== */
-const countdown = (end) => {
-  if (!end) return "-";
-  const t = new Date(end).getTime();
-  if (isNaN(t)) return "-";
-  const diff = t - Date.now();
-  if (diff <= 0) return "Expired";
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-  return `${d} Hari (Sisa Waktu)`;
+/* ===== Helpers tanggal & status ===== */
+const safeTime = (v) => {
+  const t = new Date(v).getTime();
+  return isNaN(t) ? null : t;
 };
 const fmtDateTime = (v) =>
   v
@@ -24,10 +19,44 @@ const fmtDate = (v) =>
     ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
     : "-";
 const diffDays = (start, end) => {
-  if (!start || !end) return null;
-  const ms = new Date(end) - new Date(start);
-  if (isNaN(ms)) return null;
-  return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (!s || !e) return null;
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
+};
+
+// format sisa waktu dalam jam:menit:detik, dgn total jam (bukan hari)
+const formatRemaining = (ms) => {
+  if (!ms || ms <= 0) return "0:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+};
+
+// return {key: 'pending'|'running'|'finished', label, className}
+const computeStatus = (start, end, now = Date.now()) => {
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (s && now < s) {
+    return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+  }
+  if (s && (!e || now <= e) && now >= s) {
+    const remaining = e ? e - now : 0;
+    return {
+      key: "running",
+      label: e ? `Berjalan · ${formatRemaining(remaining)}` : "Berjalan",
+      className: "bg-blue-600 text-white",
+      remaining,
+    };
+  }
+  if (e && now > e) {
+    return { key: "finished", label: "Finished", className: "bg-gray-500 text-white" };
+  }
+  // fallback jika tanggal tak lengkap
+  return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
 };
 
 /* ===== Icons ===== */
@@ -56,7 +85,7 @@ const IconMap = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
-/* ===== Simple Modal (ADDED) ===== */
+/* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children }) => {
   if (!open) return null;
   return (
@@ -129,6 +158,14 @@ const TrainingPage = () => {
   const [detailErr, setDetailErr] = useState("");
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
+
+  // ticker untuk hitung mundur realtime
+  const [, forceTick] = useState(0);
+  const tickRef = useRef(null);
+  useEffect(() => {
+    tickRef.current = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(tickRef.current);
+  }, []);
 
   useEffect(() => {
     if (!user?.token) {
@@ -212,6 +249,8 @@ const TrainingPage = () => {
     );
   }
 
+  const now = Date.now();
+
   return (
     <div className="p-6">
       {/* Topbar: Title + Search + UserChip */}
@@ -231,15 +270,6 @@ const TrainingPage = () => {
         </div>
       </div>
 
-      {/* Action button */}
-      <button
-        type="button"
-        className="mb-4 inline-flex items-center rounded-md bg-gray-900 text-white px-4 py-2 text-sm hover:bg-black"
-        onClick={() => alert("Tambah Training (manual)")}
-      >
-        Tambah Training
-      </button>
-
       {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50 text-lg font-semibold">
@@ -253,7 +283,8 @@ const TrainingPage = () => {
           {!loading &&
             !err &&
             filtered.map((t, idx) => {
-              const badge = { text: "Aktif", cls: "bg-emerald-600 text-white" };
+              const st = computeStatus(t.startTraining, t.endTraining, now);
+              const badge = { text: st.label, cls: st.className };
               return (
                 <div
                   key={t.idTraining || idx}
@@ -277,12 +308,18 @@ const TrainingPage = () => {
                     <div className="flex items-center gap-2">
                       <IconCalendar />
                       <span>
-                        {fmtDate(t.endTraining)} <span className="text-gray-500">(deadline)</span>
+                        {fmtDate(t.startTraining)} – {fmtDate(t.endTraining)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <IconClock />
-                      <span>{countdown(t.endTraining)}</span>
+                      <span>
+                        {st.key === "running"
+                          ? `Sisa: ${formatRemaining(st.remaining)}`
+                          : st.key === "pending"
+                          ? "Belum mulai"
+                          : "Selesai"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <IconUsers />
@@ -321,7 +358,14 @@ const TrainingPage = () => {
         open={open}
         onClose={() => setOpen(false)}
         title={detail?.nmTraining || "Training"}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+        badge={
+          detail
+            ? (() => {
+                const st = computeStatus(detail.startTraining, detail.endTraining);
+                return { text: st.label, cls: st.className };
+              })()
+            : null
+        }
       >
         {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
         {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
@@ -386,7 +430,7 @@ const TrainingPage = () => {
         open={openFeedback}
         onClose={() => setOpenFeedback(false)}
         title={`Feedback - ${feedbackTarget?.nmTraining || "Training"}`}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+        badge={{ text: "—", cls: "bg-gray-300 text-gray-700" }}
       >
         <div className="text-sm text-gray-700">
           Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
