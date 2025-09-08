@@ -1,10 +1,8 @@
 // backend/controllers/projectController.js
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
-const pool = require("../config/database");
 
-// GET /api/project (Admin/Expert)
-const getProjects = async (_req, res) => {
+const getProjects = async (req, res) => {
   try {
     const data = await Project.getAllProjects();
     res.json(data);
@@ -14,34 +12,20 @@ const getProjects = async (_req, res) => {
   }
 };
 
-// GET /api/project/:id (Admin/Expert/Sales/Head Sales)
+// ====================== PERUBAHAN DI FUNGSI INI ======================
 const getProjectById = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `
-      SELECT 
-        p.*,
-        c.corpCustomer,
-        s.nmSales,
-        e.nmExpert
-      FROM project p
-      LEFT JOIN opti o ON o.idOpti = p.idOpti
-      LEFT JOIN customer c ON c.idCustomer = p.idCustomer
-      LEFT JOIN sales s    ON s.idSales    = o.idSales
-      LEFT JOIN expert e   ON e.idExpert   = p.idExpert
-      WHERE p.idProject = ?
-      `,
-      [req.params.id]
-    );
-    if (!rows.length) return res.status(404).json({ error: "Project not found" });
-    res.json(rows[0]);
+    // Memanggil fungsi dari model yang query-nya sudah lengkap
+    const project = await Project.getProjectById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(project);
   } catch (err) {
     console.error("Error fetching project:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+// ====================== AKHIR PERUBAHAN ======================
 
-// POST /api/project (Admin)
 const createProject = async (req, res) => {
   try {
     const payload = { ...req.body, idProject: await generateUserId("Project") };
@@ -53,11 +37,11 @@ const createProject = async (req, res) => {
   }
 };
 
-// PUT /api/project/:id (Admin)
 const updateProject = async (req, res) => {
   try {
     const affectedRows = await Project.updateProject(req.params.id, req.body);
-    if (affectedRows === 0) return res.status(404).json({ error: "Project not found" });
+    if (affectedRows === 0)
+      return res.status(404).json({ error: "Project not found" });
     res.json({ message: "Project updated" });
   } catch (err) {
     console.error("Error updating project:", err);
@@ -65,11 +49,11 @@ const updateProject = async (req, res) => {
   }
 };
 
-// DELETE /api/project/:id (Admin)
 const deleteProject = async (req, res) => {
   try {
     const affectedRows = await Project.deleteProject(req.params.id);
-    if (affectedRows === 0) return res.status(404).json({ error: "Project not found" });
+    if (affectedRows === 0)
+      return res.status(404).json({ error: "Project not found" });
     res.json({ message: "Project deleted" });
   } catch (err) {
     console.error("Error deleting project:", err);
@@ -77,66 +61,22 @@ const deleteProject = async (req, res) => {
   }
 };
 
-
 const getMyProjects = async (req, res) => {
   try {
     const { role, id } = req.user;
-
-    let sql;
-    let params = [];
-
+    let data;
     if (role === "Expert") {
-      sql = `
-        SELECT 
-          p.*,
-          c.corpCustomer,
-          s.nmSales,
-          e.nmExpert
-        FROM project p
-        JOIN opti o ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
-        WHERE (p.idExpert = ? OR o.idExpert = ?)
-        ORDER BY COALESCE(p.endProject, p.startProject) DESC
-      `;
-      params = [id, id];
+      data = await Project.getByExpertId(id);
     } else if (role === "Sales") {
-      sql = `
-        SELECT 
-          p.*,
-          c.corpCustomer,
-          s.nmSales,
-          e.nmExpert
-        FROM project p
-        JOIN opti o ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
-        WHERE o.idSales = ?
-        ORDER BY COALESCE(p.endProject, p.startProject) DESC
-      `;
-      params = [id];
+      data = await Project.getBySalesId(id);
     } else if (role === "Head Sales") {
-      sql = `
-        SELECT 
-          p.*,
-          c.corpCustomer,
-          s.nmSales,
-          e.nmExpert
-        FROM project p
-        JOIN opti o ON o.idOpti = p.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = p.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = p.idExpert
-        ORDER BY COALESCE(p.endProject, p.startProject) DESC
-      `;
+      data = await Project.getAllProjects();
     } else {
-      return res.status(403).json({ error: "Unauthorized access for this route" });
+      return res
+        .status(403)
+        .json({ error: "Unauthorized access for this route" });
     }
-
-    const [rows] = await pool.query(sql, params);
-    res.json(rows);
+    res.json(data);
   } catch (err) {
     console.error("Error fetching projects for user:", err);
     res.status(500).json({ error: "Internal Server Error" });
