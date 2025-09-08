@@ -2,7 +2,6 @@
 const pool = require("../config/database");
 
 const Opti = {
-  // CREATE: terima 'connection' opsional
   async create(optiData, idSales, connection = pool) {
     const {
       idOpti,
@@ -59,8 +58,8 @@ const Opti = {
     const whereClauses = [];
 
     if (searchTerm) {
-      whereClauses.push(`c.corpCustomer LIKE ?`);
-      params.push(`%${searchTerm}%`);
+      whereClauses.push(`(o.nmOpti LIKE ? OR c.corpCustomer LIKE ?)`);
+      params.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
 
     if (user && user.role === "Sales") {
@@ -80,7 +79,7 @@ const Opti = {
       SELECT
         o.*, c.nmCustomer, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales
       ${baseQuery}
-      ORDER BY o.datePropOpti DESC
+      ORDER BY o.idOpti DESC
       LIMIT ?
       OFFSET ?
     `;
@@ -124,9 +123,7 @@ const Opti = {
     return opti;
   },
 
-  // FUNGSI INI DIMODIFIKASI
   async update(idOpti, optiData, connection = pool) {
-    // Terima 'connection'
     const {
       nmOpti,
       contactOpti,
@@ -143,7 +140,6 @@ const Opti = {
       valOpti = null,
     } = optiData;
 
-    // Gunakan 'connection'
     const [result] = await connection.query(
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,

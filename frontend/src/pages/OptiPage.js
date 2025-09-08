@@ -16,7 +16,7 @@ import OptiTable from "../components/OptiTable";
 import OptiDetail from "../components/OptiDetail";
 import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
-import { FaSearch } from "react-icons/fa"; // FaUserCircle dihapus, diganti chip profil
+import { FaSearch } from "react-icons/fa";
 
 /* ====== Base URL (untuk avatar jika path relatif) ====== */
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -44,7 +44,9 @@ const getAvatarUrl = (user) => {
     null;
   if (!candidate) return null;
   if (/^https?:\/\//i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -64,7 +66,6 @@ const OptiPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [optis, setOptis] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOrder, setSortOrder] = useState("date_desc");
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [editingOpti, setEditingOpti] = useState(null);
@@ -72,8 +73,6 @@ const OptiPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [debounceTimeout, setDebounceTimeout] = useState(null);
-
-  // State baru untuk loading detail
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const fetchOptis = useCallback(
@@ -86,6 +85,7 @@ const OptiPage = () => {
         });
         setOptis(response.data.data);
         setTotalPages(response.data.totalPages);
+        setCurrentPage(response.data.currentPage);
       } catch (err) {
         console.error(
           "Error fetching optis:",
@@ -93,7 +93,7 @@ const OptiPage = () => {
         );
       }
     },
-    [user]
+    [user] // <-- 'user' sudah benar ada di sini
   );
 
   useEffect(() => {
@@ -107,18 +107,27 @@ const OptiPage = () => {
     setDebounceTimeout(newTimeout);
 
     return () => clearTimeout(newTimeout);
-  }, [searchTerm, fetchOptis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
+  // ====================== PERUBAHAN DI SINI ======================
+  // useEffect ini sekarang akan memanggil fetchOptis setiap kali
+  // user berubah (misalnya dari null menjadi object setelah login) atau
+  // saat currentPage berubah.
   useEffect(() => {
-    fetchOptis();
-  }, [fetchOptis]);
+    if (user) {
+      // Hanya panggil jika user sudah terautentikasi
+      fetchOptis(searchTerm, currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentPage]);
+  // ====================== AKHIR PERUBAHAN ======================
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
     if (statusFilter) {
       data = data.filter((opti) => opti.statOpti === statusFilter);
     }
-    data.sort((a, b) => new Date(b.datePropOpti) - new Date(a.datePropOpti));
     return data;
   }, [optis, statusFilter]);
 
@@ -128,7 +137,6 @@ const OptiPage = () => {
   };
 
   const handleEditOpti = async (opti) => {
-    // Ambil detail opti dari API supaya field training ikut
     try {
       const response = await axios.get(
         `http://localhost:3000/api/opti/${opti.idOpti}`,
@@ -144,7 +152,6 @@ const OptiPage = () => {
     }
   };
 
-  // ===== View detail (ambil data lengkap) =====
   const handleViewOpti = async (opti) => {
     setViewModalOpen(true);
     setIsDetailLoading(true);
@@ -192,7 +199,6 @@ const OptiPage = () => {
   const handlePageChange = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
-    fetchOptis(searchTerm, pageNumber);
   };
 
   const handleDownloadPdf = async () => {
@@ -214,14 +220,8 @@ const OptiPage = () => {
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
   return (
     <div className="flex-grow p-8 bg-gray-100">
-      {/* Header + Search + User chip */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -229,7 +229,6 @@ const OptiPage = () => {
           </h1>
         </div>
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          {/* Search */}
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
@@ -240,8 +239,6 @@ const OptiPage = () => {
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
-
-          {/* User chip (senada dengan Training/Project) */}
           <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
@@ -308,8 +305,24 @@ const OptiPage = () => {
           />
         </div>
 
-        <div className="flex justify-center mt-6 space-x-2">
-          {/* Pagination buttons... */}
+        <div className="flex justify-center items-center mt-6 space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
         </div>
       </main>
 

@@ -18,7 +18,6 @@ const createOpti = async (req, res) => {
     await connection.beginTransaction();
     const b = { ...req.body };
     const { user } = req;
-
     let idSalesForOpti;
     if (user.role === "Sales") {
       idSalesForOpti = user.id;
@@ -34,8 +33,6 @@ const createOpti = async (req, res) => {
     }
 
     const idOpti = await generateUserId("Opti");
-
-    // Sales selalu start di "Just Get Info"; lainnya mengikuti input
     const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
 
     const optiData = {
@@ -49,15 +46,15 @@ const createOpti = async (req, res) => {
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
-      jenisOpti: b.jenisOpti, // "Training" | "Project"
+      jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       proposalOpti: req.file ? path.basename(req.file.filename) : null,
-      valOpti: b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
+      valOpti:
+        b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
     };
 
     await Opti.create(optiData, idSalesForOpti, connection);
 
-    // === BARU: auto-create anak jika saat CREATE langsung Success ===
     if (optiData.statOpti === "Success") {
       if (optiData.jenisOpti === "Training") {
         const [exists] = await connection.query(
@@ -70,9 +67,7 @@ const createOpti = async (req, res) => {
               idTraining: await generateUserId("Training"),
               idOpti,
               nmTraining: optiData.nmOpti,
-              idTypeTraining: b.idTypeTraining
-                ? Number(b.idTypeTraining)
-                : 1,
+              idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
               startTraining: toNull(b.startTraining),
               endTraining: toNull(b.endTraining),
               idExpert: optiData.idExpert,
@@ -93,10 +88,12 @@ const createOpti = async (req, res) => {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              idTypeProject: b.idTypeProject ? Number(b.idTypeProject) : 1,
-              startProject: toNull(b.startProject),
-              endProject: toNull(b.endProject),
-              placeProject: toNull(b.placeProject),
+              // ================= PERUBAHAN DI SINI =================
+              idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1, // Mengambil dari idTypeTraining
+              startProject: toNull(b.startTraining), // Mengambil dari startTraining
+              endProject: toNull(b.endTraining), // Mengambil dari endTraining
+              placeProject: toNull(b.placeTraining), // Mengambil dari placeTraining
+              // ================= AKHIR PERUBAHAN =================
               idCustomer: optiData.idCustomer,
               idSales: idSalesForOpti,
               idExpert: optiData.idExpert,
@@ -118,9 +115,6 @@ const createOpti = async (req, res) => {
   }
 };
 
-/* =========================
- * UPDATE (LOGIKA DIPERBAIKI)
- * =======================*/
 const updateOpti = async (req, res) => {
   const { id } = req.params;
   const b = { ...req.body };
@@ -140,7 +134,9 @@ const updateOpti = async (req, res) => {
       await connection.rollback();
       return res
         .status(403)
-        .json({ error: "Forbidden: You can only update your own opportunities." });
+        .json({
+          error: "Forbidden: You can only update your own opportunities.",
+        });
     }
 
     const optiData = {
@@ -178,10 +174,8 @@ const updateOpti = async (req, res) => {
 
     await Opti.update(id, optiData, connection);
 
-    // ===== Buat Training/Project idempotent saat status Success =====
     if (optiData.statOpti === "Success") {
       const idOpti = id;
-
       if (optiData.jenisOpti === "Training") {
         const [trainings] = await connection.query(
           "SELECT idTraining FROM training WHERE idOpti = ?",
@@ -219,15 +213,17 @@ const updateOpti = async (req, res) => {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              idTypeProject: b.idTypeProject
-                ? Number(b.idTypeProject)
+              // ================= PERUBAHAN DI SINI =================
+              idTypeProject: b.idTypeTraining
+                ? Number(b.idTypeTraining)
                 : existingOpti.idTypeProject || 1,
               startProject:
-                toNull(b.startProject) || toNull(existingOpti.startProject),
+                toNull(b.startTraining) || toNull(existingOpti.startProject),
               endProject:
-                toNull(b.endProject) || toNull(existingOpti.endProject),
+                toNull(b.endTraining) || toNull(existingOpti.endProject),
               placeProject:
-                toNull(b.placeProject) || toNull(existingOpti.placeProject),
+                toNull(b.placeTraining) || toNull(existingOpti.placeProject),
+              // ================= AKHIR PERUBAHAN =================
               idCustomer: optiData.idCustomer,
               idSales: existingOpti.idSales,
               idExpert: optiData.idExpert,
@@ -238,7 +234,6 @@ const updateOpti = async (req, res) => {
       }
     }
 
-    // Sinkron update training jika opti jenis Training
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
       await connection.query(
         `UPDATE training
@@ -268,9 +263,7 @@ const updateOpti = async (req, res) => {
   }
 };
 
-/* =========================
- * LIST (paginated)
- * =======================*/
+// ... (sisa kode seperti getOptis, getFormOptions, dll. tidak perlu diubah) ...
 const getOptis = async (req, res) => {
   try {
     const searchTerm = req.query.search;
@@ -304,9 +297,6 @@ const getOptis = async (req, res) => {
   }
 };
 
-/* =========================
- * FORM OPTIONS (customers/sumber/experts)
- * =======================*/
 const getFormOptions = async (req, res) => {
   try {
     let customers;
@@ -341,9 +331,6 @@ const getFormOptions = async (req, res) => {
   }
 };
 
-/* =========================
- * DETAIL (JOIN lengkap)
- * =======================*/
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -375,12 +362,8 @@ const getOptiById = async (req, res) => {
   }
 };
 
-/* =========================
- * SALES DASHBOARD
- * =======================*/
 const getSalesDashboardData = async (req, res) => {
   const { id: idSales } = req.user;
-
   try {
     const pipelineQuery = pool.query(
       `SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`,
@@ -407,7 +390,6 @@ const getSalesDashboardData = async (req, res) => {
         LIMIT 5`,
       [idSales]
     );
-
     const [
       [pipelineStats],
       [performanceOverTime],
@@ -419,7 +401,6 @@ const getSalesDashboardData = async (req, res) => {
       typesQuery,
       topDealsQuery,
     ]);
-
     res.json({
       pipelineStats,
       performanceOverTime,

@@ -5,25 +5,36 @@ import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== Helpers tanggal & status ===== */
+/* ===== Helpers tanggal & status (disamakan dengan TrainingPage) ===== */
 const safeTime = (v) => {
   const t = new Date(v).getTime();
   return isNaN(t) ? null : t;
 };
+
 const fmtDateTime = (v) =>
   v
-    ? new Date(v).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" })
+    ? new Date(v).toLocaleString("id-ID", {
+        dateStyle: "full",
+        timeStyle: "short",
+      })
     : "-";
+
 const fmtDate = (v) =>
   v
-    ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(v).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
     : "-";
+
 const diffDays = (start, end) => {
   const s = safeTime(start);
   const e = safeTime(end);
   if (!s || !e) return null;
   return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
+
 const formatRemaining = (ms) => {
   if (!ms || ms <= 0) return "0:00:00";
   const totalSec = Math.floor(ms / 1000);
@@ -33,11 +44,16 @@ const formatRemaining = (ms) => {
   const pad = (n) => String(n).padStart(2, "0");
   return `${hours}:${pad(minutes)}:${pad(seconds)}`;
 };
+
 const computeStatus = (start, end, now = Date.now()) => {
   const s = safeTime(start);
   const e = safeTime(end);
   if (s && now < s) {
-    return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+    return {
+      key: "pending",
+      label: "Pending",
+      className: "bg-amber-500 text-white",
+    };
   }
   if (s && (!e || now <= e) && now >= s) {
     const remaining = e ? e - now : 0;
@@ -49,25 +65,48 @@ const computeStatus = (start, end, now = Date.now()) => {
     };
   }
   if (e && now > e) {
-    return { key: "finished", label: "Finished", className: "bg-green-500 text-white" };
+    return {
+      key: "finished",
+      label: "Finished",
+      className: "bg-green-500 text-white",
+    };
   }
-  return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+  return {
+    key: "pending",
+    label: "Pending",
+    className: "bg-amber-500 text-white",
+  };
 };
 
 /* ===== Icons ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M8 2v3M16 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
   </svg>
 );
 const IconClock = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 3" />
   </svg>
 );
 const IconUsers = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -75,7 +114,12 @@ const IconUsers = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 const IconMap = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3" />
   </svg>
 );
@@ -95,11 +139,16 @@ const Modal = ({ open, onClose, title, badge, children }) => {
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}
+                >
                   {badge.text}
                 </span>
               ) : null}
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-800 text-2xl font-bold"
+              >
                 &times;
               </button>
             </div>
@@ -134,7 +183,9 @@ const UserChip = ({ user }) => {
       </div>
       <div className="leading-tight">
         <div className="text-sm font-semibold">{name}</div>
-        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
+        <div className="text-[10px] text-gray-500">
+          Logged in • {user?.role || "-"}
+        </div>
       </div>
     </div>
   );
@@ -179,7 +230,8 @@ const ProjectPage = () => {
           },
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+        if (!res.ok)
+          throw new Error(await res.text().catch(() => res.statusText));
         const data = await res.json();
         setProjects(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -217,7 +269,8 @@ const ProjectPage = () => {
           Authorization: `Bearer ${user.token}`,
         },
       });
-      if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+      if (!res.ok)
+        throw new Error(await res.text().catch(() => res.statusText));
       const data = await res.json();
       setDetail(data);
     } catch (e) {
@@ -228,12 +281,18 @@ const ProjectPage = () => {
     }
   };
 
+  const openFeedbackModal = (p) => {
+    setFeedbackTarget(p);
+    setOpenFeedback(true);
+  };
+
   if (!user?.token) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-2">Project Page</h1>
         <p className="text-gray-600">
-          Silakan login sebagai <b>Expert</b> atau <b>Sales</b> untuk melihat daftar proyek Anda.
+          Silakan login sebagai <b>Expert</b> atau <b>Sales</b> untuk melihat
+          daftar proyek Anda.
         </p>
       </div>
     );
@@ -254,20 +313,27 @@ const ProjectPage = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              ⌕
+            </span>
           </div>
           <UserChip user={user} />
         </div>
       </div>
 
+      {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50 text-lg font-semibold">
           Jadwal Proyek
         </div>
 
         <div className="p-5 space-y-5">
-          {loading && <div className="text-center text-gray-500 py-10">Memuat data…</div>}
-          {!loading && err && <div className="text-center text-red-600 py-10">{err}</div>}
+          {loading && (
+            <div className="text-center text-gray-500 py-10">Memuat data…</div>
+          )}
+          {!loading && err && (
+            <div className="text-center text-red-600 py-10">{err}</div>
+          )}
 
           {!loading &&
             !err &&
@@ -277,20 +343,36 @@ const ProjectPage = () => {
               return (
                 <div
                   key={p.idProject || idx}
-                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
+                  className={`rounded-xl border p-4 ${
+                    idx % 2 === 1 ? "border-blue-300" : "border-gray-300"
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-xl font-semibold">{p.nmProject || "-"}</div>
-                      <div className="text-xs text-gray-500">{p.corpCustomer || "-"}</div>
-                      <div className="text-xs text-gray-500">
-                        Sales: <span className="text-green-600 font-bold">{p.nmSales || "-"}</span>
+                      <div className="text-xl font-semibold">
+                        {p.nmProject || "-"}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Expert: <span className="text-purple-600 font-bold">{p.nmExpert || "-"}</span>
+                        {p.corpCustomer || "-"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Sales:{" "}
+                        <span className="text-green-600 font-bold">
+                          {p.nmSales || "-"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Expert:{" "}
+                        <span className="text-purple-600 font-bold">
+                          {p.nmExpert || "-"}
+                        </span>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>{badge.text}</span>
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}
+                    >
+                      {badge.text}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
@@ -327,10 +409,7 @@ const ProjectPage = () => {
                     <button
                       type="button"
                       className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
-                      onClick={() => {
-                        setFeedbackTarget(p);
-                        setOpenFeedback(true);
-                      }}
+                      onClick={() => openFeedbackModal(p)}
                     >
                       Lihat Feedback
                     </button>
@@ -340,7 +419,9 @@ const ProjectPage = () => {
             })}
 
           {!loading && !err && filtered.length === 0 && (
-            <div className="text-center text-gray-500 py-10">Belum ada proyek.</div>
+            <div className="text-center text-gray-500 py-10">
+              Belum ada proyek.
+            </div>
           )}
         </div>
       </div>
@@ -353,14 +434,21 @@ const ProjectPage = () => {
         badge={
           detail
             ? (() => {
-                const st = computeStatus(detail.startProject, detail.endProject);
+                const st = computeStatus(
+                  detail.startProject,
+                  detail.endProject
+                );
                 return { text: st.label, cls: st.className };
               })()
             : null
         }
       >
-        {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
-        {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
+        {detailLoading && (
+          <div className="text-center text-gray-500 py-6">Memuat detail…</div>
+        )}
+        {!detailLoading && detailErr && (
+          <div className="text-center text-red-600 py-6">{detailErr}</div>
+        )}
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
             <div className="rounded-lg border p-4">
@@ -376,7 +464,10 @@ const ProjectPage = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Durasi</span>
-                  <b>{diffDays(detail.startProject, detail.endProject) ?? "-"} hari</b>
+                  <b>
+                    {diffDays(detail.startProject, detail.endProject) ?? "-"}{" "}
+                    hari
+                  </b>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-2 text-gray-500">
@@ -387,21 +478,33 @@ const ProjectPage = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border p-4">
-              <div className="text-sm text-gray-500 mb-2">Dokumen</div>
-              {detail.proposalOpti ? (
-                <a
-                  href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\\/]/).pop()}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-black hover:underline flex items-center gap-2"
-                >
-                  <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                  <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
-                </a>
-              ) : (
-                <div className="text-sm text-gray-700">Belum ada dokumen.</div>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
+                <div className="text-sm text-gray-700 leading-6">
+                  {detail.kebutuhan || "Belum ada deskripsi."}
+                </div>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-gray-500 mb-2">Dokumen</div>
+                {detail.proposalOpti ? (
+                  <a
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
+                      .split(/[\\/]/)
+                      .pop()}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-black hover:underline flex items-center gap-2"
+                  >
+                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
+                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
+                  </a>
+                ) : (
+                  <div className="text-sm text-gray-700">
+                    Belum ada dokumen.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
