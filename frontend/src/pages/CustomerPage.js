@@ -67,33 +67,47 @@ const CustomerPage = () => {
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
 
+  // State untuk pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   // State untuk modal Update Status
   const [isUpdateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
   const [customerToUpdateStatus, setCustomerToUpdateStatus] = useState(null);
   const [statusOptions, setStatusOptions] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("");
 
-  // Debounce untuk search
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setCompanyFilter(searchTerm);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
-
   // Fetch data pelanggan
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = useCallback(async (searchQuery = "", page = 1) => {
     if (user && user.token) {
       try {
         const response = await axios.get(`http://localhost:3000/api/customer`, {
+          params: { search: searchQuery, page, limit: 10 }, // Added pagination params
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setCustomers(response.data);
+        setCustomers(Array.isArray(response.data.data) ? response.data.data : []); // Ensure customers is always an array
+        setTotalPages(response.data.totalPages);
       } catch (err) {
         setError(err.response?.data?.error || "Gagal mengambil data pelanggan.");
       }
     }
   }, [user]);
+
+  // Debounce untuk search
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
+
+  useEffect(() => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+    const newTimeout = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on new search
+      fetchCustomers(searchTerm, 1);
+    }, 500); // Debounce for 500ms
+    setDebounceTimeout(newTimeout);
+
+    return () => clearTimeout(newTimeout);
+  }, [searchTerm, fetchCustomers]);
 
   // Fetch opsi status
   const fetchStatusOptions = useCallback(async () => {
@@ -110,11 +124,11 @@ const CustomerPage = () => {
 
   // Panggil semua fungsi fetch saat komponen dimuat
   useEffect(() => {
-    fetchCustomers();
+    fetchCustomers(searchTerm, currentPage); // Pass searchTerm and currentPage
     if (user && (user.role === "Head Sales" || user.role === "Admin")) {
       fetchStatusOptions();
     }
-  }, [fetchCustomers, fetchStatusOptions, user]);
+  }, [fetchCustomers, fetchStatusOptions, user, searchTerm, currentPage]); // Add searchTerm and currentPage to dependencies
 
   // Handler modal
   const handleViewCustomer = (customer) => {
@@ -175,7 +189,7 @@ const CustomerPage = () => {
       await axios[method](url, formData, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      await fetchCustomers();
+      await fetchCustomers(searchTerm, currentPage); // Pass searchTerm and currentPage
       handleCloseModal();
     } catch (err) {
       console.error("Failed to submit form:", err);
@@ -183,21 +197,39 @@ const CustomerPage = () => {
     }
   };
 
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+    fetchCustomers(searchTerm, pageNumber);
+  };
+
   const filteredAndSortedCustomers = useMemo(() => {
-    let filtered = customers.filter((c) =>
-      (c.corpCustomer || "").toLowerCase().includes(companyFilter.toLowerCase())
-    );
-    return filtered.sort((a, b) => {
-      switch (sortOrder) {
-        case "name_az":
-          return (a.nmCustomer || "").localeCompare(b.nmCustomer || "");
-        case "company_az":
-          return (a.corpCustomer || "").localeCompare(b.corpCustomer || "");
-        default:
-          return 0;
+    let filtered = Array.isArray(customers) ? customers : [];
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (customer) =>
+          customer.nmCustomer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          customer.corpCustomer.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (companyFilter) {
+      filtered = filtered.filter((customer) =>
+        customer.corpCustomer.toLowerCase().includes(companyFilter.toLowerCase())
+      );
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortOrder === "name_az") {
+        return a.nmCustomer.localeCompare(b.nmCustomer);
+      } else if (sortOrder === "company_az") {
+        return a.corpCustomer.localeCompare(b.corpCustomer);
       }
+      return 0;
     });
-  }, [customers, companyFilter, sortOrder]);
+    return sorted;
+  }, [customers, searchTerm, companyFilter, sortOrder]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
   if (!user || !["Sales", "Admin", "Head Sales"].includes(user.role)) return <Navigate to="/login" />;
@@ -235,8 +267,8 @@ const CustomerPage = () => {
               <Initials name={getDisplayName(user)} />
             )}
             <div className="leading-5">
-              <div className="text-sm font-medium">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in</div>
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
             </div>
           </div>
         </div>
@@ -244,107 +276,109 @@ const CustomerPage = () => {
 
       {user.role === "Sales" ? (
         <>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Customer</h1>
-          <p className="text-gray-600 mb-6">Data Customers</p>
+          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Customer</h1>
+            <p className="text-gray-600 mb-6">Data Customers</p>
 
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mb-4 md:mb-0">
-              <button
-                onClick={handleAddCustomer}
-                className="w-full md:w-auto bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
-              >
-                Tambah Customer
-              </button>
-              {customers.length > 0 && (
-                <PDFDownloadLink
-                  key={`${companyFilter}-${sortOrder}`}
-                  document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
-                  fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
-                  className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mb-4 md:mb-0">
+                <button
+                  onClick={handleAddCustomer}
+                  className="w-full md:w-auto bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
                 >
-                  {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
-                </PDFDownloadLink>
-              )}
-            </div>
+                  Tambah Customer
+                </button>
+                {customers.length > 0 && (
+                  <PDFDownloadLink
+                    key={`${companyFilter}-${sortOrder}`}
+                    document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
+                    fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
+                    className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+                  >
+                    {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
+                  </PDFDownloadLink>
+                )}
+              </div>
 
-            <div className="w-full md:w-auto flex items-center">
-              <label htmlFor="sortOrder" className="text-gray-700 mr-2">
-                Urutkan:
-              </label>
-              <select
-                id="sortOrder"
-                className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-              >
-                <option value="name_az">Nama</option>
-                <option value="company_az">Perusahaan</option>
-              </select>
+              <div className="w-full md:w-auto flex items-center">
+                <label htmlFor="sortOrder" className="text-gray-700 mr-2">
+                  Urutkan:
+                </label>
+                <select
+                  id="sortOrder"
+                  className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="name_az">Nama</option>
+                  <option value="company_az">Perusahaan</option>
+                </select>
+              </div>
             </div>
-          </div>
-
           {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
 
-          <CustomerTable
-            customers={filteredAndSortedCustomers}
-            onViewCustomer={handleViewCustomer}
-            onEditCustomer={handleEditCustomer}
-          />
+            <CustomerTable
+              customers={filteredAndSortedCustomers}
+              onViewCustomer={handleViewCustomer}
+              onEditCustomer={handleEditCustomer}
+            />
+          </div>
         </>
       ) : (
         <>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Data Customers</h1>
-          <p className="text-gray-600 mb-6">Laporan Data Customers</p>
+          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Data Customers</h1>
+            <p className="text-gray-600 mb-6">Laporan Data Customers</p>
 
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mb-4 md:mb-0">
-              <button
-                onClick={handleAddCustomer}
-                className="w-full md:w-auto bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
-              >
-                Tambah Customer
-              </button>
-              {customers.length > 0 && (
-                <PDFDownloadLink
-                  key={`${companyFilter}-${sortOrder}`}
-                  document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
-                  fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
-                  className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mb-4 md:mb-0">
+                <button
+                  onClick={handleAddCustomer}
+                  className="w-full md:w-auto bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
                 >
-                  {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
-                </PDFDownloadLink>
-              )}
-              <Link
-                to="/sales"
-                className="w-full md:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 text-center"
-              >
-                View Sales Data
-              </Link>
-            </div>
+                  Tambah Customer
+                </button>
+                {customers.length > 0 && (
+                  <PDFDownloadLink
+                    key={`${companyFilter}-${sortOrder}`}
+                    document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
+                    fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
+                    className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+                  >
+                    {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
+                  </PDFDownloadLink>
+                )}
+                <Link
+                  to="/sales"
+                  className="w-full md:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 text-center"
+                >
+                  View Sales Data
+                </Link>
+              </div>
 
-            <div className="w-full md:w-auto flex items-center">
-              <label htmlFor="sortOrder" className="text-gray-700 mr-2">
-                Urutkan:
-              </label>
-              <select
-                id="sortOrder"
-                className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-              >
-                <option value="name_az">Nama</option>
-                <option value="company_az">Perusahaan</option>
-              </select>
+              <div className="w-full md:w-auto flex items-center">
+                <label htmlFor="sortOrder" className="text-gray-700 mr-2">
+                  Urutkan:
+                </label>
+                <select
+                  id="sortOrder"
+                  className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="name_az">Nama</option>
+                  <option value="company_az">Perusahaan</option>
+                </select>
+              </div>
             </div>
-          </div>
-
           {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
 
-          <HeadSalesCustomerTable
-            customers={filteredAndSortedCustomers}
-            onViewCustomer={handleViewCustomer}
-            openUpdateStatusModal={openUpdateStatusModal}
-          />
+            <HeadSalesCustomerTable
+              customers={filteredAndSortedCustomers}
+              onViewCustomer={handleViewCustomer}
+              openUpdateStatusModal={openUpdateStatusModal}
+            />
+          </div>
         </>
       )}
 

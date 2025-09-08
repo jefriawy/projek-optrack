@@ -67,7 +67,7 @@ const getCustomers = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized access" });
     }
 
-    res.json(customers);
+    res.json({ data: customers, totalPages: 1 }); // Assuming totalPages is not yet implemented for all cases, setting to 1 for now.
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });

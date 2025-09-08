@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
+import { FaSearch } from "react-icons/fa";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -25,10 +26,19 @@ const diffDays = (start, end) => {
   return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
 
-// format sisa waktu dalam jam:menit:detik, dgn total jam (bukan hari)
+// format sisa waktu dalam hari, jam, menit, detik
 const formatRemaining = (ms) => {
   if (!ms || ms <= 0) return "0:00:00";
+
   const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / (24 * 3600));
+
+  if (days > 0) {
+    const hours = Math.floor((totalSec % (24 * 3600)) / 3600);
+    return `${days} hari ${hours} jam`;
+  }
+
+  // If less than a day, show H:M:S
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
@@ -116,34 +126,45 @@ const Modal = ({ open, onClose, title, badge, children }) => {
   );
 };
 
-/* ====== Profile Chip ====== */
-const initials = (name = "") =>
-  name
-    .trim()
-    .split(/\s+/)
+/* ====== User chip helpers (nama & avatar) ====== */
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
+    null;
+  if (!candidate) return null;
+  if (/^https?:\]/i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
     .map((s) => s[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-const resolveName = (u) =>
-  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
-
-const UserChip = ({ user }) => {
-  const name = resolveName(user);
-  const ini = initials(name);
   return (
-    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
-      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
-        {ini}
-      </div>
-      <div className="leading-tight">
-        <div className="text-sm font-semibold">{name}</div>
-        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
-      </div>
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
     </div>
   );
 };
+
 
 /* ===== Page ===== */
 const TrainingPage = () => {
@@ -253,22 +274,43 @@ const TrainingPage = () => {
 
   return (
     <div className="p-6">
-      {/* Topbar: Title + Search + UserChip */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Training Page</h1>
-        <div className="flex items-center gap-4">
-          <div className="relative w-64">
+      {/* Header Konten Utama */}
+      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
+        <div className="w-full md:w-auto mb-4 md:mb-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training Page</h1>
+        </div>
+
+        <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
+          {/* Search */}
+          <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
-              className="w-full border rounded-full pl-4 pr-10 py-2"
+              type="text"
               placeholder="Search"
+              className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+            <FaSearch className="absolute right-3 text-gray-400" />
           </div>
-          <UserChip user={user} />
+
+          {/* User chip (senada) */}
+          <div className="flex items-center gap-3 pl-4 border-l">
+            {getAvatarUrl(user) ? (
+              <img
+                src={getAvatarUrl(user)}
+                alt="avatar"
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <Initials name={getDisplayName(user)} />
+            )}
+            <div className="leading-5">
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
