@@ -16,7 +16,49 @@ import OptiTable from "../components/OptiTable";
 import OptiDetail from "../components/OptiDetail";
 import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
-import { FaSearch, FaUserCircle } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa"; // FaUserCircle dihapus, diganti chip profil
+
+/* ====== Base URL (untuk avatar jika path relatif) ====== */
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
+/* ====== Helper chip profil (nama & avatar) ====== */
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
+    null;
+  if (!candidate) return null;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
+    </div>
+  );
+};
 
 const OptiPage = () => {
   const { user, loading } = useContext(AuthContext);
@@ -85,28 +127,37 @@ const OptiPage = () => {
     setFormModalOpen(true);
   };
 
-  const handleEditOpti = (opti) => {
-    setEditingOpti(opti);
-    setFormModalOpen(true);
-  };
-
-  // ===== FUNGSI INI DIUBAH TOTAL =====
-  const handleViewOpti = async (opti) => {
-    setViewModalOpen(true);
-    setIsDetailLoading(true);
+  const handleEditOpti = async (opti) => {
+    // Ambil detail opti dari API supaya field training ikut
     try {
-      // Panggil API untuk mendapatkan data detail yang lengkap
       const response = await axios.get(
         `http://localhost:3000/api/opti/${opti.idOpti}`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         }
       );
-      // Set state dengan data lengkap dari API
+      setEditingOpti(response.data);
+      setFormModalOpen(true);
+    } catch (err) {
+      console.error("Error fetching opti detail for edit:", err);
+      alert("Gagal mengambil data detail OPTI untuk edit.");
+    }
+  };
+
+  // ===== View detail (ambil data lengkap) =====
+  const handleViewOpti = async (opti) => {
+    setViewModalOpen(true);
+    setIsDetailLoading(true);
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/api/opti/${opti.idOpti}`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
       setEditingOpti(response.data);
     } catch (err) {
       console.error("Error fetching opti detail:", err);
-      // Handle error, mungkin tutup modal dan tampilkan notifikasi
     } finally {
       setIsDetailLoading(false);
     }
@@ -170,6 +221,7 @@ const OptiPage = () => {
 
   return (
     <div className="flex-grow p-8 bg-gray-100">
+      {/* Header + Search + User chip */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -177,6 +229,7 @@ const OptiPage = () => {
           </h1>
         </div>
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
+          {/* Search */}
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
@@ -187,11 +240,22 @@ const OptiPage = () => {
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
-          <div className="flex items-center">
-            <FaUserCircle className="text-gray-500 text-2xl mr-2" />
-            <span className="font-medium text-gray-700">
-              {user.name || "User"}
-            </span>
+
+          {/* User chip (senada dengan Training/Project) */}
+          <div className="flex items-center gap-3 pl-4 border-l">
+            {getAvatarUrl(user) ? (
+              <img
+                src={getAvatarUrl(user)}
+                alt="avatar"
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <Initials name={getDisplayName(user)} />
+            )}
+            <div className="leading-5">
+              <div className="text-sm font-medium">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in</div>
+            </div>
           </div>
         </div>
       </header>
@@ -266,7 +330,6 @@ const OptiPage = () => {
         onClose={closeModal}
         title="Detail Opportunity"
       >
-        {/* Tampilkan loading spinner saat data detail diambil */}
         {isDetailLoading ? (
           <div className="text-center p-8">Memuat data detail...</div>
         ) : (

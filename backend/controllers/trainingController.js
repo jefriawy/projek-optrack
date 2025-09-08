@@ -1,9 +1,9 @@
 // backend/controllers/trainingController.js
 const Training = require("../models/trainingModel");
 const { generateUserId } = require("../utils/idGenerator");
+const pool = require("../config/database");
 
 // GET /api/training  (Admin/Expert)
-// Mengambil semua training (sudah ada)
 const getTraining = async (_req, res) => {
   try {
     const data = await Training.getAllTraining();
@@ -14,15 +14,27 @@ const getTraining = async (_req, res) => {
   }
 };
 
-// GET /api/training/:id  (Admin/Expert)
-// Ambil training by id (sudah ada)
+// GET /api/training/:id  (Admin/Expert/Sales/Head Sales)
 const getTrainingById = async (req, res) => {
   try {
-    const training = await Training.getTrainingById(req.params.id);
-    if (!training) {
-      return res.status(404).json({ error: "Training not found" });
-    }
-    res.json(training);
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        t.*,
+        c.corpCustomer,
+        s.nmSales,
+        e.nmExpert
+      FROM training t
+      LEFT JOIN opti o ON o.idOpti = t.idOpti
+      LEFT JOIN customer c ON c.idCustomer = t.idCustomer
+      LEFT JOIN sales s    ON s.idSales    = o.idSales
+      LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+      WHERE t.idTraining = ?
+      `,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: "Training not found" });
+    res.json(rows[0]);
   } catch (err) {
     console.error("Error fetching training:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -30,10 +42,8 @@ const getTrainingById = async (req, res) => {
 };
 
 // POST /api/training  (Admin)
-// Buat training manual (sudah ada)
 const createTraining = async (req, res) => {
   try {
-    // generate idTraining and attach to payload
     const payload = { ...req.body, idTraining: await generateUserId("Training") };
     const id = await Training.createTraining(payload);
     res.status(201).json({ message: "Training created", id });
@@ -44,13 +54,10 @@ const createTraining = async (req, res) => {
 };
 
 // PUT /api/training/:id  (Admin)
-// Update training (sudah ada)
 const updateTraining = async (req, res) => {
   try {
     const affectedRows = await Training.updateTraining(req.params.id, req.body);
-    if (affectedRows === 0) {
-      return res.status(404).json({ error: "Training not found" });
-    }
+    if (affectedRows === 0) return res.status(404).json({ error: "Training not found" });
     res.json({ message: "Training updated" });
   } catch (err) {
     console.error("Error updating training:", err);
@@ -59,13 +66,10 @@ const updateTraining = async (req, res) => {
 };
 
 // DELETE /api/training/:id  (Admin)
-// Hapus training (sudah ada)
 const deleteTraining = async (req, res) => {
   try {
     const affectedRows = await Training.deleteTraining(req.params.id);
-    if (affectedRows === 0) {
-      return res.status(404).json({ error: "Training not found" });
-    }
+    if (affectedRows === 0) return res.status(404).json({ error: "Training not found" });
     res.json({ message: "Training deleted" });
   } catch (err) {
     console.error("Error deleting training:", err);
@@ -73,23 +77,78 @@ const deleteTraining = async (req, res) => {
   }
 };
 
-// ➕ NEW: GET /api/training/mine  (Expert or Sales)
-// daftar training milik expert yang sedang login (juga untuk Sales: training terkait sales)
 const getMyTrainings = async (req, res) => {
   try {
-    const { role, id } = req.user;
-    let data;
-    if (role === "Expert") {
-      data = await Training.getByExpertId(id);
-    } else if (role === "Sales") {
-      // ambil training yg terkait dengan sales (join via opti.idSales)
-      data = await Training.getBySalesId(id);
-    } else if (role === "Head Sales") {
-      data = await Training.getAllTraining();
+    const rawRole = req.user?.role || "";
+    const role = String(rawRole).toLowerCase();
+
+    // Ambil ID yang relevan dari token (flexibel ke berbagai skema)
+    const expertId = req.user?.idExpert ?? req.user?.id ?? req.user?.userId ?? null;
+    const salesId  = req.user?.idSales  ?? req.user?.id ?? req.user?.userId ?? null;
+
+    let sql = "";
+    let params = [];
+
+    if (role === "expert") {
+      if (!expertId) return res.status(400).json({ error: "Missing expert id" });
+
+      sql = `
+        SELECT DISTINCT
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
+        WHERE (t.idExpert = ? OR o.idExpert = ?)
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
+      `;
+      params = [expertId, expertId];
+
+    } else if (role === "sales") {
+      if (!salesId) return res.status(400).json({ error: "Missing sales id" });
+
+      sql = `
+        SELECT DISTINCT
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
+        WHERE o.idSales = ?
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
+      `;
+      params = [salesId];
+
+    } else if (role === "head sales" || role === "head_sales" || role === "headsales") {
+      sql = `
+        SELECT DISTINCT
+          t.*,
+          c.corpCustomer,
+          s.nmSales,
+          e.nmExpert
+        FROM training t
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
+      `;
+      params = [];
+
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
     }
-    res.json(data);
+
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
   } catch (err) {
     console.error("Error fetching training for user:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -102,5 +161,5 @@ module.exports = {
   createTraining,
   updateTraining,
   deleteTraining,
-  getMyTrainings, // export baru
+  getMyTrainings,
 };

@@ -14,6 +14,14 @@ const TYPE_TRAININGS = [
   { id: 4, name: "Online Training" },
 ];
 
+// ---- static list: samakan dengan isi tabel `typeproject`
+const TYPE_PROJECTS = [
+  { id: 1, name: "Default Project" },
+  { id: 2, name: "Public Project" },
+  { id: 3, name: "Inhouse Project" },
+  { id: 4, name: "Online Project" },
+];
+
 /* =========================
    Helpers normalisasi waktu
    ========================= */
@@ -51,23 +59,31 @@ const normalizeDateOnly = (val) => {
 };
 const normalizeInitialData = (data) => {
   if (!data) return {};
-  return {
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] initialData:", data);
+  const norm = {
     ...data,
     datePropOpti: normalizeDateOnly(data.datePropOpti),
-    startTraining: normalizeMySQLDateTimeToLocal(data.startTraining),
-    endTraining: normalizeMySQLDateTimeToLocal(data.endTraining),
+    startTraining: data.startTraining
+      ? normalizeMySQLDateTimeToLocal(data.startTraining)
+      : "",
+    endTraining: data.endTraining
+      ? normalizeMySQLDateTimeToLocal(data.endTraining)
+      : "",
     idTypeTraining:
       data.idTypeTraining === null || data.idTypeTraining === undefined
         ? ""
-        : Number(data.idTypeTraining),
+        : String(data.idTypeTraining),
+    placeTraining: data.placeTraining || "",
   };
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] normalized initialData:", norm);
+  return norm;
 };
-
 /* =========================
    Yup Schema (dinamis by role)
    ========================= */
 const emptyToNullNumber = (value, originalValue) => {
-  // Saat select masih "", jangan lempar typeError – ubah jadi null
   if (originalValue === "" || originalValue === undefined) return null;
   const n = Number(originalValue);
   return Number.isNaN(n) ? null : n;
@@ -75,8 +91,12 @@ const emptyToNullNumber = (value, originalValue) => {
 const getValidationSchema = (role) =>
   Yup.object({
     nmOpti: Yup.string().required("Nama Opti wajib diisi"),
-    idCustomer: Yup.number().typeError("Pilih perusahaan").required("Perusahaan wajib dipilih"),
-    idSumber: Yup.number().typeError("Pilih sumber").required("Sumber wajib dipilih"),
+    idCustomer: Yup.number()
+      .typeError("Pilih perusahaan")
+      .required("Perusahaan wajib dipilih"),
+    idSumber: Yup.number()
+      .typeError("Pilih sumber")
+      .required("Sumber wajib dipilih"),
     statOpti: Yup.string().when([], (__, schema) => {
       if (role !== "Sales") {
         return schema.required("Status Opti wajib diisi");
@@ -87,23 +107,20 @@ const getValidationSchema = (role) =>
     jenisOpti: Yup.string()
       .oneOf(["Training", "Project", "Outsource"])
       .required("Jenis Opti wajib diisi"),
-
-    // >>>> Perbaikan utama: transform "" -> null dan wajib hanya jika bukan Sales
     idExpert: Yup.number()
       .transform(emptyToNullNumber)
       .nullable()
       .when("jenisOpti", (jenisOpti, schema) => {
-        if (jenisOpti === "Training") {
-          return schema.required("Expert wajib dipilih untuk Training");
+        if (jenisOpti === "Training" || jenisOpti === "Project") {
+          return schema.required("Expert wajib dipilih untuk jenis ini");
         }
         return schema;
       }),
-
     idTypeTraining: Yup.number()
-      .typeError("Pilih tipe training")
+      .typeError("Pilih tipe")
       .when("jenisOpti", {
-        is: "Training",
-        then: (s) => s.required("Tipe training wajib dipilih"),
+        is: (val) => val === "Training" || val === "Project",
+        then: (s) => s.required("Tipe wajib dipilih"),
         otherwise: (s) => s.nullable(),
       }),
     startTraining: Yup.string().nullable(),
@@ -113,14 +130,13 @@ const getValidationSchema = (role) =>
     emailOpti: Yup.string().email("Email tidak valid").nullable(),
     mobileOpti: Yup.string().nullable(),
     kebutuhan: Yup.string().nullable(),
+    valOpti: Yup.number().typeError("Value harus berupa angka").nullable(),
   });
-
 /* =========================
    Komponen Form
    ========================= */
 const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const { user } = useContext(AuthContext);
-
   const baseState = {
     nmOpti: "",
     idCustomer: "",
@@ -137,16 +153,20 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     startTraining: "",
     endTraining: "",
     placeTraining: "",
+    valOpti: "",
   };
-
   const seed = normalizeInitialData(initialData);
+  // eslint-disable-next-line no-console
+  console.log("[OptiForm] seed for formData:", seed);
   const [formData, setFormData] = useState({
     ...baseState,
     ...seed,
-    statOpti: user?.role === "Sales" ? "Just Get Info" : seed.statOpti || baseState.statOpti,
+    statOpti:
+      user?.role === "Sales"
+        ? "Just Get Info"
+        : seed.statOpti || baseState.statOpti,
     datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
-
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
@@ -172,10 +192,15 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
   useEffect(() => {
     const safe = normalizeInitialData(initialData);
+    // eslint-disable-next-line no-console
+    console.log("[OptiForm] useEffect initialData changed, safe:", safe);
     setFormData((prev) => ({
       ...baseState,
       ...safe,
-      statOpti: user?.role === "Sales" ? "Just Get Info" : safe.statOpti || baseState.statOpti,
+      statOpti:
+        user?.role === "Sales"
+          ? "Just Get Info"
+          : safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,13 +208,11 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
   const inputClass =
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((s) => ({ ...s, [name]: value }));
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
   };
-
   const handleFileChange = (e) => setProposalFile(e.target.files[0] || null);
 
   const handleReset = () => {
@@ -197,7 +220,10 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     setFormData({
       ...baseState,
       ...safe,
-      statOpti: user?.role === "Sales" ? "Just Get Info" : safe.statOpti || baseState.statOpti,
+      statOpti:
+        user?.role === "Sales"
+          ? "Just Get Info"
+          : safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     });
     setProposalFile(null);
@@ -208,8 +234,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-
-      // gunakan schema yang mempertimbangkan role
       const schema = getValidationSchema(user?.role);
       await schema.validate(payload, { abortEarly: false });
 
@@ -225,7 +249,8 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     }
   };
 
-  const isExpertRequired = formData.jenisOpti === "Training";
+  const isExpertRequired =
+    formData.jenisOpti === "Training" || formData.jenisOpti === "Project";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -241,7 +266,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             placeholder="Masukkan nama opportunity"
             className={inputClass}
           />
-          {errors.nmOpti && <p className="text-red-600 text-sm">{errors.nmOpti}</p>}
+          {errors.nmOpti && (
+            <p className="text-red-600 text-sm">{errors.nmOpti}</p>
+          )}
         </div>
 
         {/* Kontak */}
@@ -268,7 +295,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             placeholder="contoh@email.com"
             className={inputClass}
           />
-          {errors.emailOpti && <p className="text-red-600 text-sm">{errors.emailOpti}</p>}
+          {errors.emailOpti && (
+            <p className="text-red-600 text-sm">{errors.emailOpti}</p>
+          )}
         </div>
 
         {/* Mobile */}
@@ -298,7 +327,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <option value="Project">Project</option>
             <option value="Outsource">Outsource</option>
           </select>
-          {errors.jenisOpti && <p className="text-red-600 text-sm">{errors.jenisOpti}</p>}
+          {errors.jenisOpti && (
+            <p className="text-red-600 text-sm">{errors.jenisOpti}</p>
+          )}
         </div>
 
         {/* Expert */}
@@ -311,7 +342,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             value={formData.idExpert || ""}
             onChange={handleChange}
             className={inputClass}
-            disabled={user?.role === "Sales" ? false : formData.jenisOpti !== "Training"}
           >
             <option value="">Pilih Expert</option>
             {experts.map((ex) => (
@@ -320,13 +350,17 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               </option>
             ))}
           </select>
-          {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
+          {errors.idExpert && (
+            <p className="text-red-600 text-sm">{errors.idExpert}</p>
+          )}
         </div>
 
         {/* Status Opti */}
         {user?.role !== "Sales" && (
           <div>
-            <label className="block text-sm font-medium mb-1">Status Opti *</label>
+            <label className="block text-sm font-medium mb-1">
+              Status Opti *
+            </label>
             <select
               name="statOpti"
               value={formData.statOpti || ""}
@@ -340,7 +374,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               <option value="Failed">Failed</option>
               <option value="Just Get Info">Just Get Info</option>
             </select>
-            {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
+            {errors.statOpti && (
+              <p className="text-red-600 text-sm">{errors.statOpti}</p>
+            )}
           </div>
         )}
 
@@ -355,7 +391,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
           >
             <option value="">Pilih sumber opportunity</option>
             {sumber.length === 0 ? (
-              <option value="" disabled>(Belum ada data sumber)</option>
+              <option value="" disabled>
+                (Belum ada data sumber)
+              </option>
             ) : (
               sumber.map((s) => (
                 <option key={s.idSumber} value={s.idSumber}>
@@ -364,12 +402,16 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               ))
             )}
           </select>
-          {errors.idSumber && <p className="text-red-600 text-sm">{errors.idSumber}</p>}
+          {errors.idSumber && (
+            <p className="text-red-600 text-sm">{errors.idSumber}</p>
+          )}
         </div>
 
         {/* Proposal file */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Proposal Opti</label>
+          <label className="block text-sm font-medium mb-1">
+            Proposal Opti
+          </label>
           <input
             type="file"
             name="proposalOpti"
@@ -389,7 +431,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             onChange={handleChange}
             className={inputClass}
           />
-          {errors.datePropOpti && <p className="text-red-600 text-sm">{errors.datePropOpti}</p>}
+          {errors.datePropOpti && (
+            <p className="text-red-600 text-sm">{errors.datePropOpti}</p>
+          )}
         </div>
 
         {/* Perusahaan */}
@@ -408,7 +452,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               </option>
             ))}
           </select>
-          {errors.idCustomer && <p className="text-red-600 text-sm">{errors.idCustomer}</p>}
+          {errors.idCustomer && (
+            <p className="text-red-600 text-sm">{errors.idCustomer}</p>
+          )}
         </div>
 
         {/* Deskripsi */}
@@ -424,65 +470,113 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
           />
         </div>
 
-        {/* ====== Khusus Training ====== */}
-        {formData.jenisOpti === "Training" && (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-1">Tipe Training *</label>
-              <select
-                name="idTypeTraining"
-                value={formData.idTypeTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              >
-                <option value="">Pilih tipe training</option>
-                {TYPE_TRAININGS.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+        {/* ====== Khusus Training atau Project ====== */}
+        {(formData.jenisOpti === "Training" ||
+          formData.jenisOpti === "Project") && (
+          <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              {/* Tipe Training / Project */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {formData.jenisOpti === "Training"
+                    ? "Tipe Training"
+                    : "Tipe Proyek"}{" "}
+                  *
+                </label>
+                <select
+                  name="idTypeTraining" // Re-use state, backend should handle mapping
+                  value={formData.idTypeTraining || ""}
+                  defaultValue={formData.idTypeTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {formData.jenisOpti === "Training"
+                      ? "Pilih tipe training"
+                      : "Pilih tipe proyek"}
                   </option>
-                ))}
-              </select>
-              {errors.idTypeTraining && (
-                <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>
-              )}
+                  {(formData.jenisOpti === "Training"
+                    ? TYPE_TRAININGS
+                    : TYPE_PROJECTS
+                  ).map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.idTypeTraining && (
+                  <p className="text-red-600 text-sm">
+                    {errors.idTypeTraining}
+                  </p>
+                )}
+              </div>
+              {/* Value */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Value</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
+                    Rp.
+                  </span>
+                  <input
+                    type="number"
+                    name="valOpti"
+                    value={formData.valOpti || ""}
+                    onChange={handleChange}
+                    placeholder="Value"
+                    className={inputClass + " pl-12"}
+                  />
+                </div>
+                {errors.valOpti && (
+                  <p className="text-red-600 text-sm">{errors.valOpti}</p>
+                )}
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Mulai Training</label>
-              <input
-                type="datetime-local"
-                name="startTraining"
-                value={formData.startTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
+              {/* Mulai */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Mulai</label>
+                <input
+                  type="datetime-local"
+                  name="startTraining" // Re-use state
+                  value={formData.startTraining || ""}
+                  defaultValue={formData.startTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              {/* Selesai */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Selesai
+                </label>
+                <input
+                  type="datetime-local"
+                  name="endTraining" // Re-use state
+                  value={formData.endTraining || ""}
+                  defaultValue={formData.endTraining || ""}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Selesai Training</label>
-              <input
-                type="datetime-local"
-                name="endTraining"
-                value={formData.endTraining || ""}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
+            {/* Tempat/Platform */}
+            <div className="mt-2">
+              <label className="block text-sm font-medium mb-1">
+                Tempat / Platform
+              </label>
               <input
                 type="text"
-                name="placeTraining"
+                name="placeTraining" // Re-use state
                 value={formData.placeTraining || ""}
+                defaultValue={formData.placeTraining || ""}
                 onChange={handleChange}
                 placeholder="Online / alamat / venue"
                 className={inputClass}
               />
             </div>
-          </>
+          </div>
         )}
-        {/* ====== END khusus Training ====== */}
+        {/* ====== END khusus Training / Project ====== */}
       </div>
 
       <div className="flex items-center gap-3 pt-2">

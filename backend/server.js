@@ -3,7 +3,7 @@
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const path = require("path"); // Import path module
+const path = require("path");
 require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
@@ -18,6 +18,9 @@ const skillRoutes = require("./routes/skill");
 const adminRoutes = require("./routes/admin");
 const expertRoutes = require("./routes/expert");
 
+// ⬇️ Scheduler untuk auto-update status Training/Project
+const { startStatusScheduler } = require("./jobs/statusUpdater");
+
 const app = express();
 
 app.use(cors());
@@ -30,6 +33,7 @@ const loginLimiter = rateLimit({
 });
 app.use("/api/auth/login", loginLimiter);
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/user", userRoutes);
@@ -40,30 +44,36 @@ app.use("/api/project", projectRoutes);
 app.use("/api/outsource", outsourceRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/dashboard", require("./routes/dashboard"));
+app.use("/api/expert", expertRoutes);
 
-// Route to force download for proposal PDFs
-app.get('/uploads/proposals/:filename', (req, res) => {
+// Static files (uploads)
+app.use("/uploads", express.static("uploads"));
+
+// Route untuk download proposal PDF (force download)
+app.get("/uploads/proposals/:filename", (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', 'proposals', filename);
+  const filePath = path.join(__dirname, "uploads", "proposals", filename);
   res.download(filePath, (err) => {
     if (err) {
-      console.error('Error downloading file:', err);
-      console.error('Attempted file path:', filePath);
-      if (err.code === 'ENOENT') {
-        res.status(404).send('File not found.');
-      } else if (err.code === 'EACCES') {
-        res.status(403).send('Permission denied to access file.');
+      console.error("Error downloading file:", err);
+      console.error("Attempted file path:", filePath);
+      if (err.code === "ENOENT") {
+        res.status(404).send("File not found.");
+      } else if (err.code === "EACCES") {
+        res.status(403).send("Permission denied to access file.");
       } else {
-        res.status(500).send('Server error during download.');
+        res.status(500).send("Server error during download.");
       }
     }
   });
 });
-app.use("/api/expert", expertRoutes);
-
-app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
+
+// ⬇️ Jalankan scheduler status (jalan saat server start & tiap 1 menit)
+startStatusScheduler();
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

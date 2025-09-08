@@ -61,7 +61,6 @@ const createExpertUser = async (req, res) => {
  * @access  Private (Expert)
  */
 const getMyDashboardData = async (req, res) => {
-  // req.user.id didapat dari middleware otentikasi setelah token diverifikasi
   const idExpert = req.user.id; 
 
   if (!idExpert) {
@@ -72,11 +71,9 @@ const getMyDashboardData = async (req, res) => {
   try {
     connection = await pool.getConnection();
 
-    // 1. Ambil total training dan project yang ditugaskan ke expert ini
+    // Query untuk totals tidak berubah
     const [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training WHERE idExpert = ?', [idExpert]);
     const [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project WHERE idExpert = ?', [idExpert]);
-    
-    // Outsource dihitung semua karena di skema database tidak ada kolom idExpert
     const [outsourceCount] = await connection.query('SELECT COUNT(*) as count FROM outsource');
 
     const totals = {
@@ -85,18 +82,21 @@ const getMyDashboardData = async (req, res) => {
       outsource: outsourceCount[0].count,
     };
 
-    // 2. Ambil daftar aktivitas (training & project) beserta detailnya
+    // Query untuk activities kini DITAMBAH dengan startDate
     const [activities] = await connection.query(`
       SELECT 
         'Training' as type, 
         t.idTraining as id,
         t.nmTraining as name, 
-        o.statOpti as status, 
+        o.statOpti as status,
+        t.startTraining as startDate,
         t.endTraining as endDate, 
-        c.nmCustomer as customerName
+        c.nmCustomer as customerName,
+        tt.nmTypeTraining as trainingType
       FROM training t
       LEFT JOIN opti o ON t.idOpti = o.idOpti
       LEFT JOIN customer c ON t.idCustomer = c.idCustomer
+      LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
       WHERE t.idExpert = ?
       
       UNION ALL
@@ -105,16 +105,17 @@ const getMyDashboardData = async (req, res) => {
         'Project' as type, 
         p.idProject as id,
         p.nmProject as name, 
-        o.statOpti as status, 
+        o.statOpti as status,
+        p.startProject as startDate,
         p.endProject as endDate, 
-        c.nmCustomer as customerName
+        c.nmCustomer as customerName,
+        NULL as trainingType
       FROM project p
       LEFT JOIN opti o ON p.idOpti = o.idOpti
       LEFT JOIN customer c ON p.idCustomer = c.idCustomer
       WHERE p.idExpert = ?
     `, [idExpert, idExpert]);
     
-    // Kirim semua data dalam satu respons
     res.json({ totals, activities });
 
   } catch (error) {

@@ -1,86 +1,92 @@
 // src/pages/TrainingPage.js
-import React, { useEffect, useMemo, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
-
 import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== Helpers (date-based fallback) ===== */
-const getBadge = (start, end) => {
-  if (!end) return { text: "Open", cls: "bg-emerald-500 text-white" };
-  const now = new Date();
-  const endD = new Date(end);
-  if (isNaN(endD)) return { text: "Open", cls: "bg-emerald-500 text-white" };
-  if (endD <= now) return { text: "Closed", cls: "bg-gray-900 text-white" };
-  const diffDays = Math.ceil((endD - now) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 3) return { text: "Almost Full", cls: "bg-yellow-500 text-black" };
-  return { text: "Open", cls: "bg-emerald-500 text-white" };
-};
-const countdown = (end) => {
-  if (!end) return "-";
-  const t = new Date(end).getTime();
-  if (isNaN(t)) return "-";
-  const diff = t - Date.now();
-  if (diff <= 0) return "Expired";
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-  return `${d} Hari (Sisa Waktu)`;
+/* ===== Helpers tanggal & status ===== */
+const safeTime = (v) => {
+  const t = new Date(v).getTime();
+  return isNaN(t) ? null : t;
 };
 const fmtDateTime = (v) =>
-  v ? new Date(v).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" }) : "-";
+  v
+    ? new Date(v).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" })
+    : "-";
 const fmtDate = (v) =>
-  v ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "-";
+  v
+    ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
+    : "-";
 const diffDays = (start, end) => {
-  if (!start || !end) return null;
-  const ms = new Date(end) - new Date(start);
-  if (isNaN(ms)) return null;
-  return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (!s || !e) return null;
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
 
-/* ===== Map status OPTI -> badge ===== */
-const getOptiStatusBadge = (stat) => {
-  switch (stat) {
-    case "Follow Up":
-      return { text: "Follow Up", cls: "bg-blue-500 text-white" };
-    case "On-Progress":
-      return { text: "On-Progress", cls: "bg-yellow-500 text-black" };
-    case "Success":
-      return { text: "Success", cls: "bg-emerald-600 text-white" };
-    case "Failed":
-      return { text: "Failed", cls: "bg-red-600 text-white" };
-    case "Just Get Info":
-      return { text: "Just Get Info", cls: "bg-orange-100 text-orange-800" };
-    default:
-      return null;
+// format sisa waktu dalam jam:menit:detik, dgn total jam (bukan hari)
+const formatRemaining = (ms) => {
+  if (!ms || ms <= 0) return "0:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+};
+
+// return {key: 'pending'|'running'|'finished', label, className}
+const computeStatus = (start, end, now = Date.now()) => {
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (s && now < s) {
+    return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
   }
+  if (s && (!e || now <= e) && now >= s) {
+    const remaining = e ? e - now : 0;
+    return {
+      key: "running",
+      label: e ? `Berjalan · ${formatRemaining(remaining)}` : "Berjalan",
+      className: "bg-blue-600 text-white",
+      remaining,
+    };
+  }
+  if (e && now > e) {
+    return { key: "finished", label: "Finished", className: "bg-green-500 text-white" };
+  }
+  // fallback jika tanggal tak lengkap
+  return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
 };
 
-/* ===== Inline Icons (ringan) ===== */
+/* ===== Icons ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M8 2v3M16 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>
+    <path d="M8 2v3M16 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
   </svg>
 );
 const IconClock = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
   </svg>
 );
 const IconUsers = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
 const IconMap = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3"/>
+    <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3" />
   </svg>
 );
 
-
-
 /* ===== Simple Modal ===== */
-const Modal = ({ open, onClose, title, badge, children, footer }) => {
+const Modal = ({ open, onClose, title, badge, children }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[999]">
@@ -90,20 +96,50 @@ const Modal = ({ open, onClose, title, badge, children, footer }) => {
           <div className="px-6 py-4 border-b flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">{title}</h3>
-              <p className="text-xs text-gray-500">Detail jadwal training</p>
+              <p className="text-xs text-gray-500">Detail informasi training</p>
             </div>
-            {badge ? (
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}>{badge.text}</span>
-            ) : null}
+            <div className="flex items-center gap-4">
+              {badge ? (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}>
+                  {badge.text}
+                </span>
+              ) : null}
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">
+                &times;
+              </button>
+            </div>
           </div>
-          <div className="p-6">{children}</div>
-          <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-end gap-3">
-            {footer}
-            <button onClick={onClose} className="px-4 py-2 rounded-md border hover:bg-gray-100">
-              Tutup
-            </button>
-          </div>
+          <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+/* ====== Profile Chip ====== */
+const initials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const resolveName = (u) =>
+  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
+
+const UserChip = ({ user }) => {
+  const name = resolveName(user);
+  const ini = initials(name);
+  return (
+    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
+      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
+        {ini}
+      </div>
+      <div className="leading-tight">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
       </div>
     </div>
   );
@@ -116,14 +152,21 @@ const TrainingPage = () => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-
-  // detail modal state
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState("");
+  const [openFeedback, setOpenFeedback] = useState(false);
+  const [feedbackTarget, setFeedbackTarget] = useState(null);
 
-  // Fetch list (now includes statOpti)
+  // ticker untuk hitung mundur realtime
+  const [, forceTick] = useState(0);
+  const tickRef = useRef(null);
+  useEffect(() => {
+    tickRef.current = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(tickRef.current);
+  }, []);
+
   useEffect(() => {
     if (!user?.token) {
       setLoading(false);
@@ -135,7 +178,10 @@ const TrainingPage = () => {
         setLoading(true);
         setErr("");
         const res = await fetch(`${API_BASE}/api/training/mine`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${user.token}` },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
           signal: controller.signal,
         });
         if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
@@ -171,7 +217,10 @@ const TrainingPage = () => {
     setDetailLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/training/${id}`, {
-        headers: { Accept: "application/json", Authorization: `Bearer ${user.token}` },
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
       });
       if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
       const data = await res.json();
@@ -184,39 +233,42 @@ const TrainingPage = () => {
     }
   };
 
+  const openFeedbackModal = (t) => {
+    setFeedbackTarget(t);
+    setOpenFeedback(true);
+  };
+
   if (!user?.token) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-2">Training Page</h1>
-        <p className="text-gray-600">Silakan login sebagai <b>Expert</b> untuk melihat jadwal training Anda.</p>
+        <p className="text-gray-600">
+          Silakan login sebagai <b>Expert</b> untuk melihat jadwal training Anda.
+        </p>
       </div>
     );
   }
 
+  const now = Date.now();
+
   return (
     <div className="p-6">
-      {/* Topbar: Title + Search */}
+      {/* Topbar: Title + Search + UserChip */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Training Page</h1>
-        <div className="relative w-64">
-          <input
-            className="w-full border rounded-full pl-4 pr-10 py-2"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              className="w-full border rounded-full pl-4 pr-10 py-2"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+          </div>
+          <UserChip user={user} />
         </div>
       </div>
-
-      {/* Action button */}
-      <button
-        type="button"
-        className="mb-4 inline-flex items-center rounded-md bg-gray-900 text-white px-4 py-2 text-sm hover:bg-black"
-        onClick={() => alert("Tambah Training (manual)")}
-      >
-        Tambah Training
-      </button>
 
       {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
@@ -228,53 +280,72 @@ const TrainingPage = () => {
           {loading && <div className="text-center text-gray-500 py-10">Memuat data…</div>}
           {!loading && err && <div className="text-center text-red-600 py-10">{err}</div>}
 
-          {!loading && !err && filtered.map((t, idx) => {
-            // <- status mengikuti OPTI jika ada; kalau tidak, fallback ke date-based
-            const badge = getOptiStatusBadge(t.statOpti) || getBadge(t.startTraining, t.endTraining);
-            return (
-              <div
-                key={t.idTraining || idx}
-                className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
-                    <div className="text-xs text-gray-500">{t.corpCustomer || "-"}</div>
-                    <div className="text-xs text-gray-500">Sales: <span className="text-green-600 font-bold">{t.nmSales || "-"}</span></div>
-                    <div className="text-xs text-gray-500">Expert: <span className="text-purple-600 font-bold">{t.nmExpert || "-"}</span></div>
+          {!loading &&
+            !err &&
+            filtered.map((t, idx) => {
+              const st = computeStatus(t.startTraining, t.endTraining, now);
+              const badge = { text: st.label, cls: st.className };
+              return (
+                <div
+                  key={t.idTraining || idx}
+                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
+                      <div className="text-xs text-gray-500">{t.corpCustomer || "-"}</div>
+                      <div className="text-xs text-gray-500">
+                        Sales: <span className="text-green-600 font-bold">{t.nmSales || "-"}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Expert: <span className="text-purple-600 font-bold">{t.nmExpert || "-"}</span>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>{badge.text}</span>
                   </div>
-                  <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>
-                    {badge.text}
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <IconCalendar />
-                    <span>{fmtDate(t.endTraining)} <span className="text-gray-500">(deadline)</span></span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <IconCalendar />
+                      <span>
+                        {fmtDate(t.startTraining)} – {fmtDate(t.endTraining)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IconClock />
+                      <span>
+                        {st.key === "running"
+                          ? `Sisa: ${formatRemaining(st.remaining)}`
+                          : st.key === "pending"
+                          ? "Belum mulai"
+                          : "Selesai"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IconUsers />
+                      <span>{t.registered ?? 25} Orang (Peserta Training)</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <IconClock />
-                    <span>{countdown(t.endTraining)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <IconUsers />
-                    <span>{t.registered ?? 25} Orang (Peserta Training)</span>
-                  </div>
-                </div>
 
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    className="w-full border rounded-md py-2 text-sm hover:bg-gray-50"
-                    onClick={() => openDetail(t.idTraining)}
-                  >
-                    Lihat Detail
-                  </button>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      onClick={() => openDetail(t.idTraining)}
+                    >
+                      Lihat Detail
+                    </button>
+                    <button
+                      type="button"
+                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      onClick={() => openFeedbackModal(t)}
+                    >
+                      Lihat Feedback
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
           {!loading && !err && filtered.length === 0 && (
             <div className="text-center text-gray-500 py-10">Belum ada training.</div>
@@ -282,29 +353,22 @@ const TrainingPage = () => {
         </div>
       </div>
 
-      {/* ===== Modal Detail ===== */}
+      {/* Modal Detail */}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         title={detail?.nmTraining || "Training"}
-        badge={getOptiStatusBadge(detail?.statOpti) || getBadge(detail?.startTraining, detail?.endTraining)}
-        footer={
-          <>
-            <button className="px-4 py-2 rounded-md border hover:bg-gray-100" onClick={() => alert("Mulai Training")}>
-              Mulai Training
-            </button>
-            <button className="px-4 py-2 rounded-md border hover:bg-gray-100" onClick={() => alert("Tutup Pendaftaran")}>
-              Tutup Pendaftaran
-            </button>
-            <button className="px-4 py-2 rounded-md border hover:bg-gray-100" onClick={() => window.print()}>
-              Export PDF
-            </button>
-          </>
+        badge={
+          detail
+            ? (() => {
+                const st = computeStatus(detail.startTraining, detail.endTraining);
+                return { text: st.label, cls: st.className };
+              })()
+            : null
         }
       >
         {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
         {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
-
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
@@ -335,22 +399,22 @@ const TrainingPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Catatan</div>
+                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
                 <div className="text-sm text-gray-700 leading-6">
-                  {detail.descTraining || "Belum ada catatan."}
+                  {detail.kebutuhan || "Belum ada deskripsi."}
                 </div>
               </div>
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-gray-500 mb-2">Dokumen</div>
                 {detail.proposalOpti ? (
                   <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\]?[\]?\[\/]/).pop()}`}
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\\/]/).pop()}`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm text-black hover:underline flex items-center gap-2"
                   >
                     <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                    <span>{detail.proposalOpti.split(/[\]?[\]?\[\/]/).pop()}</span>
+                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
                   </a>
                 ) : (
                   <div className="text-sm text-gray-700">Belum ada dokumen.</div>
@@ -359,6 +423,18 @@ const TrainingPage = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal Feedback */}
+      <Modal
+        open={openFeedback}
+        onClose={() => setOpenFeedback(false)}
+        title={`Feedback - ${feedbackTarget?.nmTraining || "Training"}`}
+        badge={{ text: "—", cls: "bg-gray-300 text-gray-700" }}
+      >
+        <div className="text-sm text-gray-700">
+          Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
+        </div>
       </Modal>
     </div>
   );
