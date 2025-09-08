@@ -118,7 +118,6 @@ const OptiPage = () => {
     if (statusFilter) {
       data = data.filter((opti) => opti.statOpti === statusFilter);
     }
-    data.sort((a, b) => new Date(b.datePropOpti) - new Date(a.datePropOpti));
     return data;
   }, [optis, statusFilter]);
 
@@ -253,8 +252,8 @@ const OptiPage = () => {
               <Initials name={getDisplayName(user)} />
             )}
             <div className="leading-5">
-              <div className="text-sm font-medium">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in</div>
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
             </div>
           </div>
         </div>
@@ -309,7 +308,36 @@ const OptiPage = () => {
         </div>
 
         <div className="flex justify-center mt-6 space-x-2">
-          {/* Pagination buttons... */}
+          {totalPages > 1 && (
+            <>
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              {pageNumbers.map((number) => (
+                <button
+                  key={number}
+                  onClick={() => handlePageChange(number)}
+                  className={`px-4 py-2 rounded-md ${currentPage === number
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 hover:bg-gray-300"
+                    }`}
+                >
+                  {number}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </>
+          )}
         </div>
       </main>
 

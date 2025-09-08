@@ -37,29 +37,29 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA OPTI
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA PERUSAHAAN
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA CUSTOMER
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA SALES
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA EXPERT
               </th>
               
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 STATUS OPTI
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 DOKUMEN
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 AKSI
               </th>
             </tr>
@@ -68,19 +68,19 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
             {optis.length > 0 ? (
               optis.map((opti) => (
                 <tr key={opti.idOpti}>
-                  <td className="px-6 py-4 font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {opti.nmOpti}
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.corpCustomer || "-"}
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmCustomer || "-"}
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmSales || "-"}
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmExpert || "-"}
                   </td>
                   
@@ -93,7 +93,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                       {opti.statOpti || "-"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {console.log("OptiTable - opti.proposalPath:", opti.proposalPath)}
                     {opti.proposalPath ? (
                       <a
@@ -111,13 +111,13 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   <td className="px-6 py-4 flex gap-2">
                     <button
                       onClick={() => onViewOpti(opti)}
-                      className="px-4 py-1 rounded bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
+                      className="text-blue-600 hover:text-blue-900 mr-2 px-3 py-1 rounded-md bg-blue-100"
                     >
                       View
                     </button>
                     <button
                       onClick={() => onEditOpti(opti)}
-                      className="px-4 py-1 rounded bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition"
+                      className="text-green-600 hover:text-green-900 px-3 py-1 rounded-md bg-green-100"
                     >
                       Edit
                     </button>
@@ -130,7 +130,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   colSpan="9"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  Belum ada data opportunity. Klik "Tambah Opti" untuk memulai.
+                  No opportunities match the current filters.
                 </td>
               </tr>
             )}
