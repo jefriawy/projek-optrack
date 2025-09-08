@@ -56,6 +56,35 @@ const IconMap = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
+/* ===== Profile Chip (reusable) ===== */
+const initials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const resolveName = (u) =>
+  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
+
+const UserChip = ({ user }) => {
+  const name = resolveName(user);
+  const ini = initials(name);
+  return (
+    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
+      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
+        {ini}
+      </div>
+      <div className="leading-tight">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
+      </div>
+    </div>
+  );
+};
+
 /* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children }) => {
   if (!open) return null;
@@ -98,7 +127,6 @@ const ProjectPage = () => {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState("");
-  // feedback modal
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
 
@@ -186,16 +214,20 @@ const ProjectPage = () => {
 
   return (
     <div className="p-6">
+      {/* Topbar: Title + Search + UserChip */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Project Page</h1>
-        <div className="relative w-64">
-          <input
-            className="w-full border rounded-full pl-4 pr-10 py-2"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              className="w-full border rounded-full pl-4 pr-10 py-2"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+          </div>
+          <UserChip user={user} />
         </div>
       </div>
 
@@ -256,7 +288,6 @@ const ProjectPage = () => {
                     </div>
                   </div>
 
-                  {/* tombol kanan kecil */}
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       type="button"
@@ -284,8 +315,12 @@ const ProjectPage = () => {
       </div>
 
       {/* Modal Detail */}
-      <Modal open={open} onClose={() => setOpen(false)} title={detail?.nmProject || "Proyek"}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={detail?.nmProject || "Proyek"}
+        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+      >
         {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
         {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
         {!detailLoading && !detailErr && detail && (
@@ -349,7 +384,6 @@ const ProjectPage = () => {
         title={`Feedback - ${feedbackTarget?.nmProject || "Proyek"}`}
         badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
       >
-        {/* TODO: gantikan ini dengan isi feedback sebenarnya */}
         <div className="text-sm text-gray-700">
           Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
         </div>

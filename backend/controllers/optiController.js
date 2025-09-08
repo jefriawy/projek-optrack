@@ -12,9 +12,6 @@ const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
-/* =========================
- * CREATE (LOGIKA DIPINDAHKAN)
- * =======================*/
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -36,8 +33,11 @@ const createOpti = async (req, res) => {
       idSalesForOpti = customer.idSales;
     }
 
-    const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
     const idOpti = await generateUserId("Opti");
+
+    // Sales selalu start di "Just Get Info"; lainnya mengikuti input
+    const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
+
     const optiData = {
       idOpti,
       nmOpti: b.nmOpti,
@@ -45,20 +45,68 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: statOpti,
+      statOpti,
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
-      jenisOpti: b.jenisOpti,
+      jenisOpti: b.jenisOpti, // "Training" | "Project"
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       proposalOpti: req.file ? path.basename(req.file.filename) : null,
-      valOpti:
-        b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
+      valOpti: b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
     };
 
     await Opti.create(optiData, idSalesForOpti, connection);
 
-    // NOTE: Training/Project dibuat saat update => Success
+    // === BARU: auto-create anak jika saat CREATE langsung Success ===
+    if (optiData.statOpti === "Success") {
+      if (optiData.jenisOpti === "Training") {
+        const [exists] = await connection.query(
+          "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
+          [idOpti]
+        );
+        if (!exists.length) {
+          await Training.createTraining(
+            {
+              idTraining: await generateUserId("Training"),
+              idOpti,
+              nmTraining: optiData.nmOpti,
+              idTypeTraining: b.idTypeTraining
+                ? Number(b.idTypeTraining)
+                : 1,
+              startTraining: toNull(b.startTraining),
+              endTraining: toNull(b.endTraining),
+              idExpert: optiData.idExpert,
+              placeTraining: toNull(b.placeTraining),
+              idCustomer: optiData.idCustomer,
+            },
+            connection
+          );
+        }
+      } else if (optiData.jenisOpti === "Project") {
+        const [exists] = await connection.query(
+          "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
+          [idOpti]
+        );
+        if (!exists.length) {
+          await Project.createProject(
+            {
+              idProject: await generateUserId("Project"),
+              idOpti,
+              nmProject: optiData.nmOpti,
+              idTypeProject: b.idTypeProject ? Number(b.idTypeProject) : 1,
+              startProject: toNull(b.startProject),
+              endProject: toNull(b.endProject),
+              placeProject: toNull(b.placeProject),
+              idCustomer: optiData.idCustomer,
+              idSales: idSalesForOpti,
+              idExpert: optiData.idExpert,
+            },
+            connection
+          );
+        }
+      }
+    }
+
     await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
@@ -71,7 +119,7 @@ const createOpti = async (req, res) => {
 };
 
 /* =========================
- * UPDATE (LOGIKA BARU DITAMBAHKAN)
+ * UPDATE (LOGIKA DIPERBAIKI)
  * =======================*/
 const updateOpti = async (req, res) => {
   const { id } = req.params;
@@ -130,11 +178,11 @@ const updateOpti = async (req, res) => {
 
     await Opti.update(id, optiData, connection);
 
-    // ===== Buat Training/Project saat status berubah menjadi Success =====
-    if (b.statOpti === "Success" && existingOpti.statOpti !== "Success") {
+    // ===== Buat Training/Project idempotent saat status Success =====
+    if (optiData.statOpti === "Success") {
       const idOpti = id;
 
-      if (existingOpti.jenisOpti === "Training") {
+      if (optiData.jenisOpti === "Training") {
         const [trainings] = await connection.query(
           "SELECT idTraining FROM training WHERE idOpti = ?",
           [idOpti]
@@ -160,7 +208,7 @@ const updateOpti = async (req, res) => {
             connection
           );
         }
-      } else if (existingOpti.jenisOpti === "Project") {
+      } else if (optiData.jenisOpti === "Project") {
         const [projects] = await connection.query(
           "SELECT idProject FROM project WHERE idOpti = ?",
           [idOpti]
@@ -171,7 +219,6 @@ const updateOpti = async (req, res) => {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              // ✅ gunakan field Project (bukan training)
               idTypeProject: b.idTypeProject
                 ? Number(b.idTypeProject)
                 : existingOpti.idTypeProject || 1,
@@ -191,7 +238,7 @@ const updateOpti = async (req, res) => {
       }
     }
 
-    // Optional: sinkron detail training jika ada (tetap seperti milikmu)
+    // Sinkron update training jika opti jenis Training
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
       await connection.query(
         `UPDATE training

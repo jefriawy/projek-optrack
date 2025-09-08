@@ -14,45 +14,56 @@ const {
 } = require("../controllers/optiController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Konfigurasi Multer untuk upload proposal
-// Pastikan folder target ada dan gunakan path absolut berbasis __dirname
+// Pastikan folder upload proposal ada
 const proposalsDir = path.join(__dirname, "..", "uploads", "proposals");
 if (!fs.existsSync(proposalsDir)) {
   fs.mkdirSync(proposalsDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
     cb(null, proposalsDir);
   },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // Nama file unik
+  filename: function (_req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // unik
   },
 });
+const upload = multer({ storage });
 
-const upload = multer({ storage: storage });
+// Dashboard Sales
+router.get(
+  "/dashboard",
+  authMiddleware(["Sales", "Admin", "Head Sales"]),
+  getSalesDashboardData
+);
 
-// Rute untuk dasbor sales
-router.get("/dashboard", authMiddleware(["Sales", "Admin", "Head Sales"]), getSalesDashboardData);
-
-// Rute untuk mendapatkan semua data Opti
+// List Opti
 router.get("/", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptis);
 
-// Rute untuk membuat Opti baru dengan upload proposal
+// Create Opti (boleh Sales & Head Sales; Admin opsional kalau mau)
 router.post(
   "/",
-  authMiddleware(["Sales", "Head Sales"]),
+  authMiddleware(["Sales", "Head Sales", "Admin"]),
   upload.single("proposalOpti"),
   createOpti
 );
 
-// Rute untuk mendapatkan data customer dan sumber untuk form
-router.get("/form-options", authMiddleware(["Sales", "Admin", "Head Sales"]), getFormOptions);
+// Form options
+router.get(
+  "/form-options",
+  authMiddleware(["Sales", "Admin", "Head Sales"]),
+  getFormOptions
+);
 
-// Rute baru untuk detail
+// Detail Opti
 router.get("/:id", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptiById);
 
-// Rute baru untuk update
-router.put("/:id", authMiddleware(["Sales", "Head Sales"]), upload.single("proposalOpti"), updateOpti);
+// Update Opti (perluas agar Admin juga bisa)
+router.put(
+  "/:id",
+  authMiddleware(["Sales", "Head Sales", "Admin"]),
+  upload.single("proposalOpti"),
+  updateOpti
+);
 
 module.exports = router;

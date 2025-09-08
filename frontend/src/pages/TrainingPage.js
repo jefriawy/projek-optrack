@@ -17,18 +17,11 @@ const countdown = (end) => {
 };
 const fmtDateTime = (v) =>
   v
-    ? new Date(v).toLocaleString("id-ID", {
-        dateStyle: "full",
-        timeStyle: "short",
-      })
+    ? new Date(v).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" })
     : "-";
 const fmtDate = (v) =>
   v
-    ? new Date(v).toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+    ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
     : "-";
 const diffDays = (start, end) => {
   if (!start || !end) return null;
@@ -37,7 +30,7 @@ const diffDays = (start, end) => {
   return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
 };
 
-/* ===== Inline Icons ===== */
+/* ===== Icons ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
     <path d="M8 2v3M16 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
@@ -63,7 +56,7 @@ const IconMap = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
-/* ===== Simple Modal ===== */
+/* ===== Simple Modal (ADDED) ===== */
 const Modal = ({ open, onClose, title, badge, children }) => {
   if (!open) return null;
   return (
@@ -74,7 +67,7 @@ const Modal = ({ open, onClose, title, badge, children }) => {
           <div className="px-6 py-4 border-b flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">{title}</h3>
-              <p className="text-xs text-gray-500">Detail jadwal training</p>
+              <p className="text-xs text-gray-500">Detail informasi training</p>
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
@@ -94,6 +87,35 @@ const Modal = ({ open, onClose, title, badge, children }) => {
   );
 };
 
+/* ====== Profile Chip ====== */
+const initials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const resolveName = (u) =>
+  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
+
+const UserChip = ({ user }) => {
+  const name = resolveName(user);
+  const ini = initials(name);
+  return (
+    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
+      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
+        {ini}
+      </div>
+      <div className="leading-tight">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
+      </div>
+    </div>
+  );
+};
+
 /* ===== Page ===== */
 const TrainingPage = () => {
   const { user } = useContext(AuthContext);
@@ -105,7 +127,6 @@ const TrainingPage = () => {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState("");
-  // feedback modal
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
 
@@ -193,17 +214,20 @@ const TrainingPage = () => {
 
   return (
     <div className="p-6">
-      {/* Topbar: Title + Search */}
+      {/* Topbar: Title + Search + UserChip */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Training Page</h1>
-        <div className="relative w-64">
-          <input
-            className="w-full border rounded-full pl-4 pr-10 py-2"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              className="w-full border rounded-full pl-4 pr-10 py-2"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
+          </div>
+          <UserChip user={user} />
         </div>
       </div>
 
@@ -229,7 +253,6 @@ const TrainingPage = () => {
           {!loading &&
             !err &&
             filtered.map((t, idx) => {
-              // badge seragam
               const badge = { text: "Aktif", cls: "bg-emerald-600 text-white" };
               return (
                 <div
@@ -267,7 +290,6 @@ const TrainingPage = () => {
                     </div>
                   </div>
 
-                  {/* tombol kanan kecil */}
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       type="button"
@@ -295,8 +317,12 @@ const TrainingPage = () => {
       </div>
 
       {/* Modal Detail */}
-      <Modal open={open} onClose={() => setOpen(false)} title={detail?.nmTraining || "Training"}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={detail?.nmTraining || "Training"}
+        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+      >
         {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
         {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
         {!detailLoading && !detailErr && detail && (
@@ -362,7 +388,6 @@ const TrainingPage = () => {
         title={`Feedback - ${feedbackTarget?.nmTraining || "Training"}`}
         badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
       >
-        {/* TODO: gantikan ini dengan isi feedback sebenarnya */}
         <div className="text-sm text-gray-700">
           Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
         </div>

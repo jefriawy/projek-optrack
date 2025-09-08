@@ -17,18 +17,31 @@ const getTraining = async (_req, res) => {
 // GET /api/training/:id  (Admin/Expert/Sales/Head Sales)
 const getTrainingById = async (req, res) => {
   try {
-    const training = await Training.getTrainingById(req.params.id);
-    if (!training) {
-      return res.status(404).json({ error: "Training not found" });
-    }
-    res.json(training);
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        t.*,
+        c.corpCustomer,
+        s.nmSales,
+        e.nmExpert
+      FROM training t
+      LEFT JOIN opti o ON o.idOpti = t.idOpti
+      LEFT JOIN customer c ON c.idCustomer = t.idCustomer
+      LEFT JOIN sales s    ON s.idSales    = o.idSales
+      LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+      WHERE t.idTraining = ?
+      `,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: "Training not found" });
+    res.json(rows[0]);
   } catch (err) {
     console.error("Error fetching training:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-// POST /api/training  (Admin) — buat manual
+// POST /api/training  (Admin)
 const createTraining = async (req, res) => {
   try {
     const payload = { ...req.body, idTraining: await generateUserId("Training") };
@@ -44,9 +57,7 @@ const createTraining = async (req, res) => {
 const updateTraining = async (req, res) => {
   try {
     const affectedRows = await Training.updateTraining(req.params.id, req.body);
-    if (affectedRows === 0) {
-      return res.status(404).json({ error: "Training not found" });
-    }
+    if (affectedRows === 0) return res.status(404).json({ error: "Training not found" });
     res.json({ message: "Training updated" });
   } catch (err) {
     console.error("Error updating training:", err);
@@ -58,9 +69,7 @@ const updateTraining = async (req, res) => {
 const deleteTraining = async (req, res) => {
   try {
     const affectedRows = await Training.deleteTraining(req.params.id);
-    if (affectedRows === 0) {
-      return res.status(404).json({ error: "Training not found" });
-    }
+    if (affectedRows === 0) return res.status(404).json({ error: "Training not found" });
     res.json({ message: "Training deleted" });
   } catch (err) {
     console.error("Error deleting training:", err);
@@ -68,60 +77,72 @@ const deleteTraining = async (req, res) => {
   }
 };
 
-// GET /api/training/mine (Expert/Sales/Head Sales)
-// ⚠️ Hanya kirim training yang parent OPTI-nya sudah Success
 const getMyTrainings = async (req, res) => {
   try {
-    const { role, id } = req.user;
+    const rawRole = req.user?.role || "";
+    const role = String(rawRole).toLowerCase();
 
-    let sql, params;
-    if (role === "Expert") {
+    // Ambil ID yang relevan dari token (flexibel ke berbagai skema)
+    const expertId = req.user?.idExpert ?? req.user?.id ?? req.user?.userId ?? null;
+    const salesId  = req.user?.idSales  ?? req.user?.id ?? req.user?.userId ?? null;
+
+    let sql = "";
+    let params = [];
+
+    if (role === "expert") {
+      if (!expertId) return res.status(400).json({ error: "Missing expert id" });
+
       sql = `
-        SELECT 
+        SELECT DISTINCT
           t.*,
           c.corpCustomer,
           s.nmSales,
           e.nmExpert
         FROM training t
-        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
-        WHERE t.idExpert = ?
-        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
+        WHERE (t.idExpert = ? OR o.idExpert = ?)
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
       `;
-      params = [id];
-    } else if (role === "Sales") {
+      params = [expertId, expertId];
+
+    } else if (role === "sales") {
+      if (!salesId) return res.status(400).json({ error: "Missing sales id" });
+
       sql = `
-        SELECT 
+        SELECT DISTINCT
           t.*,
           c.corpCustomer,
           s.nmSales,
           e.nmExpert
         FROM training t
-        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
         WHERE o.idSales = ?
-        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
       `;
-      params = [id];
-    } else if (role === "Head Sales") {
+      params = [salesId];
+
+    } else if (role === "head sales" || role === "head_sales" || role === "headsales") {
       sql = `
-        SELECT 
+        SELECT DISTINCT
           t.*,
           c.corpCustomer,
           s.nmSales,
           e.nmExpert
         FROM training t
-        JOIN opti o   ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
-        LEFT JOIN customer c ON c.idCustomer = t.idCustomer
-        LEFT JOIN sales s    ON s.idSales    = o.idSales
-        LEFT JOIN expert e   ON e.idExpert   = t.idExpert
-        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC
+        JOIN opti o           ON o.idOpti = t.idOpti AND o.statOpti = 'Success'
+        LEFT JOIN customer c  ON c.idCustomer = t.idCustomer
+        LEFT JOIN sales s     ON s.idSales    = o.idSales
+        LEFT JOIN expert e    ON e.idExpert   = COALESCE(t.idExpert, o.idExpert)
+        ORDER BY COALESCE(t.endTraining, t.startTraining) DESC, t.idTraining DESC
       `;
       params = [];
+
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
     }
@@ -133,7 +154,6 @@ const getMyTrainings = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 
 module.exports = {
   getTraining,
