@@ -53,7 +53,7 @@ const computeStatus = (start, end, now = Date.now()) => {
     };
   }
   if (e && now > e) {
-    return { key: "finished", label: "Finished", className: "bg-gray-500 text-white" };
+    return { key: "finished", label: "Finished", className: "bg-green-500 text-white" };
   }
   // fallback jika tanggal tak lengkap
   return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };

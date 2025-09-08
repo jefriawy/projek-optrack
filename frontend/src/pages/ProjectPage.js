@@ -1,19 +1,14 @@
 // src/pages/ProjectPage.js
-import React, { useEffect, useMemo, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== Helpers ===== */
-const countdown = (end) => {
-  if (!end) return "-";
-  const t = new Date(end).getTime();
-  if (isNaN(t)) return "-";
-  const diff = t - Date.now();
-  if (diff <= 0) return "Selesai";
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-  return `${d} Hari (Sisa Waktu)`;
+/* ===== Helpers tanggal & status ===== */
+const safeTime = (v) => {
+  const t = new Date(v).getTime();
+  return isNaN(t) ? null : t;
 };
 const fmtDateTime = (v) =>
   v
@@ -24,10 +19,39 @@ const fmtDate = (v) =>
     ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
     : "-";
 const diffDays = (start, end) => {
-  if (!start || !end) return null;
-  const ms = new Date(end) - new Date(start);
-  if (isNaN(ms)) return null;
-  return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (!s || !e) return null;
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
+};
+const formatRemaining = (ms) => {
+  if (!ms || ms <= 0) return "0:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+};
+const computeStatus = (start, end, now = Date.now()) => {
+  const s = safeTime(start);
+  const e = safeTime(end);
+  if (s && now < s) {
+    return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+  }
+  if (s && (!e || now <= e) && now >= s) {
+    const remaining = e ? e - now : 0;
+    return {
+      key: "running",
+      label: e ? `Berjalan · ${formatRemaining(remaining)}` : "Berjalan",
+      className: "bg-blue-600 text-white",
+      remaining,
+    };
+  }
+  if (e && now > e) {
+    return { key: "finished", label: "Finished", className: "bg-green-500 text-white" };
+  }
+  return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
 };
 
 /* ===== Icons ===== */
@@ -55,35 +79,6 @@ const IconMap = ({ className = "w-4 h-4" }) => (
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3" />
   </svg>
 );
-
-/* ===== Profile Chip (reusable) ===== */
-const initials = (name = "") =>
-  name
-    .trim()
-    .split(/\s+/)
-    .map((s) => s[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-const resolveName = (u) =>
-  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
-
-const UserChip = ({ user }) => {
-  const name = resolveName(user);
-  const ini = initials(name);
-  return (
-    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
-      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
-        {ini}
-      </div>
-      <div className="leading-tight">
-        <div className="text-sm font-semibold">{name}</div>
-        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
-      </div>
-    </div>
-  );
-};
 
 /* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children }) => {
@@ -116,6 +111,35 @@ const Modal = ({ open, onClose, title, badge, children }) => {
   );
 };
 
+/* ====== Profile Chip ====== */
+const initials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const resolveName = (u) =>
+  u?.name || u?.nmExpert || u?.nmSales || u?.nmUser || u?.email || "User";
+
+const UserChip = ({ user }) => {
+  const name = resolveName(user);
+  const ini = initials(name);
+  return (
+    <div className="flex items-center gap-3 bg-white border rounded-full pl-2 pr-3 py-1 shadow-sm">
+      <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
+        {ini}
+      </div>
+      <div className="leading-tight">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className="text-[10px] text-gray-500">Logged in • {user?.role || "-"}</div>
+      </div>
+    </div>
+  );
+};
+
 /* ===== Page Component ===== */
 const ProjectPage = () => {
   const { user } = useContext(AuthContext);
@@ -129,6 +153,14 @@ const ProjectPage = () => {
   const [detailErr, setDetailErr] = useState("");
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
+
+  // ticker untuk countdown realtime
+  const [, forceTick] = useState(0);
+  const tickRef = useRef(null);
+  useEffect(() => {
+    tickRef.current = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(tickRef.current);
+  }, []);
 
   useEffect(() => {
     if (!user?.token) {
@@ -196,11 +228,6 @@ const ProjectPage = () => {
     }
   };
 
-  const openFeedbackModal = (p) => {
-    setFeedbackTarget(p);
-    setOpenFeedback(true);
-  };
-
   if (!user?.token) {
     return (
       <div className="p-6">
@@ -211,6 +238,8 @@ const ProjectPage = () => {
       </div>
     );
   }
+
+  const now = Date.now();
 
   return (
     <div className="p-6">
@@ -231,14 +260,6 @@ const ProjectPage = () => {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="mb-4 inline-flex items-center rounded-md bg-gray-900 text-white px-4 py-2 text-sm hover:bg-black"
-        onClick={() => alert("Tambah Proyek (manual)")}
-      >
-        Tambah Proyek
-      </button>
-
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50 text-lg font-semibold">
           Jadwal Proyek
@@ -251,7 +272,8 @@ const ProjectPage = () => {
           {!loading &&
             !err &&
             filtered.map((p, idx) => {
-              const badge = { text: "Aktif", cls: "bg-emerald-600 text-white" };
+              const st = computeStatus(p.startProject, p.endProject, now);
+              const badge = { text: st.label, cls: st.className };
               return (
                 <div
                   key={p.idProject || idx}
@@ -275,12 +297,18 @@ const ProjectPage = () => {
                     <div className="flex items-center gap-2">
                       <IconCalendar />
                       <span>
-                        {fmtDate(p.endProject)} <span className="text-gray-500">(deadline)</span>
+                        {fmtDate(p.startProject)} – {fmtDate(p.endProject)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <IconClock />
-                      <span>{countdown(p.endProject)}</span>
+                      <span>
+                        {st.key === "running"
+                          ? `Sisa: ${formatRemaining(st.remaining)}`
+                          : st.key === "pending"
+                          ? "Belum mulai"
+                          : "Selesai"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <IconUsers />
@@ -299,7 +327,10 @@ const ProjectPage = () => {
                     <button
                       type="button"
                       className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
-                      onClick={() => openFeedbackModal(p)}
+                      onClick={() => {
+                        setFeedbackTarget(p);
+                        setOpenFeedback(true);
+                      }}
                     >
                       Lihat Feedback
                     </button>
@@ -319,7 +350,14 @@ const ProjectPage = () => {
         open={open}
         onClose={() => setOpen(false)}
         title={detail?.nmProject || "Proyek"}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+        badge={
+          detail
+            ? (() => {
+                const st = computeStatus(detail.startProject, detail.endProject);
+                return { text: st.label, cls: st.className };
+              })()
+            : null
+        }
       >
         {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
         {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
@@ -349,29 +387,21 @@ const ProjectPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
-                <div className="text-sm text-gray-700 leading-6">
-                  {detail.kebutuhan || "Belum ada deskripsi."}
-                </div>
-              </div>
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Dokumen</div>
-                {detail.proposalOpti ? (
-                  <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\\/]/).pop()}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-black hover:underline flex items-center gap-2"
-                  >
-                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
-                  </a>
-                ) : (
-                  <div className="text-sm text-gray-700">Belum ada dokumen.</div>
-                )}
-              </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-gray-500 mb-2">Dokumen</div>
+              {detail.proposalOpti ? (
+                <a
+                  href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\\/]/).pop()}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-black hover:underline flex items-center gap-2"
+                >
+                  <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
+                  <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
+                </a>
+              ) : (
+                <div className="text-sm text-gray-700">Belum ada dokumen.</div>
+              )}
             </div>
           </div>
         )}
@@ -382,7 +412,7 @@ const ProjectPage = () => {
         open={openFeedback}
         onClose={() => setOpenFeedback(false)}
         title={`Feedback - ${feedbackTarget?.nmProject || "Proyek"}`}
-        badge={{ text: "Aktif", cls: "bg-emerald-600 text-white" }}
+        badge={{ text: "—", cls: "bg-gray-300 text-gray-700" }}
       >
         <div className="text-sm text-gray-700">
           Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
