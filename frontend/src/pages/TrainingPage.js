@@ -363,10 +363,7 @@ const TrainingPage = () => {
                           : "Selesai"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <IconUsers />
-                      <span>{t.registered ?? 25} Orang (Peserta Training)</span>
-                    </div>
+                    
                   </div>
 
                   <div className="mt-3 flex justify-end gap-2">

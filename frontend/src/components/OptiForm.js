@@ -6,6 +6,28 @@ import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
+// Function to format number to Rupiah currency string
+const formatRupiah = (amount) => {
+  if (amount === null || amount === undefined || amount === "") return "";
+  return new Intl.NumberFormat("id-ID").format(amount);
+};
+
+// Function to parse Rupiah currency string to number
+const parseRupiah = (rupiahString) => {
+  if (typeof rupiahString !== 'string') {
+    // If it's not a string, assume it's already a number or null/undefined
+    // and return it directly.
+    return rupiahString;
+  }
+  if (!rupiahString) return null;
+  // Remove all non-digit characters except for the comma (if used as decimal separator)
+  // For Indonesian Rupiah, the dot is a thousands separator, and comma is decimal.
+  // Since we only want dot as thousands separator, we remove all non-digits.
+  const cleanedString = rupiahString.replace(/[^,\d]/g, '').replace(/,/g, '.');
+  const parsed = parseFloat(cleanedString);
+  return isNaN(parsed) ? null : parsed;
+};
+
 // ---- static list: samakan dengan isi tabel `typetraining`
 const TYPE_TRAININGS = [
   { id: 1, name: "Default Training" },
@@ -75,6 +97,7 @@ const normalizeInitialData = (data) => {
         ? ""
         : String(data.idTypeTraining),
     placeTraining: data.placeTraining || "",
+    valOpti: parseRupiah(data.valOpti), // Ensure valOpti is parsed to a number
   };
   // eslint-disable-next-line no-console
   console.log("[OptiForm] normalized initialData:", norm);
@@ -167,6 +190,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
         : seed.statOpti || baseState.statOpti,
     datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
+  const [displayValOpti, setDisplayValOpti] = useState(formatRupiah(seed.valOpti)); // New state for displayed value
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
@@ -203,6 +227,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
           : safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
+    setDisplayValOpti(formatRupiah(safe.valOpti)); // Set display value based on initialData.valOpti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
@@ -210,10 +235,28 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((s) => ({ ...s, [name]: value }));
+
+    if (name === "valOpti") {
+      // Allow only digits for internal storage, but update display value with formatting
+      const parsedValue = parseRupiah(value);
+      setFormData((s) => ({ ...s, [name]: parsedValue }));
+      setDisplayValOpti(value); // Update display value as user types
+    } else {
+      setFormData((s) => ({ ...s, [name]: value }));
+    }
+
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
   };
   const handleFileChange = (e) => setProposalFile(e.target.files[0] || null);
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (name === "valOpti") {
+      // Format the displayed value when input loses focus
+      const parsedValue = parseRupiah(value);
+      setDisplayValOpti(formatRupiah(parsedValue));
+    }
+  };
 
   const handleReset = () => {
     const safe = normalizeInitialData(initialData);
@@ -228,6 +271,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     });
     setProposalFile(null);
     setErrors({});
+    setDisplayValOpti(formatRupiah(safe.valOpti)); // Reset display value
   };
 
   const handleSubmit = async (e) => {
@@ -518,10 +562,11 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                     Rp.
                   </span>
                   <input
-                    type="number"
+                    type="text" // Change type to text
                     name="valOpti"
-                    value={formData.valOpti || ""}
+                    value={displayValOpti} // Use displayValOpti for display
                     onChange={handleChange}
+                    onBlur={handleBlur} // Add onBlur handler
                     placeholder="Value"
                     className={inputClass + " pl-12"}
                   />

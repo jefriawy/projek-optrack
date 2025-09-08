@@ -10,6 +10,46 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import barGraphIcon from '../iconres/bar-graph.png';
 import pieChartIcon from '../iconres/pie-chart.png';
 
+/* ===== User chip helpers (nama & avatar) ===== */
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate = 
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
+    null;
+  if (!candidate) return null;
+  if (/^https?:\]/i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
+    </div>
+  );
+};
+
+
 ChartJS.register(
   ArcElement, Tooltip, Legend, CategoryScale, LinearScale, 
   BarElement, Title, ChartDataLabels, PointElement, LineElement, Filler
@@ -214,23 +254,24 @@ const ExpertDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header + Cards */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full sm:w-auto">
-          <div className="border p-4 rounded-lg text-center bg-white shadow">
-            <p className="font-medium text-sm sm:text-base">Total Training</p>
-            <p className="text-xl sm:text-2xl font-bold">{totals.training}</p>
+      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Expert Dashboard</h1>
+        <div className="flex items-center gap-3 pl-4 border-l">
+            {getAvatarUrl(user) ? (
+              <img
+                src={getAvatarUrl(user)}
+                alt="avatar"
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <Initials name={getDisplayName(user)} />
+            )}
+            <div className="leading-5">
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+            </div>
           </div>
-          <div className="border p-4 rounded-lg text-center bg-white shadow">
-            <p className="font-medium text-sm sm:text-base">Total Project</p>
-            <p className="text-xl sm:text-2xl font-bold">{totals.project}</p>
-          </div>
-          <div className="border p-4 rounded-lg text-center bg-white shadow">
-            <p className="font-medium text-sm sm:text-base">Total Outsource</p>
-            <p className="text-xl sm:text-2xl font-bold">{totals.outsource}</p>
-          </div>
-        </div>
-      </div>
+      </header>
 
       {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg">{error}</p>}
 

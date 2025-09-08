@@ -8,6 +8,49 @@ import AddUserForm from "./AddUserForm";
 import EditUserForm from "./EditUserForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
+/* ===== Base URL (untuk avatar jika path relatif) ===== */
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
+/* ===== User chip helpers (nama & avatar) ===== */
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate = 
+    user.photoURL || 
+    user.photoUrl || 
+    user.photo || 
+    user.avatar || 
+    user.image || 
+    user.photoUser || 
+    null;
+  if (!candidate) return null;
+  if (/^https?:\\\]/i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
+    </div>
+  );
+};
+
+
 
 
 const UserManagement = () => {

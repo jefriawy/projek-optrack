@@ -106,10 +106,14 @@ async function getByExpertId(expertId) {
         tt.nmTypeTraining,
         o.statOpti,
         o.nmOpti,
+        s.nmSales,  -- Add this line
+        e.nmExpert, -- Add this line
         c.corpCustomer
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
+     LEFT JOIN sales s          ON s.idSales       = o.idSales  -- Add this line
+     LEFT JOIN expert e         ON e.idExpert      = tr.idExpert -- Add this line
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
      WHERE tr.idExpert = ?
      ORDER BY tr.startTraining DESC`,
