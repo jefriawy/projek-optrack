@@ -15,11 +15,14 @@ ChartJS.register(
   BarElement, Title, ChartDataLabels, PointElement, LineElement, Filler
 );
 
+// getStatusColor diperbarui dengan status dan warna baru
 const getStatusColor = (status) => {
-  // Fungsi ini digunakan untuk memberikan warna pada chart
   switch (status) {
+    case "Pending": return "rgba(255, 159, 64, 0.8)"; // Orange
+    case "On Progress": return "rgba(255, 206, 86, 0.8)"; // Yellow
+    case "Finished": return "rgba(75, 192, 192, 0.8)"; // Green/Teal
+    // Status lama untuk kompatibilitas warna jika masih ada di data
     case "Follow Up": return "rgba(54, 162, 235, 0.8)"; // Blue
-    case "On-Progress": return "rgba(255, 206, 86, 0.8)"; // Yellow
     case "Success": return "rgba(75, 192, 192, 0.8)"; // Green
     case "Failed": return "rgba(255, 99, 132, 0.8)"; // Red
     case "Just Get Info": return "rgba(255, 159, 64, 0.8)"; // Orange
@@ -201,11 +204,12 @@ const ExpertDashboard = () => {
     scales: { y: { ticks: { stepSize: 1, beginAtZero: true } } }
   };
 
-  const onProgressActivities = useMemo(() => {
+  const ongoingActivities = useMemo(() => {
     return allActivities.filter(activity => 
-      activity.type === viewType && activity.status === 'On-Progress'
+      activity.type === viewType && ['Pending', 'On Progress'].includes(activity.status)
     );
   }, [allActivities, viewType]);
+
 
   return (
     <div className="space-y-6">
@@ -262,10 +266,10 @@ const ExpertDashboard = () => {
         </div>
       </div>
       
-      {/* Daftar Aktivitas On-Progress dengan Dropdown */}
+      {/* Daftar Aktivitas Berlangsung (Pending & On-Progress) */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <h2 className="text-lg font-semibold">Aktivitas Berlangsung (On-Progress)</h2>
+          <h2 className="text-lg font-semibold">Aktivitas Berlangsung (Pending & On-Progress)</h2>
           <select 
             value={viewType} 
             onChange={e => setViewType(e.target.value)}
@@ -276,17 +280,19 @@ const ExpertDashboard = () => {
             <option value="Outsource">Outsource</option>
           </select>
         </div>
+        
         {viewType === 'Outsource' ? (
           <p className="text-center text-gray-500 py-4">Tampilan untuk Outsource belum tersedia.</p>
-        ) : onProgressActivities.length > 0 ? (
+        ) : ongoingActivities.length > 0 ? (
           <div className="space-y-4">
-            {onProgressActivities.map((activity) => {
-              const cardColor = activity.type === 'Training' 
-                ? "border-yellow-200 bg-yellow-50" 
-                : "border-blue-200 bg-blue-50";
-              const textColor = activity.type === 'Training' 
-                ? "text-yellow-800"
-                : "text-blue-800";
+            {ongoingActivities.map((activity) => {
+              const cardColor = activity.status === 'Pending' 
+                ? "border-orange-200 bg-orange-50" 
+                : "border-yellow-200 bg-yellow-50";
+              const textColor = activity.status === 'Pending'
+                ? "text-orange-800"
+                : "text-yellow-800";
+
               return (
                 <div key={activity.id} className={`border ${cardColor} p-4 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center`}>
                   <div>
@@ -294,7 +300,7 @@ const ExpertDashboard = () => {
                     <p className="text-sm text-gray-600">Customer: <span className="font-medium">{activity.customerName || 'N/A'}</span></p>
                   </div>
                   <div className="mt-2 sm:mt-0 text-left sm:text-right">
-                    <p className={`text-sm font-semibold ${textColor}`}>Deadline</p>
+                    <p className={`text-sm font-semibold ${textColor}`}>{activity.status}</p>
                     <p className="text-sm text-gray-700">{getDeadlineCountdown(activity.endDate)}</p>
                   </div>
                 </div>
@@ -302,7 +308,7 @@ const ExpertDashboard = () => {
             })}
           </div>
         ) : (
-          <p className="text-center text-gray-500 py-4">Tidak ada {viewType} yang sedang berlangsung saat ini.</p>
+          <p className="text-center text-gray-500 py-4">Tidak ada {viewType} yang berstatus Pending atau On Progress.</p>
         )}
       </div>
 

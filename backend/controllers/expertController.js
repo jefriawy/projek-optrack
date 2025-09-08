@@ -1,7 +1,7 @@
 const Expert = require("../models/expert");
 const bcrypt = require("bcrypt");
 const { generateUserId } = require("../utils/idGenerator");
-const pool = require('../config/database'); // Pastikan path ini benar
+const pool = require('../config/database');
 
 /**
  * @desc    Mengambil semua data expert
@@ -12,7 +12,8 @@ const getExperts = async (_req, res) => {
   try {
     const experts = await Expert.findAll();
     res.json(experts);
-  } catch (err) {
+  } catch (err)
+ {
     console.error("getExperts error:", err);
     res.status(500).json({ error: "Server error" });
   }
@@ -82,19 +83,18 @@ const getMyDashboardData = async (req, res) => {
       outsource: outsourceCount[0].count,
     };
 
-    // Query untuk activities kini DITAMBAH dengan startDate
+    // Query diubah untuk mengambil status dari tabel training/project, bukan opti
     const [activities] = await connection.query(`
       SELECT 
         'Training' as type, 
         t.idTraining as id,
         t.nmTraining as name, 
-        o.statOpti as status,
+        t.statusTraining as status, -- <-- INI PERUBAHANNYA
         t.startTraining as startDate,
         t.endTraining as endDate, 
         c.nmCustomer as customerName,
         tt.nmTypeTraining as trainingType
       FROM training t
-      LEFT JOIN opti o ON t.idOpti = o.idOpti
       LEFT JOIN customer c ON t.idCustomer = c.idCustomer
       LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
       WHERE t.idExpert = ?
@@ -105,13 +105,12 @@ const getMyDashboardData = async (req, res) => {
         'Project' as type, 
         p.idProject as id,
         p.nmProject as name, 
-        o.statOpti as status,
+        p.statusProject as status, -- <-- INI PERUBAHANNYA
         p.startProject as startDate,
         p.endProject as endDate, 
         c.nmCustomer as customerName,
         NULL as trainingType
       FROM project p
-      LEFT JOIN opti o ON p.idOpti = o.idOpti
       LEFT JOIN customer c ON p.idCustomer = c.idCustomer
       WHERE p.idExpert = ?
     `, [idExpert, idExpert]);
