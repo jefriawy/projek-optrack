@@ -55,52 +55,49 @@ const createOpti = async (req, res) => {
 
     await Opti.create(optiData, idSalesForOpti, connection);
 
-    if (optiData.statOpti === "Success") {
-      if (optiData.jenisOpti === "Training") {
-        const [exists] = await connection.query(
-          "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
-          [idOpti]
+    // Selalu buat data training/project jika jenis sesuai, meskipun status belum Success
+    if (optiData.jenisOpti === "Training") {
+      const [exists] = await connection.query(
+        "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
+        [idOpti]
+      );
+      if (!exists.length) {
+        await Training.createTraining(
+          {
+            idTraining: await generateUserId("Training"),
+            idOpti,
+            nmTraining: optiData.nmOpti,
+            idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+            startTraining: toNull(b.startTraining),
+            endTraining: toNull(b.endTraining),
+            idExpert: optiData.idExpert,
+            placeTraining: toNull(b.placeTraining),
+            idCustomer: optiData.idCustomer,
+          },
+          connection
         );
-        if (!exists.length) {
-          await Training.createTraining(
-            {
-              idTraining: await generateUserId("Training"),
-              idOpti,
-              nmTraining: optiData.nmOpti,
-              idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-              startTraining: toNull(b.startTraining),
-              endTraining: toNull(b.endTraining),
-              idExpert: optiData.idExpert,
-              placeTraining: toNull(b.placeTraining),
-              idCustomer: optiData.idCustomer,
-            },
-            connection
-          );
-        }
-      } else if (optiData.jenisOpti === "Project") {
-        const [exists] = await connection.query(
-          "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
-          [idOpti]
+      }
+    } else if (optiData.jenisOpti === "Project") {
+      const [exists] = await connection.query(
+        "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
+        [idOpti]
+      );
+      if (!exists.length) {
+        await Project.createProject(
+          {
+            idProject: await generateUserId("Project"),
+            idOpti,
+            nmProject: optiData.nmOpti,
+            idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+            startProject: toNull(b.startTraining),
+            endProject: toNull(b.endTraining),
+            placeProject: toNull(b.placeTraining),
+            idCustomer: optiData.idCustomer,
+            idSales: idSalesForOpti,
+            idExpert: optiData.idExpert,
+          },
+          connection
         );
-        if (!exists.length) {
-          await Project.createProject(
-            {
-              idProject: await generateUserId("Project"),
-              idOpti,
-              nmProject: optiData.nmOpti,
-              // ================= PERUBAHAN DI SINI =================
-              idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1, // Mengambil dari idTypeTraining
-              startProject: toNull(b.startTraining), // Mengambil dari startTraining
-              endProject: toNull(b.endTraining), // Mengambil dari endTraining
-              placeProject: toNull(b.placeTraining), // Mengambil dari placeTraining
-              // ================= AKHIR PERUBAHAN =================
-              idCustomer: optiData.idCustomer,
-              idSales: idSalesForOpti,
-              idExpert: optiData.idExpert,
-            },
-            connection
-          );
-        }
       }
     }
 
@@ -114,6 +111,9 @@ const createOpti = async (req, res) => {
     connection.release();
   }
 };
+
+// Helper: jika baru kosong/null/undefined, pakai lama
+const getUpdated = (baru, lama) => (baru === undefined || baru === null || baru === "" ? lama : baru);
 
 const updateOpti = async (req, res) => {
   const { id } = req.params;
@@ -234,20 +234,87 @@ const updateOpti = async (req, res) => {
       }
     }
 
+
+    // Selalu update/insert data training/project jika jenis sesuai
     if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
-      await connection.query(
-        `UPDATE training
-           SET idTypeTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, idExpert = ?
-         WHERE idOpti = ?`,
-        [
-          b.idTypeTraining ?? existingOpti.idTypeTraining,
-          toNull(b.startTraining) ?? existingOpti.startTraining,
-          toNull(b.endTraining) ?? existingOpti.endTraining,
-          toNull(b.placeTraining) ?? existingOpti.placeTraining,
-          toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
-          id,
-        ]
+      // Cek apakah sudah ada baris training untuk idOpti ini
+      const [trainings] = await connection.query(
+        "SELECT idTraining FROM training WHERE idOpti = ?",
+        [id]
       );
+      if (trainings.length === 0) {
+        // Insert baru
+        await Training.createTraining(
+          {
+            idTraining: await generateUserId("Training"),
+            idOpti: id,
+            nmTraining: optiData.nmOpti,
+            idTypeTraining: getUpdated(b.idTypeTraining, existingOpti.idTypeTraining || 1),
+            startTraining: getUpdated(toNull(b.startTraining), existingOpti.startTraining),
+            endTraining: getUpdated(toNull(b.endTraining), existingOpti.endTraining),
+            idExpert: optiData.idExpert,
+            placeTraining: getUpdated(toNull(b.placeTraining), existingOpti.placeTraining),
+            idCustomer: optiData.idCustomer,
+          },
+          connection
+        );
+      } else {
+        // Update
+        await connection.query(
+          `UPDATE training
+             SET idTypeTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, idExpert = ?
+           WHERE idOpti = ?`,
+          [
+            getUpdated(b.idTypeTraining, existingOpti.idTypeTraining),
+            getUpdated(toNull(b.startTraining), existingOpti.startTraining),
+            getUpdated(toNull(b.endTraining), existingOpti.endTraining),
+            getUpdated(toNull(b.placeTraining), existingOpti.placeTraining),
+            toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
+            id,
+          ]
+        );
+      }
+    }
+
+    if ((b.jenisOpti || existingOpti.jenisOpti) === "Project") {
+      // Cek apakah sudah ada baris project untuk idOpti ini
+      const [projects] = await connection.query(
+        "SELECT idProject FROM project WHERE idOpti = ?",
+        [id]
+      );
+      if (projects.length === 0) {
+        // Insert baru
+        await Project.createProject(
+          {
+            idProject: await generateUserId("Project"),
+            idOpti: id,
+            nmProject: optiData.nmOpti,
+            idTypeProject: getUpdated(b.idTypeTraining, existingOpti.idTypeProject || 1),
+            startProject: getUpdated(toNull(b.startTraining), existingOpti.startProject),
+            endProject: getUpdated(toNull(b.endTraining), existingOpti.endProject),
+            placeProject: getUpdated(toNull(b.placeTraining), existingOpti.placeProject),
+            idCustomer: optiData.idCustomer,
+            idSales: existingOpti.idSales,
+            idExpert: optiData.idExpert,
+          },
+          connection
+        );
+      } else {
+        // Update
+        await connection.query(
+          `UPDATE project
+             SET idTypeProject = ?, startProject = ?, endProject = ?, placeProject = ?, idExpert = ?
+           WHERE idOpti = ?`,
+          [
+            getUpdated(b.idTypeTraining, existingOpti.idTypeProject),
+            getUpdated(toNull(b.startTraining), existingOpti.startProject),
+            getUpdated(toNull(b.endTraining), existingOpti.endProject),
+            getUpdated(toNull(b.placeTraining), existingOpti.placeProject),
+            toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
+            id,
+          ]
+        );
+      }
     }
 
     await connection.commit();

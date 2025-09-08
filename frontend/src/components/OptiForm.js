@@ -83,21 +83,26 @@ const normalizeInitialData = (data) => {
   if (!data) return {};
   // eslint-disable-next-line no-console
   console.log("[OptiForm] initialData:", data);
+  let start = "", end = "", idType = "", place = "";
+  if (data.jenisOpti === "Training") {
+    start = data.startTraining ? normalizeMySQLDateTimeToLocal(data.startTraining) : "";
+    end = data.endTraining ? normalizeMySQLDateTimeToLocal(data.endTraining) : "";
+    idType = data.idTypeTraining === null || data.idTypeTraining === undefined ? "" : String(data.idTypeTraining);
+    place = data.placeTraining || "";
+  } else if (data.jenisOpti === "Project") {
+    start = data.startProject ? normalizeMySQLDateTimeToLocal(data.startProject) : "";
+    end = data.endProject ? normalizeMySQLDateTimeToLocal(data.endProject) : "";
+    idType = data.idTypeProject === null || data.idTypeProject === undefined ? "" : String(data.idTypeProject);
+    place = data.placeProject || "";
+  }
   const norm = {
     ...data,
     datePropOpti: normalizeDateOnly(data.datePropOpti),
-    startTraining: data.startTraining
-      ? normalizeMySQLDateTimeToLocal(data.startTraining)
-      : "",
-    endTraining: data.endTraining
-      ? normalizeMySQLDateTimeToLocal(data.endTraining)
-      : "",
-    idTypeTraining:
-      data.idTypeTraining === null || data.idTypeTraining === undefined
-        ? ""
-        : String(data.idTypeTraining),
-    placeTraining: data.placeTraining || "",
-    valOpti: parseRupiah(data.valOpti), // Ensure valOpti is parsed to a number
+    startTraining: start,
+    endTraining: end,
+    idTypeTraining: idType,
+    placeTraining: place,
+    valOpti: parseRupiah(data.valOpti),
   };
   // eslint-disable-next-line no-console
   console.log("[OptiForm] normalized initialData:", norm);
