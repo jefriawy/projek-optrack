@@ -13,38 +13,29 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 const OpportunityTypePie = ({ data }) => {
   const options = {
     responsive: true,
+    maintainAspectRatio: false,        // ⬅️ penting
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Opportunity Types Breakdown',
-      },
+      legend: { position: 'top' },
+      title: { display: true, text: 'Opportunity Types Breakdown' },
       datalabels: {
         formatter: (value, ctx) => {
-          let sum = 0;
-          let dataArr = ctx.chart.data.datasets[0].data;
-          dataArr.map(data => {
-            sum += data;
-          });
-          let percentage = (value * 100 / sum).toFixed(2) + "%";
-          return percentage;
+          const ds = ctx?.chart?.data?.datasets?.[0]?.data || [];
+          const sum = ds.reduce((a, b) => a + (Number(b) || 0), 0);
+          if (!sum) return '0%';
+          return ((value * 100) / sum).toFixed(1) + '%';
         },
         color: '#fff',
-        font: {
-          weight: 'bold',
-        },
+        font: { weight: 'bold' },
       },
     },
   };
 
   const chartData = {
-    labels: data.map(item => item.jenisOpti),
+    labels: data.map((item) => item.jenisOpti),
     datasets: [
       {
         label: '# of Opportunities',
-        data: data.map(item => item.count),
+        data: data.map((item) => item.count),
         backgroundColor: [
           'rgba(255, 99, 132, 0.6)',
           'rgba(54, 162, 235, 0.6)',
@@ -67,7 +58,8 @@ const OpportunityTypePie = ({ data }) => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
+    // ⬇️ flex item: ikut lebar, tinggi tetap, tanpa card dalam card
+    <div className="flex-1 min-w-0 h-64 md:h-80">
       <Pie options={options} data={chartData} />
     </div>
   );
