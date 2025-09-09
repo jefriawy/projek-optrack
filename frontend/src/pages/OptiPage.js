@@ -250,8 +250,8 @@ const OptiPage = () => {
               <Initials name={getDisplayName(user)} />
             )}
             <div className="leading-5">
-              <div className="text-sm font-medium">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in</div>
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
             </div>
           </div>
         </div>

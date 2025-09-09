@@ -36,7 +36,7 @@ const TopDealsTable = ({ data }) => {
                     {deal.corpCustomer}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-right">
-                    {formatCurrency(deal.kebutuhan)}
+                    {formatCurrency(deal.valOpti)}
                   </td>
                 </tr>
               ))

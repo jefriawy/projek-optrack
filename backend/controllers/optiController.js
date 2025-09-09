@@ -55,49 +55,51 @@ const createOpti = async (req, res) => {
 
     await Opti.create(optiData, idSalesForOpti, connection);
 
-    // Selalu buat data training/project jika jenis sesuai, meskipun status belum Success
-    if (optiData.jenisOpti === "Training") {
-      const [exists] = await connection.query(
-        "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
-        [idOpti]
-      );
-      if (!exists.length) {
-        await Training.createTraining(
-          {
-            idTraining: await generateUserId("Training"),
-            idOpti,
-            nmTraining: optiData.nmOpti,
-            idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-            startTraining: toNull(b.startTraining),
-            endTraining: toNull(b.endTraining),
-            idExpert: optiData.idExpert,
-            placeTraining: toNull(b.placeTraining),
-            idCustomer: optiData.idCustomer,
-          },
-          connection
+    // Hanya buat data training/project jika status sudah Success
+    if (optiData.statOpti === "Success") {
+      if (optiData.jenisOpti === "Training") {
+        const [exists] = await connection.query(
+          "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
+          [idOpti]
         );
-      }
-    } else if (optiData.jenisOpti === "Project") {
-      const [exists] = await connection.query(
-        "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
-        [idOpti]
-      );
-      if (!exists.length) {
-        await Project.createProject(
-          {
-            idProject: await generateUserId("Project"),
-            idOpti,
-            nmProject: optiData.nmOpti,
-            idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-            startProject: toNull(b.startTraining),
-            endProject: toNull(b.endTraining),
-            placeProject: toNull(b.placeTraining),
-            idCustomer: optiData.idCustomer,
-            idSales: idSalesForOpti,
-            idExpert: optiData.idExpert,
-          },
-          connection
+        if (!exists.length) {
+          await Training.createTraining(
+            {
+              idTraining: await generateUserId("Training"),
+              idOpti,
+              nmTraining: optiData.nmOpti,
+              idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+              startTraining: toNull(b.startTraining),
+              endTraining: toNull(b.endTraining),
+              idExpert: optiData.idExpert,
+              placeTraining: toNull(b.placeTraining),
+              idCustomer: optiData.idCustomer,
+            },
+            connection
+          );
+        }
+      } else if (optiData.jenisOpti === "Project") {
+        const [exists] = await connection.query(
+          "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
+          [idOpti]
         );
+        if (!exists.length) {
+          await Project.createProject(
+            {
+              idProject: await generateUserId("Project"),
+              idOpti,
+              nmProject: optiData.nmOpti,
+              idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
+              startProject: toNull(b.startTraining),
+              endProject: toNull(b.endTraining),
+              placeProject: toNull(b.placeTraining),
+              idCustomer: optiData.idCustomer,
+              idSales: idSalesForOpti,
+              idExpert: optiData.idExpert,
+            },
+            connection
+          );
+        }
       }
     }
 
@@ -235,87 +237,7 @@ const updateOpti = async (req, res) => {
     }
 
 
-    // Selalu update/insert data training/project jika jenis sesuai
-    if ((b.jenisOpti || existingOpti.jenisOpti) === "Training") {
-      // Cek apakah sudah ada baris training untuk idOpti ini
-      const [trainings] = await connection.query(
-        "SELECT idTraining FROM training WHERE idOpti = ?",
-        [id]
-      );
-      if (trainings.length === 0) {
-        // Insert baru
-        await Training.createTraining(
-          {
-            idTraining: await generateUserId("Training"),
-            idOpti: id,
-            nmTraining: optiData.nmOpti,
-            idTypeTraining: getUpdated(b.idTypeTraining, existingOpti.idTypeTraining || 1),
-            startTraining: getUpdated(toNull(b.startTraining), existingOpti.startTraining),
-            endTraining: getUpdated(toNull(b.endTraining), existingOpti.endTraining),
-            idExpert: optiData.idExpert,
-            placeTraining: getUpdated(toNull(b.placeTraining), existingOpti.placeTraining),
-            idCustomer: optiData.idCustomer,
-          },
-          connection
-        );
-      } else {
-        // Update
-        await connection.query(
-          `UPDATE training
-             SET idTypeTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, idExpert = ?
-           WHERE idOpti = ?`,
-          [
-            getUpdated(b.idTypeTraining, existingOpti.idTypeTraining),
-            getUpdated(toNull(b.startTraining), existingOpti.startTraining),
-            getUpdated(toNull(b.endTraining), existingOpti.endTraining),
-            getUpdated(toNull(b.placeTraining), existingOpti.placeTraining),
-            toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
-            id,
-          ]
-        );
-      }
-    }
-
-    if ((b.jenisOpti || existingOpti.jenisOpti) === "Project") {
-      // Cek apakah sudah ada baris project untuk idOpti ini
-      const [projects] = await connection.query(
-        "SELECT idProject FROM project WHERE idOpti = ?",
-        [id]
-      );
-      if (projects.length === 0) {
-        // Insert baru
-        await Project.createProject(
-          {
-            idProject: await generateUserId("Project"),
-            idOpti: id,
-            nmProject: optiData.nmOpti,
-            idTypeProject: getUpdated(b.idTypeTraining, existingOpti.idTypeProject || 1),
-            startProject: getUpdated(toNull(b.startTraining), existingOpti.startProject),
-            endProject: getUpdated(toNull(b.endTraining), existingOpti.endProject),
-            placeProject: getUpdated(toNull(b.placeTraining), existingOpti.placeProject),
-            idCustomer: optiData.idCustomer,
-            idSales: existingOpti.idSales,
-            idExpert: optiData.idExpert,
-          },
-          connection
-        );
-      } else {
-        // Update
-        await connection.query(
-          `UPDATE project
-             SET idTypeProject = ?, startProject = ?, endProject = ?, placeProject = ?, idExpert = ?
-           WHERE idOpti = ?`,
-          [
-            getUpdated(b.idTypeTraining, existingOpti.idTypeProject),
-            getUpdated(toNull(b.startTraining), existingOpti.startProject),
-            getUpdated(toNull(b.endTraining), existingOpti.endProject),
-            getUpdated(toNull(b.placeTraining), existingOpti.placeProject),
-            toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
-            id,
-          ]
-        );
-      }
-    }
+    
 
     await connection.commit();
     res.json({ message: "Opportunity updated successfully" });
@@ -430,50 +352,54 @@ const getOptiById = async (req, res) => {
 };
 
 const getSalesDashboardData = async (req, res) => {
-  const { id: idSales } = req.user;
+  const { id: idSales, role } = req.user;
+
   try {
-    const pipelineQuery = pool.query(
-      `SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`,
-      [idSales]
-    );
-    const performanceQuery = pool.query(
-      `SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(kebutuhan) as totalValue
-         FROM opti
-        WHERE idSales = ? AND statOpti = 'Succed'
-        GROUP BY month
-        ORDER BY month ASC`,
-      [idSales]
-    );
-    const typesQuery = pool.query(
-      `SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`,
-      [idSales]
-    );
-    const topDealsQuery = pool.query(
-      `SELECT o.nmOpti, c.corpCustomer, o.kebutuhan
-         FROM opti o
-         LEFT JOIN customer c ON o.idCustomer = c.idCustomer
-        WHERE o.idSales = ? AND o.statOpti NOT IN ('Closed Won', 'Closed Lost')
-        ORDER BY o.kebutuhan DESC
-        LIMIT 5`,
-      [idSales]
-    );
+    let pipelineQuery, performanceQuery, typesQuery, topDealsQuery;
+
+    if (role === 'Admin' || role === 'Head Sales') {
+      pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti GROUP BY statOpti`);
+      performanceQuery = pool.query(`SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(valOpti) as totalValue FROM opti WHERE statOpti = 'Success' GROUP BY month ORDER BY month ASC`);
+      typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti GROUP BY jenisOpti`);
+      topDealsQuery = pool.query(`SELECT o.nmOpti, c.corpCustomer, o.valOpti FROM opti o LEFT JOIN customer c ON o.idCustomer = c.idCustomer WHERE o.statOpti NOT IN ('Success', 'Failed') ORDER BY o.valOpti DESC LIMIT 5`);
+    } else { // Sales
+      const params = [idSales];
+      pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`, params);
+      performanceQuery = pool.query(`SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(valOpti) as totalValue FROM opti WHERE idSales = ? AND statOpti = 'Success' GROUP BY month ORDER BY month ASC`, params);
+      typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`, params);
+      topDealsQuery = pool.query(`SELECT o.nmOpti, c.corpCustomer, o.valOpti FROM opti o LEFT JOIN customer c ON o.idCustomer = c.idCustomer WHERE o.idSales = ? AND o.statOpti NOT IN ('Success', 'Failed') ORDER BY o.valOpti DESC LIMIT 5`, params);
+    }
+
     const [
-      [pipelineStats],
-      [performanceOverTime],
-      [opportunityTypes],
-      [topOpenDeals],
+      pipelineResult,
+      performanceResult,
+      typesResult,
+      topDealsResult,
     ] = await Promise.all([
       pipelineQuery,
       performanceQuery,
       typesQuery,
       topDealsQuery,
     ]);
+
+    const pipelineStats = pipelineResult[0];
+    const performanceOverTime = performanceResult[0];
+    const opportunityTypes = typesResult[0];
+    const topOpenDeals = topDealsResult[0];
+
+    const allPipelineStages = ['Follow Up', 'On-Progress', 'Success', 'Failed', 'Just Get Info'];
+    const finalPipelineStats = allPipelineStages.map(stage => {
+      const found = pipelineStats.find(s => s.statOpti === stage);
+      return { statOpti: stage, count: found ? found.count : 0 };
+    });
+
     res.json({
-      pipelineStats,
+      pipelineStats: finalPipelineStats,
       performanceOverTime,
       opportunityTypes,
       topOpenDeals,
     });
+
   } catch (error) {
     console.error("Error fetching sales dashboard data:", error);
     res.status(500).json({ error: "Server error" });

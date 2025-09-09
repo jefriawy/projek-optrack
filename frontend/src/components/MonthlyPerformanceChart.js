@@ -1,5 +1,5 @@
 // frontend/src/components/MonthlyPerformanceChart.js
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,8 +31,6 @@ const IDR = new Intl.NumberFormat("id-ID", {
 });
 
 const MonthlyPerformanceChart = ({ data = [] }) => {
-  const canvasRef = useRef(null);
-
   // labels & values yang rapi
   const { labels, values } = useMemo(() => {
     const lbl = [];
@@ -46,20 +44,6 @@ const MonthlyPerformanceChart = ({ data = [] }) => {
     }
     return { labels: lbl, values: val };
   }, [data]);
-
-  // gradient fill yang responsif terhadap resize
-  const gradient = useMemo(() => {
-    const ctx = canvasRef.current?.getContext?.("2d");
-    if (!ctx) return null;
-    const g = ctx.createLinearGradient(0, 0, 0, 320);
-    g.addColorStop(0, "rgba(59, 130, 246, 0.25)"); // biru-500 25%
-    g.addColorStop(1, "rgba(59, 130, 246, 0.02)");
-    return g;
-  }, [canvasRef.current, labels.length]); // re-run jika canvas/ukuran berubah
-
-  useEffect(() => {
-    // trigger re-render gradient saat container berubah ukuran
-  }, [gradient]);
 
   const options = {
     responsive: true,
@@ -101,8 +85,23 @@ const MonthlyPerformanceChart = ({ data = [] }) => {
       {
         label: "Total Value",
         data: values,
-        borderColor: "rgba(59, 130, 246, 1)",       // blue-500
-        backgroundColor: gradient || "rgba(59,130,246,0.15)",
+        borderColor: "rgba(59, 130, 246, 1)", // blue-500
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) {
+            return null;
+          }
+          const gradient = ctx.createLinearGradient(
+            0,
+            chartArea.bottom,
+            0,
+            chartArea.top
+          );
+          gradient.addColorStop(0, "rgba(59, 130, 246, 0.02)");
+          gradient.addColorStop(1, "rgba(59, 130, 246, 0.25)");
+          return gradient;
+        },
         fill: true,
         pointBackgroundColor: "#fff",
         pointBorderColor: "rgba(59,130,246,1)",
@@ -111,8 +110,8 @@ const MonthlyPerformanceChart = ({ data = [] }) => {
   };
 
   return (
-    <div className="w-full h-80 md:h-96"> {/* tinggi fleksibel */}
-      <Line ref={canvasRef} options={options} data={chartData} />
+    <div className="w-full h-80 md:h-96">
+      <Line options={options} data={chartData} />
     </div>
   );
 };
