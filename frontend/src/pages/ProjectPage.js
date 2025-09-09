@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
+import FeedbackModal from "../components/FeedbackModal";
+import axios from "axios";
 
 /* ===== User chip helpers (nama & avatar) ====== */
 const getDisplayName = (user) => {
@@ -17,17 +19,19 @@ const getDisplayName = (user) => {
 };
 const getAvatarUrl = (user) => {
   if (!user) return null;
-  const candidate = 
-    user.photoURL || 
-    user.photoUrl || 
-    user.photo || 
-    user.avatar || 
-    user.image || 
-    user.photoUser || 
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
     null;
   if (!candidate) return null;
   if (/^https?:\\\]/i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -42,7 +46,6 @@ const Initials = ({ name }) => {
     </div>
   );
 };
-
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -210,8 +213,6 @@ const Modal = ({ open, onClose, title, badge, children }) => {
   );
 };
 
-
-
 /* ===== Page Component ===== */
 const ProjectPage = () => {
   const { user } = useContext(AuthContext);
@@ -306,6 +307,21 @@ const ProjectPage = () => {
     setOpenFeedback(true);
   };
 
+  const handleFeedbackSubmit = async (target, feedbackText) => {
+    if (!target) return;
+    try {
+      await axios.put(
+        `${API_BASE}/api/project/${target.idProject}/feedback`,
+        { feedback: feedbackText },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setOpenFeedback(false);
+    } catch (error) {
+      console.error("Failed to submit feedback", error);
+      alert("Gagal menyimpan feedback.");
+    }
+  };
+
   if (!user?.token) {
     return (
       <div className="p-6">
@@ -324,7 +340,9 @@ const ProjectPage = () => {
     <div className="p-6">
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Project Page</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            Project Page
+          </h1>
         </div>
 
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
@@ -353,7 +371,9 @@ const ProjectPage = () => {
             )}
             <div className="leading-5">
               <div className="text-sm font-bold">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+              <div className="text-xs text-gray-500">
+                Logged in • {user?.role || "User"}
+              </div>
             </div>
           </div>
         </div>
@@ -426,7 +446,6 @@ const ProjectPage = () => {
                           : "Selesai"}
                       </span>
                     </div>
-                    
                   </div>
                   <div className="mt-3 flex justify-end gap-2">
                     <button
@@ -539,16 +558,13 @@ const ProjectPage = () => {
         )}
       </Modal>
 
-      <Modal
-        open={openFeedback}
+      <FeedbackModal
+        isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
-        title={`Feedback - ${feedbackTarget?.nmProject || "Proyek"}`}
-        badge={{ text: "—", cls: "bg-gray-300 text-gray-700" }}
-      >
-        <div className="text-sm text-gray-700">
-          Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
-        </div>
-      </Modal>
+        targetData={feedbackTarget}
+        userRole={user?.role}
+        onSubmit={handleFeedbackSubmit}
+      />
     </div>
   );
 };

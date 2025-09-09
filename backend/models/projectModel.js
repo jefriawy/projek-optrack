@@ -24,7 +24,9 @@ const BASE_QUERY = `
 
 // Get all projects (untuk Admin)
 const getAllProjects = async () => {
-  const [rows] = await db.query(`${BASE_QUERY} WHERE o.statOpti = 'Success' ORDER BY p.startProject DESC`);
+  const [rows] = await db.query(
+    `${BASE_QUERY} WHERE o.statOpti = 'Success' ORDER BY p.startProject DESC`
+  );
   return rows;
 };
 
@@ -121,6 +123,14 @@ async function getBySalesId(salesId) {
   return rows;
 }
 
+async function updateFeedback(idProject, feedback) {
+  const [result] = await db.query(
+    `UPDATE project SET fbProject = ? WHERE idProject = ?`,
+    [feedback, idProject]
+  );
+  return result.affectedRows;
+}
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -129,4 +139,5 @@ module.exports = {
   deleteProject,
   getByExpertId,
   getBySalesId,
+  updateFeedback,
 };

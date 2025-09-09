@@ -162,6 +162,14 @@ async function getByOptiIdWithType(optiId) {
   return rows;
 }
 
+async function updateFeedback(idTraining, feedback) {
+  const [result] = await pool.query(
+    `UPDATE training SET fbTraining = ? WHERE idTraining = ?`,
+    [feedback, idTraining]
+  );
+  return result.affectedRows;
+}
+
 module.exports = {
   createTraining,
   getAllTraining,
@@ -171,4 +179,5 @@ module.exports = {
   getByExpertId,
   getByOptiIdWithType,
   getBySalesId,
+  updateFeedback,
 };

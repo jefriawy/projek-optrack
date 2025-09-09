@@ -11,23 +11,26 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-  if (user) {
-    switch (user.role) {
-      case "Admin":
-        navigate("/dashboard-admin", { replace: true });
-        break;
-      case "Head Sales":
-      case "Sales":
-        navigate("/customer", { replace: true });
-        break;
-      case "Expert":
-        navigate("/training", { replace: true });
-        break;
-      default:
-        navigate("/login", { replace: true });
+    if (user) {
+      switch (user.role) {
+        case "Admin":
+          navigate("/dashboard-admin", { replace: true });
+          break;
+        case "Head Sales":
+        case "Sales":
+          navigate("/customer", { replace: true });
+          break;
+        // ====================== PERUBAHAN DI SINI ======================
+        case "Expert":
+        case "Head of Expert": // Head of Expert ditambahkan di sini
+          navigate("/training", { replace: true }); // Diarahkan ke halaman training
+          break;
+        // ====================== AKHIR PERUBAHAN ======================
+        default:
+          navigate("/login", { replace: true });
+      }
     }
-  }
-}, [user, navigate]);
+  }, [user, navigate]);
 
   if (loading) {
     return (
@@ -54,16 +57,11 @@ const LoginPage = () => {
       <div className="relative z-10 h-full flex flex-col">
         {/* Mobile Header - Logo Only */}
         <div className="lg:hidden flex justify-center pt-6 pb-2">
-          <img
-            src={logo}
-            alt="OPTrack Logo"
-            className="h-12 sm:h-16 w-auto"
-          />
+          <img src={logo} alt="OPTrack Logo" className="h-12 sm:h-16 w-auto" />
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col lg:flex-row items-center justify-center lg:justify-between px-4 sm:px-6 md:px-8 lg:px-16 xl:px-20 py-4 lg:py-0 gap-6 lg:gap-12 xl:gap-16">
-          
           {/* Left Side: Logo + Text (Hidden on mobile, shown on lg+) */}
           <div className="hidden lg:flex lg:flex-col lg:flex-1 lg:max-w-2xl text-white">
             <img
@@ -73,10 +71,12 @@ const LoginPage = () => {
             />
             <div className="space-y-4">
               <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-bold leading-tight">
-                Selamat datang di <span className="text-blue-400">OPTrack!</span>
+                Selamat datang di{" "}
+                <span className="text-blue-400">OPTrack!</span>
               </h1>
               <p className="text-lg xl:text-xl 2xl:text-2xl leading-relaxed text-gray-200">
-                Platform smart tracking untuk mengoptimalkan operasional perusahaan Anda.
+                Platform smart tracking untuk mengoptimalkan operasional
+                perusahaan Anda.
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@ const LoginPage = () => {
                   Platform smart tracking OPTrack
                 </p>
               </div>
-              
+
               {/* Desktop Title */}
               <div className="hidden lg:block text-center mb-8">
                 <h2 className="text-2xl xl:text-3xl font-bold text-white mb-2">
@@ -112,7 +112,8 @@ const LoginPage = () => {
         {/* Mobile Footer Text */}
         <div className="lg:hidden text-center px-6 pb-4">
           <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-            Platform smart tracking untuk mengoptimalkan operasional perusahaan Anda.
+            Platform smart tracking untuk mengoptimalkan operasional perusahaan
+            Anda.
           </p>
         </div>
       </div>

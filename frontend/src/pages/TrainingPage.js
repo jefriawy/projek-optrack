@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
+import FeedbackModal from "../components/FeedbackModal";
+import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -13,11 +15,18 @@ const safeTime = (v) => {
 };
 const fmtDateTime = (v) =>
   v
-    ? new Date(v).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" })
+    ? new Date(v).toLocaleString("id-ID", {
+        dateStyle: "full",
+        timeStyle: "short",
+      })
     : "-";
 const fmtDate = (v) =>
   v
-    ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(v).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
     : "-";
 const diffDays = (start, end) => {
   const s = safeTime(start);
@@ -51,7 +60,11 @@ const computeStatus = (start, end, now = Date.now()) => {
   const s = safeTime(start);
   const e = safeTime(end);
   if (s && now < s) {
-    return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+    return {
+      key: "pending",
+      label: "Pending",
+      className: "bg-amber-500 text-white",
+    };
   }
   if (s && (!e || now <= e) && now >= s) {
     const remaining = e ? e - now : 0;
@@ -63,26 +76,49 @@ const computeStatus = (start, end, now = Date.now()) => {
     };
   }
   if (e && now > e) {
-    return { key: "finished", label: "Finished", className: "bg-green-500 text-white" };
+    return {
+      key: "finished",
+      label: "Finished",
+      className: "bg-green-500 text-white",
+    };
   }
   // fallback jika tanggal tak lengkap
-  return { key: "pending", label: "Pending", className: "bg-amber-500 text-white" };
+  return {
+    key: "pending",
+    label: "Pending",
+    className: "bg-amber-500 text-white",
+  };
 };
 
 /* ===== Icons ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M8 2v3M16 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
   </svg>
 );
 const IconClock = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 3" />
   </svg>
 );
 const IconUsers = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -90,7 +126,12 @@ const IconUsers = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 const IconMap = ({ className = "w-4 h-4" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3" />
   </svg>
 );
@@ -110,11 +151,16 @@ const Modal = ({ open, onClose, title, badge, children }) => {
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.cls}`}
+                >
                   {badge.text}
                 </span>
               ) : null}
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-800 text-2xl font-bold"
+              >
                 &times;
               </button>
             </div>
@@ -149,7 +195,9 @@ const getAvatarUrl = (user) => {
     null;
   if (!candidate) return null;
   if (/^https?:\]/i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -164,7 +212,6 @@ const Initials = ({ name }) => {
     </div>
   );
 };
-
 
 /* ===== Page ===== */
 const TrainingPage = () => {
@@ -205,7 +252,8 @@ const TrainingPage = () => {
           },
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+        if (!res.ok)
+          throw new Error(await res.text().catch(() => res.statusText));
         const data = await res.json();
         setList(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -243,7 +291,8 @@ const TrainingPage = () => {
           Authorization: `Bearer ${user.token}`,
         },
       });
-      if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+      if (!res.ok)
+        throw new Error(await res.text().catch(() => res.statusText));
       const data = await res.json();
       setDetail(data);
     } catch (e) {
@@ -259,12 +308,28 @@ const TrainingPage = () => {
     setOpenFeedback(true);
   };
 
+  const handleFeedbackSubmit = async (target, feedbackText) => {
+    if (!target) return;
+    try {
+      await axios.put(
+        `${API_BASE}/api/training/${target.idTraining}/feedback`,
+        { feedback: feedbackText },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setOpenFeedback(false);
+    } catch (error) {
+      console.error("Failed to submit feedback", error);
+      alert("Gagal menyimpan feedback.");
+    }
+  };
+
   if (!user?.token) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-2">Training Page</h1>
         <p className="text-gray-600">
-          Silakan login sebagai <b>Expert</b> untuk melihat jadwal training Anda.
+          Silakan login sebagai <b>Expert</b> untuk melihat jadwal training
+          Anda.
         </p>
       </div>
     );
@@ -277,7 +342,9 @@ const TrainingPage = () => {
       {/* Header Konten Utama */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training Page</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            Training Page
+          </h1>
         </div>
 
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
@@ -306,7 +373,9 @@ const TrainingPage = () => {
             )}
             <div className="leading-5">
               <div className="text-sm font-bold">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+              <div className="text-xs text-gray-500">
+                Logged in • {user?.role || "User"}
+              </div>
             </div>
           </div>
         </div>
@@ -319,8 +388,12 @@ const TrainingPage = () => {
         </div>
 
         <div className="p-5 space-y-5">
-          {loading && <div className="text-center text-gray-500 py-10">Memuat data…</div>}
-          {!loading && err && <div className="text-center text-red-600 py-10">{err}</div>}
+          {loading && (
+            <div className="text-center text-gray-500 py-10">Memuat data…</div>
+          )}
+          {!loading && err && (
+            <div className="text-center text-red-600 py-10">{err}</div>
+          )}
 
           {!loading &&
             !err &&
@@ -330,20 +403,36 @@ const TrainingPage = () => {
               return (
                 <div
                   key={t.idTraining || idx}
-                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
+                  className={`rounded-xl border p-4 ${
+                    idx % 2 === 1 ? "border-blue-300" : "border-gray-300"
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-xl font-semibold">{t.nmTraining || "-"}</div>
-                      <div className="text-xs text-gray-500">{t.corpCustomer || "-"}</div>
-                      <div className="text-xs text-gray-500">
-                        Sales: <span className="text-green-600 font-bold">{t.nmSales || "-"}</span>
+                      <div className="text-xl font-semibold">
+                        {t.nmTraining || "-"}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Expert: <span className="text-purple-600 font-bold">{t.nmExpert || "-"}</span>
+                        {t.corpCustomer || "-"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Sales:{" "}
+                        <span className="text-green-600 font-bold">
+                          {t.nmSales || "-"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Expert:{" "}
+                        <span className="text-purple-600 font-bold">
+                          {t.nmExpert || "-"}
+                        </span>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}>{badge.text}</span>
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}
+                    >
+                      {badge.text}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
@@ -363,7 +452,6 @@ const TrainingPage = () => {
                           : "Selesai"}
                       </span>
                     </div>
-                    
                   </div>
 
                   <div className="mt-3 flex justify-end gap-2">
@@ -387,7 +475,9 @@ const TrainingPage = () => {
             })}
 
           {!loading && !err && filtered.length === 0 && (
-            <div className="text-center text-gray-500 py-10">Belum ada training.</div>
+            <div className="text-center text-gray-500 py-10">
+              Belum ada training.
+            </div>
           )}
         </div>
       </div>
@@ -400,19 +490,28 @@ const TrainingPage = () => {
         badge={
           detail
             ? (() => {
-                const st = computeStatus(detail.startTraining, detail.endTraining);
+                const st = computeStatus(
+                  detail.startTraining,
+                  detail.endTraining
+                );
                 return { text: st.label, cls: st.className };
               })()
             : null
         }
       >
-        {detailLoading && <div className="text-center text-gray-500 py-6">Memuat detail…</div>}
-        {!detailLoading && detailErr && <div className="text-center text-red-600 py-6">{detailErr}</div>}
+        {detailLoading && (
+          <div className="text-center text-gray-500 py-6">Memuat detail…</div>
+        )}
+        {!detailLoading && detailErr && (
+          <div className="text-center text-red-600 py-6">{detailErr}</div>
+        )}
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
+                <div className="text-sm text-gray-500 mb-2">
+                  Jadwal & Lokasi
+                </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Mulai</span>
@@ -424,7 +523,11 @@ const TrainingPage = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Durasi</span>
-                    <b>{diffDays(detail.startTraining, detail.endTraining) ?? "-"} hari</b>
+                    <b>
+                      {diffDays(detail.startTraining, detail.endTraining) ??
+                        "-"}{" "}
+                      hari
+                    </b>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-2 text-gray-500">
@@ -447,7 +550,9 @@ const TrainingPage = () => {
                 <div className="text-sm text-gray-500 mb-2">Dokumen</div>
                 {detail.proposalOpti ? (
                   <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti.split(/[\\/]/).pop()}`}
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
+                      .split(/[\\/]/)
+                      .pop()}`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm text-black hover:underline flex items-center gap-2"
@@ -456,7 +561,9 @@ const TrainingPage = () => {
                     <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
                   </a>
                 ) : (
-                  <div className="text-sm text-gray-700">Belum ada dokumen.</div>
+                  <div className="text-sm text-gray-700">
+                    Belum ada dokumen.
+                  </div>
                 )}
               </div>
             </div>
@@ -465,16 +572,13 @@ const TrainingPage = () => {
       </Modal>
 
       {/* Modal Feedback */}
-      <Modal
-        open={openFeedback}
+      <FeedbackModal
+        isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
-        title={`Feedback - ${feedbackTarget?.nmTraining || "Training"}`}
-        badge={{ text: "—", cls: "bg-gray-300 text-gray-700" }}
-      >
-        <div className="text-sm text-gray-700">
-          Belum ada feedback. (Hook-kan ke endpoint feedback jika sudah siap.)
-        </div>
-      </Modal>
+        targetData={feedbackTarget}
+        userRole={user?.role}
+        onSubmit={handleFeedbackSubmit}
+      />
     </div>
   );
 };

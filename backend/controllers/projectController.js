@@ -69,7 +69,7 @@ const getMyProjects = async (req, res) => {
       data = await Project.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Project.getBySalesId(id);
-    } else if (role === "Head Sales") {
+    } else if (role === "Head Sales" || role === "Head of Expert") {
       data = await Project.getAllProjects();
     } else {
       return res
@@ -83,6 +83,23 @@ const getMyProjects = async (req, res) => {
   }
 };
 
+const submitProjectFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback } = req.body;
+    if (feedback === undefined) {
+      return res.status(400).json({ error: "Feedback content is required." });
+    }
+    const affectedRows = await Project.updateFeedback(id, feedback);
+    if (affectedRows === 0)
+      return res.status(404).json({ error: "Project not found" });
+    res.json({ message: "Feedback submitted successfully" });
+  } catch (err) {
+    console.error("Error submitting project feedback:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getProjects,
   getProjectById,
@@ -90,4 +107,5 @@ module.exports = {
   updateProject,
   deleteProject,
   getMyProjects,
+  submitProjectFeedback,
 };

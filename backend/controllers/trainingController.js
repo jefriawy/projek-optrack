@@ -72,7 +72,7 @@ const getMyTrainings = async (req, res) => {
       data = await Training.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Training.getBySalesId(id);
-    } else if (role === "Head Sales") {
+    } else if (role === "Head Sales" || role === "Head of Expert") {
       data = await Training.getAllTraining();
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
@@ -84,6 +84,23 @@ const getMyTrainings = async (req, res) => {
   }
 };
 
+const submitTrainingFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback } = req.body;
+    if (feedback === undefined) {
+      return res.status(400).json({ error: "Feedback content is required." });
+    }
+    const affectedRows = await Training.updateFeedback(id, feedback);
+    if (affectedRows === 0)
+      return res.status(404).json({ error: "Training not found" });
+    res.json({ message: "Feedback submitted successfully" });
+  } catch (err) {
+    console.error("Error submitting training feedback:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getTraining,
   getTrainingById,
@@ -91,4 +108,5 @@ module.exports = {
   updateTraining,
   deleteTraining,
   getMyTrainings,
+  submitTrainingFeedback,
 };

@@ -8,7 +8,7 @@ const roleToCode = {
   "Head Sales": "02",
   Sales: "03",
   Expert: "04",
-  "Head of Expert": "03",
+  "Head of Expert": "10",
   Customer: "05",
   Opti: "06",
   Training: "07",
