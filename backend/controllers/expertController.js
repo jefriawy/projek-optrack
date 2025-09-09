@@ -25,7 +25,7 @@ const getExperts = async (_req, res) => {
  */
 const createExpertUser = async (req, res) => {
   console.log("Attempting to create expert with data:", req.body);
-  const { nmExpert, emailExpert, password, mobileExpert, idSkill, statExpert, Row } = req.body;
+  const { nmExpert, emailExpert, password, mobileExpert, idSkill, statExpert, Row, role } = req.body;
 
   if (!nmExpert || !emailExpert || !password) {
     return res.status(400).json({ error: "Name, email, and password are required." });
@@ -36,7 +36,7 @@ const createExpertUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: "Email already in use." });
     }
-    const newExpertId = await generateUserId('Expert');
+  const newExpertId = await generateUserId(role === 'Head of Expert' ? 'Head of Expert' : 'Expert');
     const hashedPassword = await bcrypt.hash(password, 10);
     await Expert.create({
       idExpert: newExpertId,
@@ -47,6 +47,7 @@ const createExpertUser = async (req, res) => {
       idSkill,
       statExpert,
       Row,
+      role: role || 'Expert',
     });
     res.status(201).json({ message: "Expert user created successfully", idExpert: newExpertId });
   } catch (error) {
@@ -61,20 +62,91 @@ const createExpertUser = async (req, res) => {
  * @access  Private (Expert)
  */
 const getMyDashboardData = async (req, res) => {
-  const idExpert = req.user.id; 
-
-  if (!idExpert) {
-    return res.status(400).json({ error: 'Expert ID tidak ditemukan dari token.' });
-  }
+  const idExpert = req.user.id;
+  const role = req.user.role;
 
   let connection;
   try {
     connection = await pool.getConnection();
 
-    // Query untuk totals
-    const [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training WHERE idExpert = ?', [idExpert]);
-    const [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project WHERE idExpert = ?', [idExpert]);
+    let trainingCount, projectCount, activities;
     const [outsourceCount] = await connection.query('SELECT COUNT(*) as count FROM outsource');
+
+    if (role === 'Head of Expert' || role === 'head of expert') {
+      // Head of Expert: lihat semua
+      [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training');
+      [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project');
+      [activities] = await connection.query(`
+        SELECT 
+          'Training' as type, 
+          t.idTraining as id,
+          t.nmTraining as name, 
+          t.statusTraining as status,
+          t.startTraining as startDate,
+          t.endTraining as endDate, 
+          c.nmCustomer as customerName,
+          tt.nmTypeTraining as activitySubType
+        FROM training t
+        LEFT JOIN opti o ON t.idOpti = o.idOpti
+        LEFT JOIN customer c ON t.idCustomer = c.idCustomer
+        LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
+        WHERE o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
+        
+        UNION ALL
+        
+        SELECT 
+          'Project' as type, 
+          p.idProject as id,
+          p.nmProject as name, 
+          p.statusProject as status,
+          p.startProject as startDate,
+          p.endProject as endDate, 
+          c.nmCustomer as customerName,
+          tp.nmTypeProject as activitySubType
+        FROM project p
+        LEFT JOIN opti o ON p.idOpti = o.idOpti
+        LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+        LEFT JOIN typeproject tp ON p.idTypeProject = tp.idTypeProject
+        WHERE o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
+      `);
+    } else {
+      // Expert biasa: hanya miliknya sendiri
+      [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training WHERE idExpert = ?', [idExpert]);
+      [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project WHERE idExpert = ?', [idExpert]);
+      [activities] = await connection.query(`
+        SELECT 
+          'Training' as type, 
+          t.idTraining as id,
+          t.nmTraining as name, 
+          t.statusTraining as status,
+          t.startTraining as startDate,
+          t.endTraining as endDate, 
+          c.nmCustomer as customerName,
+          tt.nmTypeTraining as activitySubType
+        FROM training t
+        LEFT JOIN opti o ON t.idOpti = o.idOpti
+        LEFT JOIN customer c ON t.idCustomer = c.idCustomer
+        LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
+        WHERE t.idExpert = ? AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
+        
+        UNION ALL
+        
+        SELECT 
+          'Project' as type, 
+          p.idProject as id,
+          p.nmProject as name, 
+          p.statusProject as status,
+          p.startProject as startDate,
+          p.endProject as endDate, 
+          c.nmCustomer as customerName,
+          tp.nmTypeProject as activitySubType
+        FROM project p
+        LEFT JOIN opti o ON p.idOpti = o.idOpti
+        LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+        LEFT JOIN typeproject tp ON p.idTypeProject = tp.idTypeProject
+        WHERE p.idExpert = ? AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
+      `, [idExpert, idExpert]);
+    }
 
     const totals = {
       training: trainingCount[0].count,
@@ -82,45 +154,6 @@ const getMyDashboardData = async (req, res) => {
       outsource: outsourceCount[0].count,
     };
 
-    // Query untuk semua aktivitas yang relevan (Opti-nya sudah aktif)
-    const [activities] = await connection.query(`
-      SELECT 
-        'Training' as type, 
-        t.idTraining as id,
-        t.nmTraining as name, 
-        t.statusTraining as status,
-        t.startTraining as startDate,
-        t.endTraining as endDate, 
-        c.nmCustomer as customerName,
-        tt.nmTypeTraining as activitySubType
-      FROM training t
-      LEFT JOIN opti o ON t.idOpti = o.idOpti
-      LEFT JOIN customer c ON t.idCustomer = c.idCustomer
-      LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
-      WHERE 
-        t.idExpert = ? 
-        AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
-      
-      UNION ALL
-      
-      SELECT 
-        'Project' as type, 
-        p.idProject as id,
-        p.nmProject as name, 
-        p.statusProject as status,
-        p.startProject as startDate,
-        p.endProject as endDate, 
-        c.nmCustomer as customerName,
-        tp.nmTypeProject as activitySubType
-      FROM project p
-      LEFT JOIN opti o ON p.idOpti = o.idOpti
-      LEFT JOIN customer c ON p.idCustomer = c.idCustomer
-      LEFT JOIN typeproject tp ON p.idTypeProject = tp.idTypeProject
-      WHERE 
-        p.idExpert = ?
-        AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
-    `, [idExpert, idExpert]);
-    
     res.json({ totals, activities });
 
   } catch (error) {

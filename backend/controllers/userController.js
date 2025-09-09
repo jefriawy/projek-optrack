@@ -6,9 +6,9 @@ const getAllUsers = async (req, res) => {
   try {
     // Query all tables in parallel
     const [adminPromise, salesPromise, expertPromise] = [
-      pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
-      pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
-      pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, 'Expert' as role FROM expert"),
+  pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
+  pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
+  pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, role FROM expert"),
     ];
 
     const [[admins], [sales], [experts]] = await Promise.all([
@@ -48,6 +48,8 @@ const deleteUserByRole = async (req, res) => {
       idColumn = 'idSales';
       break;
     case 'Expert':
+    case 'Head of Expert':
+    case 'head of expert':
       tableName = 'expert';
       idColumn = 'idExpert';
       break;

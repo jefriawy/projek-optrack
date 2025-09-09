@@ -27,6 +27,7 @@ const expertSchema = Yup.object({
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
   mobile: Yup.string().required("Mobile number is required"),
   idSkill: Yup.string().required("Skill is required"),
+  role: Yup.string().oneOf(["Expert", "Head of Expert"]).required("Role is required"),
   statExpert: Yup.string().optional(),
   Row: Yup.string().optional(),
 });
@@ -46,7 +47,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
     email: "",
     password: "",
     mobile: "",
-    role: "Sales", // Default for the Sales role dropdown
+    role: userType === "Expert" ? "Expert" : "Sales", // Default sesuai tipe user
     descSales: "",
     idSkill: "",
     statExpert: "",
@@ -149,6 +150,14 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
       {userType === 'Expert' && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Expert Details</h3>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="Expert">Expert</option>
+              <option value="Head of Expert">Head of Expert</option>
+            </select>
+            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+          </div>
           <div>
             <label className="block text-gray-700 font-semibold mb-1">Primary Skill *</label>
             <select name="idSkill" value={formData.idSkill} onChange={handleChange} className="w-full p-2 border rounded-md">
