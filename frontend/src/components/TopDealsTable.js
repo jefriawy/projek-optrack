@@ -9,7 +9,7 @@ const TopDealsTable = ({ data }) => {
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">Top 5 Open Deals</h2>
+      <h2 className="text-xl font-semibold mb-4">Top 5 Won Deals</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

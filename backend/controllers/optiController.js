@@ -355,37 +355,105 @@ const getSalesDashboardData = async (req, res) => {
   const { id: idSales, role } = req.user;
 
   try {
-    let pipelineQuery, performanceQuery, typesQuery, topDealsQuery;
+    let pipelineQuery, performanceQuery, typesQuery, topWonDealsQuery;
+
+    // Subquery to get IDs of opportunities that are "Closed Won" (i.e., have become a project or training)
+    const wonOptiIdsSubquery = `
+      SELECT idOpti FROM training WHERE idOpti IS NOT NULL
+      UNION
+      SELECT idOpti FROM project WHERE idOpti IS NOT NULL
+    `;
+
+    // Query baru untuk performa bulanan (Closed Won)
+    const performanceQueryBody = `
+      SELECT
+        DATE_FORMAT(won_deals.start_date, '%Y-%m') AS month,
+        SUM(won_deals.value) AS totalValue
+      FROM (
+        SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
+        UNION ALL
+        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti = o.idOpti WHERE t.startTraining IS NOT NULL
+      ) AS won_deals
+    `;
 
     if (role === 'Admin' || role === 'Head Sales') {
       pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti GROUP BY statOpti`);
-      performanceQuery = pool.query(`SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(valOpti) as totalValue FROM opti WHERE statOpti = 'Success' GROUP BY month ORDER BY month ASC`);
+      
+      performanceQuery = pool.query(`${performanceQueryBody} GROUP BY month ORDER BY month ASC`);
+      
       typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti GROUP BY jenisOpti`);
-      topDealsQuery = pool.query(`SELECT o.nmOpti, c.corpCustomer, o.valOpti FROM opti o LEFT JOIN customer c ON o.idCustomer = c.idCustomer WHERE o.statOpti NOT IN ('Success', 'Failed') ORDER BY o.valOpti DESC LIMIT 5`);
+      
+      topWonDealsQuery = pool.query(`
+        SELECT
+          won_deals.name AS nmOpti,
+          won_deals.customer AS corpCustomer,
+          won_deals.value AS valOpti
+        FROM (
+          SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+          FROM project p
+          JOIN opti o ON p.idOpti = o.idOpti
+          JOIN customer c ON p.idCustomer = c.idCustomer
+
+          UNION ALL
+
+          SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+          FROM training t
+          JOIN opti o ON t.idOpti = o.idOpti
+          JOIN customer c ON t.idCustomer = c.idCustomer
+        ) AS won_deals
+        ORDER BY won_deals.value DESC
+        LIMIT 5
+      `);
+
     } else { // Sales
       const params = [idSales];
+      const performanceParams = [idSales];
       pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`, params);
-      performanceQuery = pool.query(`SELECT DATE_FORMAT(datePropOpti, '%Y-%m') as month, SUM(valOpti) as totalValue FROM opti WHERE idSales = ? AND statOpti = 'Success' GROUP BY month ORDER BY month ASC`, params);
+      
+      performanceQuery = pool.query(`${performanceQueryBody} WHERE won_deals.idSales = ? GROUP BY month ORDER BY month ASC`, performanceParams);
+      
       typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`, params);
-      topDealsQuery = pool.query(`SELECT o.nmOpti, c.corpCustomer, o.valOpti FROM opti o LEFT JOIN customer c ON o.idCustomer = c.idCustomer WHERE o.idSales = ? AND o.statOpti NOT IN ('Success', 'Failed') ORDER BY o.valOpti DESC LIMIT 5`, params);
+      
+      topWonDealsQuery = pool.query(`
+        SELECT
+          won_deals.name AS nmOpti,
+          won_deals.customer AS corpCustomer,
+          won_deals.value AS valOpti
+        FROM (
+          SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+          FROM project p
+          JOIN opti o ON p.idOpti = o.idOpti
+          JOIN customer c ON p.idCustomer = c.idCustomer
+
+          UNION ALL
+
+          SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+          FROM training t
+          JOIN opti o ON t.idOpti = o.idOpti
+          JOIN customer c ON t.idCustomer = c.idCustomer
+        ) AS won_deals
+        WHERE won_deals.idSales = ?
+        ORDER BY won_deals.value DESC
+        LIMIT 5
+      `, params);
     }
 
     const [
       pipelineResult,
       performanceResult,
       typesResult,
-      topDealsResult,
+      topWonDealsResult,
     ] = await Promise.all([
       pipelineQuery,
       performanceQuery,
       typesQuery,
-      topDealsQuery,
+      topWonDealsQuery,
     ]);
 
     const pipelineStats = pipelineResult[0];
     const performanceOverTime = performanceResult[0];
     const opportunityTypes = typesResult[0];
-    const topOpenDeals = topDealsResult[0];
+    const topWonDeals = topWonDealsResult[0];
 
     const allPipelineStages = ['Follow Up', 'On-Progress', 'Success', 'Failed', 'Just Get Info'];
     const finalPipelineStats = allPipelineStages.map(stage => {
@@ -397,7 +465,7 @@ const getSalesDashboardData = async (req, res) => {
       pipelineStats: finalPipelineStats,
       performanceOverTime,
       opportunityTypes,
-      topOpenDeals,
+      topWonDeals,
     });
 
   } catch (error) {

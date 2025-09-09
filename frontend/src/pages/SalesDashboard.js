@@ -158,7 +158,7 @@ const SalesDashboard = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <TopDealsTable data={dashboardData.topOpenDeals} />
+            <TopDealsTable data={dashboardData.topWonDeals} />
           </div>
         </div>
       </main>
