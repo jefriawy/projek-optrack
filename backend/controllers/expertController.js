@@ -12,8 +12,7 @@ const getExperts = async (_req, res) => {
   try {
     const experts = await Expert.findAll();
     res.json(experts);
-  } catch (err)
- {
+  } catch (err) {
     console.error("getExperts error:", err);
     res.status(500).json({ error: "Server error" });
   }
@@ -72,7 +71,7 @@ const getMyDashboardData = async (req, res) => {
   try {
     connection = await pool.getConnection();
 
-    // Query untuk totals tidak berubah
+    // Query untuk totals
     const [trainingCount] = await connection.query('SELECT COUNT(*) as count FROM training WHERE idExpert = ?', [idExpert]);
     const [projectCount] = await connection.query('SELECT COUNT(*) as count FROM project WHERE idExpert = ?', [idExpert]);
     const [outsourceCount] = await connection.query('SELECT COUNT(*) as count FROM outsource');
@@ -83,21 +82,24 @@ const getMyDashboardData = async (req, res) => {
       outsource: outsourceCount[0].count,
     };
 
-    // Query diubah untuk mengambil status dari tabel training/project, bukan opti
+    // Query untuk semua aktivitas yang relevan (Opti-nya sudah aktif)
     const [activities] = await connection.query(`
       SELECT 
         'Training' as type, 
         t.idTraining as id,
         t.nmTraining as name, 
-        t.statusTraining as status, -- <-- INI PERUBAHANNYA
+        t.statusTraining as status,
         t.startTraining as startDate,
         t.endTraining as endDate, 
         c.nmCustomer as customerName,
-        tt.nmTypeTraining as trainingType
+        tt.nmTypeTraining as activitySubType
       FROM training t
+      LEFT JOIN opti o ON t.idOpti = o.idOpti
       LEFT JOIN customer c ON t.idCustomer = c.idCustomer
       LEFT JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
-      WHERE t.idExpert = ?
+      WHERE 
+        t.idExpert = ? 
+        AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
       
       UNION ALL
       
@@ -105,14 +107,18 @@ const getMyDashboardData = async (req, res) => {
         'Project' as type, 
         p.idProject as id,
         p.nmProject as name, 
-        p.statusProject as status, -- <-- INI PERUBAHANNYA
+        p.statusProject as status,
         p.startProject as startDate,
         p.endProject as endDate, 
         c.nmCustomer as customerName,
-        NULL as trainingType
+        tp.nmTypeProject as activitySubType
       FROM project p
+      LEFT JOIN opti o ON p.idOpti = o.idOpti
       LEFT JOIN customer c ON p.idCustomer = c.idCustomer
-      WHERE p.idExpert = ?
+      LEFT JOIN typeproject tp ON p.idTypeProject = tp.idTypeProject
+      WHERE 
+        p.idExpert = ?
+        AND o.statOpti IN ('On-Progress', 'Success', 'Follow Up')
     `, [idExpert, idExpert]);
     
     res.json({ totals, activities });
