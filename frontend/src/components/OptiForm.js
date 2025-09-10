@@ -280,23 +280,39 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = { ...formData };
-      const schema = getValidationSchema(user?.role);
-      await schema.validate(payload, { abortEarly: false });
+  e.preventDefault();
+  try {
+    const payload = { ...formData };
+    const schema = getValidationSchema(user?.role);
+    await schema.validate(payload, { abortEarly: false });
 
-      const fd = new FormData();
-      Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
-      if (proposalFile) fd.append("proposalOpti", proposalFile);
-
-      onSubmit(fd);
-    } catch (err) {
-      const vErr = {};
-      if (err.inner) err.inner.forEach((e) => (vErr[e.path] = e.message));
-      setErrors(vErr);
+    // === NORMALISASI FIELD JADWAL SESUAI JENIS ===
+    if (payload.jenisOpti === "Project") {
+      // map dari field "training" (yang dipakai form) ke field project
+      payload.startProject = payload.startTraining || "";
+      payload.endProject   = payload.endTraining   || "";
+      payload.placeProject = payload.placeTraining || "";
+      payload.idTypeProject = payload.idTypeTraining ?? "";
+    } else if (payload.jenisOpti === "Training") {
+      // pastikan field training terisi dengan benar
+      payload.startTraining = payload.startTraining || "";
+      payload.endTraining   = payload.endTraining   || "";
+      payload.placeTraining = payload.placeTraining || "";
+      payload.idTypeTraining = payload.idTypeTraining ?? "";
     }
-  };
+
+    const fd = new FormData();
+    Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
+    if (proposalFile) fd.append("proposalOpti", proposalFile);
+
+    onSubmit(fd);
+  } catch (err) {
+    const vErr = {};
+    if (err.inner) err.inner.forEach((e) => (vErr[e.path] = e.message));
+    setErrors(vErr);
+  }
+}
+
 
   const isExpertRequired =
     formData.jenisOpti === "Training" || formData.jenisOpti === "Project";

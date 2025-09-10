@@ -12,6 +12,7 @@ const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
+
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -34,6 +35,23 @@ const createOpti = async (req, res) => {
 
     const idOpti = await generateUserId("Opti");
     const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
+
+    // Normalisasi field jadwal (support nama field Training dipakai untuk Project)
+    const norm = {
+      idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : null,
+      startTraining: toNull(b.startTraining),
+      endTraining: toNull(b.endTraining),
+      placeTraining: toNull(b.placeTraining),
+
+      idTypeProject: b.idTypeProject
+        ? Number(b.idTypeProject)
+        : b.idTypeTraining
+        ? Number(b.idTypeTraining)
+        : null,
+      startProject: toNull(b.startProject) ?? toNull(b.startTraining),
+      endProject: toNull(b.endProject) ?? toNull(b.endTraining),
+      placeProject: toNull(b.placeProject) ?? toNull(b.placeTraining),
+    };
 
     const optiData = {
       idOpti,
@@ -68,11 +86,11 @@ const createOpti = async (req, res) => {
               idTraining: await generateUserId("Training"),
               idOpti,
               nmTraining: optiData.nmOpti,
-              idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-              startTraining: toNull(b.startTraining),
-              endTraining: toNull(b.endTraining),
+              idTypeTraining: norm.idTypeTraining ?? 1,
+              startTraining: norm.startTraining,
+              endTraining: norm.endTraining,
               idExpert: optiData.idExpert,
-              placeTraining: toNull(b.placeTraining),
+              placeTraining: norm.placeTraining,
               idCustomer: optiData.idCustomer,
             },
             connection
@@ -89,10 +107,10 @@ const createOpti = async (req, res) => {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              idTypeProject: b.idTypeTraining ? Number(b.idTypeTraining) : 1,
-              startProject: toNull(b.startTraining),
-              endProject: toNull(b.endTraining),
-              placeProject: toNull(b.placeTraining),
+              idTypeProject: norm.idTypeProject ?? 1,
+              startProject: norm.startProject,
+              endProject: norm.endProject,
+              placeProject: norm.placeProject,
               idCustomer: optiData.idCustomer,
               idSales: idSalesForOpti,
               idExpert: optiData.idExpert,
@@ -141,6 +159,24 @@ const updateOpti = async (req, res) => {
         });
     }
 
+    // Normalisasi field jadwal dari body (mendukung nama training dipakai project)
+    const norm = {
+      // training
+      idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : null,
+      startTraining: toNull(b.startTraining),
+      endTraining: toNull(b.endTraining),
+      placeTraining: toNull(b.placeTraining),
+      // project
+      idTypeProject: b.idTypeProject
+        ? Number(b.idTypeProject)
+        : b.idTypeTraining
+        ? Number(b.idTypeTraining)
+        : null,
+      startProject: toNull(b.startProject) ?? toNull(b.startTraining),
+      endProject: toNull(b.endProject) ?? toNull(b.endTraining),
+      placeProject: toNull(b.placeProject) ?? toNull(b.placeTraining),
+    };
+
     const optiData = {
       nmOpti: b.nmOpti || existingOpti.nmOpti,
       idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
@@ -176,8 +212,10 @@ const updateOpti = async (req, res) => {
 
     await Opti.update(id, optiData, connection);
 
+    // ============== SYNC TURUNAN TRAINING/PROJECT (UPSERT) ==============
     if (optiData.statOpti === "Success") {
       const idOpti = id;
+
       if (optiData.jenisOpti === "Training") {
         const [trainings] = await connection.query(
           "SELECT idTraining FROM training WHERE idOpti = ?",
@@ -189,19 +227,37 @@ const updateOpti = async (req, res) => {
               idTraining: await generateUserId("Training"),
               idOpti,
               nmTraining: optiData.nmOpti,
-              idTypeTraining: b.idTypeTraining
-                ? Number(b.idTypeTraining)
-                : existingOpti.idTypeTraining || 1,
-              startTraining:
-                toNull(b.startTraining) || toNull(existingOpti.startTraining),
-              endTraining:
-                toNull(b.endTraining) || toNull(existingOpti.endTraining),
+              idTypeTraining: norm.idTypeTraining ?? existingOpti.idTypeTraining ?? 1,
+              startTraining: norm.startTraining ?? existingOpti.startTraining ?? null,
+              endTraining: norm.endTraining ?? existingOpti.endTraining ?? null,
               idExpert: optiData.idExpert,
-              placeTraining:
-                toNull(b.placeTraining) || toNull(existingOpti.placeTraining),
+              placeTraining: norm.placeTraining ?? existingOpti.placeTraining ?? null,
               idCustomer: optiData.idCustomer,
             },
             connection
+          );
+        } else {
+          // UPDATE existing training: hanya overwrite jika ada nilai baru
+          await connection.query(
+            `UPDATE training SET
+              nmTraining = COALESCE(?, nmTraining),
+              idTypeTraining = COALESCE(?, idTypeTraining),
+              startTraining = COALESCE(?, startTraining),
+              endTraining = COALESCE(?, endTraining),
+              placeTraining = COALESCE(?, placeTraining),
+              idExpert = COALESCE(?, idExpert),
+              idCustomer = COALESCE(?, idCustomer)
+            WHERE idOpti = ?`,
+            [
+              optiData.nmOpti || null,
+              norm.idTypeTraining,
+              norm.startTraining,
+              norm.endTraining,
+              norm.placeTraining,
+              optiData.idExpert ?? null,
+              optiData.idCustomer ?? null,
+              idOpti,
+            ]
           );
         }
       } else if (optiData.jenisOpti === "Project") {
@@ -215,32 +271,47 @@ const updateOpti = async (req, res) => {
               idProject: await generateUserId("Project"),
               idOpti,
               nmProject: optiData.nmOpti,
-              // ================= PERUBAHAN DI SINI =================
-              idTypeProject: b.idTypeTraining
-                ? Number(b.idTypeTraining)
-                : existingOpti.idTypeProject || 1,
-              startProject:
-                toNull(b.startTraining) || toNull(existingOpti.startProject),
-              endProject:
-                toNull(b.endTraining) || toNull(existingOpti.endProject),
-              placeProject:
-                toNull(b.placeTraining) || toNull(existingOpti.placeProject),
-              // ================= AKHIR PERUBAHAN =================
+              idTypeProject: norm.idTypeProject ?? existingOpti.idTypeProject ?? 1,
+              startProject: norm.startProject ?? existingOpti.startProject ?? null,
+              endProject: norm.endProject ?? existingOpti.endProject ?? null,
+              placeProject: norm.placeProject ?? existingOpti.placeProject ?? null,
               idCustomer: optiData.idCustomer,
               idSales: existingOpti.idSales,
               idExpert: optiData.idExpert,
             },
             connection
           );
+        } else {
+          // UPDATE existing project
+          await connection.query(
+            `UPDATE project SET
+              nmProject = COALESCE(?, nmProject),
+              idTypeProject = COALESCE(?, idTypeProject),
+              startProject = COALESCE(?, startProject),
+              endProject = COALESCE(?, endProject),
+              placeProject = COALESCE(?, placeProject),
+              idCustomer = COALESCE(?, idCustomer),
+              idSales = COALESCE(?, idSales),
+              idExpert = COALESCE(?, idExpert)
+            WHERE idOpti = ?`,
+            [
+              optiData.nmOpti || null,
+              norm.idTypeProject,
+              norm.startProject,
+              norm.endProject,
+              norm.placeProject,
+              optiData.idCustomer ?? null,
+              existingOpti.idSales ?? null,
+              optiData.idExpert ?? null,
+              idOpti,
+            ]
+          );
         }
       }
     }
 
-
-    
-
     await connection.commit();
-    res.json({ message: "Opportunity updated successfully" });
+    res.json({ message: "Opportunity updated & schedule synced" });
   } catch (error) {
     await connection.rollback();
     console.error("Error updating opportunity:", error);
