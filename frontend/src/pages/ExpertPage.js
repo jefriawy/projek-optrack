@@ -81,7 +81,7 @@ const ExpertPage = () => {
     <div className="flex-grow p-8 bg-gray-100">
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">📊 Expert Page</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Expert Page</h1>
         <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img

@@ -20,6 +20,7 @@ import SalesPage from "./pages/SalesPage";
 import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
+import ExpertPage from "./pages/ExpertPage"; // <- penting utk /expert (Admin)
 
 // Dashboards
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -56,7 +57,7 @@ const Protected = ({ children, allow }) => {
   if (loading) return null; // bisa diganti spinner/loading state
   if (!user) return <Navigate to="/login" replace />;
 
-  // Normalisasi role untuk perbandingan yang konsisten
+  // Normalisasi role untuk perbandingan konsisten
   const userRole = (user.role || "").toLowerCase();
   const allowNormalized = (allow || []).map((r) => (r || "").toLowerCase());
 
@@ -190,7 +191,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/* >>> DIBENERIN: izinkan Sales & Head Sales buka Training / Project / Outsource */}
+      {/* >>> FIX: izinkan Sales & Head Sales buka Training / Project / Outsource */}
       <Route
         path="/training"
         element={
@@ -214,6 +215,25 @@ const AppRoutes = () => {
         element={
           <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
             <Layout><OutsourcePage /></Layout>
+          </Protected>
+        }
+      />
+
+      {/* >>> FIX ADMIN: ExpertPage & Manage User dapat diakses Admin */}
+      <Route
+        path="/expert"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><ExpertPage /></Layout>
+          </Protected>
+        }
+      />
+
+      <Route
+        path="/users"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><UserManagementPage /></Layout>
           </Protected>
         }
       />
