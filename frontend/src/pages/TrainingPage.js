@@ -1,5 +1,5 @@
 // src/pages/TrainingPage.js
-import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
@@ -194,7 +194,7 @@ const getAvatarUrl = (user) => {
     user.photoUser ||
     null;
   if (!candidate) return null;
-  if (/^https?:\]/i.test(candidate)) return candidate;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
   return `${API_BASE}/uploads/avatars/${String(candidate)
     .split(/[\\/]/)
     .pop()}`;
@@ -235,38 +235,41 @@ const TrainingPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
+  const fetchTrainings = useCallback(async (signal) => {
+    const endpoint = user?.role === 'Head of Expert' ? '' : '/mine';
+    try {
+      setLoading(true);
+      setErr("");
+      const res = await fetch(`${API_BASE}/api/training${endpoint}`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        signal,
+      });
+      if (!res.ok)
+        throw new Error(await res.text().catch(() => res.statusText));
+      const data = await res.json();
+      setList(Array.isArray(data) ? data : []);
+    } catch (e) {
+      if (e.name !== "AbortError") {
+        console.error(e);
+        setErr("Gagal memuat data training.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.token]);
+
   useEffect(() => {
     if (!user?.token) {
       setLoading(false);
       return;
     }
     const controller = new AbortController();
-    (async () => {
-      try {
-        setLoading(true);
-        setErr("");
-        const res = await fetch(`${API_BASE}/api/training/mine`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          signal: controller.signal,
-        });
-        if (!res.ok)
-          throw new Error(await res.text().catch(() => res.statusText));
-        const data = await res.json();
-        setList(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (e.name !== "AbortError") {
-          console.error(e);
-          setErr("Gagal memuat data training.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchTrainings(controller.signal);
     return () => controller.abort();
-  }, [user?.token]);
+  }, [user?.token, fetchTrainings]);
 
   const filtered = useMemo(() => {
     const q = (query || "").toLowerCase();
@@ -317,6 +320,8 @@ const TrainingPage = () => {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setOpenFeedback(false);
+      // Refresh data automatically after submitting feedback
+      fetchTrainings();
     } catch (error) {
       console.error("Failed to submit feedback", error);
       alert("Gagal menyimpan feedback.");
@@ -336,6 +341,7 @@ const TrainingPage = () => {
   }
 
   const now = Date.now();
+  const isHeadOfExpert = user?.role === 'Head of Expert';
 
   return (
     <div className="p-6">
@@ -403,9 +409,7 @@ const TrainingPage = () => {
               return (
                 <div
                   key={t.idTraining || idx}
-                  className={`rounded-xl border p-4 ${
-                    idx % 2 === 1 ? "border-blue-300" : "border-gray-300"
-                  }`}
+                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -416,13 +420,13 @@ const TrainingPage = () => {
                         {t.corpCustomer || "-"}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Sales:{" "}
+                        Sales:{ " "}
                         <span className="text-green-600 font-bold">
                           {t.nmSales || "-"}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Expert:{" "}
+                        Expert:{ " "}
                         <span className="text-purple-600 font-bold">
                           {t.nmExpert || "-"}
                         </span>
@@ -457,17 +461,18 @@ const TrainingPage = () => {
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      className="px-4 py-2 text-xs font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
                       onClick={() => openDetail(t.idTraining)}
                     >
                       Lihat Detail
                     </button>
                     <button
                       type="button"
-                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      className="px-4 py-2 text-xs font-semibold text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                       onClick={() => openFeedbackModal(t)}
+                      disabled={st.key !== 'finished'}
                     >
-                      Lihat Feedback
+                      {isHeadOfExpert ? 'Beri/Edit Feedback' : 'Lihat Feedback'}
                     </button>
                   </div>
                 </div>

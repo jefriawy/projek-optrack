@@ -15,7 +15,7 @@ router.get(
 // existing endpoints
 router.get(
   "/",
-  authMiddleware(["Admin", "Expert"]),
+  authMiddleware(["Admin", "Expert", "Head of Expert"]),
   trainingController.getTraining
 );
 router.get(

@@ -164,8 +164,143 @@ const getMyDashboardData = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Mengambil data dashboard agregat untuk Head of Expert
+ * @route   GET /api/expert/head-dashboard
+ * @access  Private (Admin, Head of Expert)
+ */
+const getHeadExpertDashboardData = async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+
+    // 1. Total Activities by Status
+    const [totalActivitiesByStatus] = await connection.query(`
+      SELECT status, COUNT(*) as count
+      FROM (
+          SELECT statusTraining as status FROM training
+          UNION ALL
+          SELECT statusProject as status FROM project
+      ) as all_activities
+      GROUP BY status
+    `);
+
+    // 2. Training Type Distribution
+    const [trainingTypeDistribution] = await connection.query(`
+      SELECT tt.nmTypeTraining as type, COUNT(t.idTraining) as count
+      FROM training t
+      JOIN typetraining tt ON t.idTypeTraining = tt.idTypeTraining
+      GROUP BY tt.nmTypeTraining
+    `);
+
+    // 3. Project Type Distribution
+    const [projectTypeDistribution] = await connection.query(`
+      SELECT tp.nmTypeProject as type, COUNT(p.idProject) as count
+      FROM project p
+      JOIN typeproject tp ON p.idTypeProject = tp.idTypeProject
+      GROUP BY tp.nmTypeProject
+    `);
+
+    // 4. Skill Distribution of Experts
+    const [skillDistribution] = await connection.query(`
+      SELECT s.nmSkill as skill, COUNT(e.idExpert) as count
+      FROM expert e
+      JOIN skill s ON e.idSkill = s.idSkill
+      GROUP BY s.nmSkill
+    `);
+
+    // 5. Activities per Expert
+    const [activitiesPerExpert] = await connection.query(`
+      SELECT e.nmExpert as expertName, COUNT(all_activities.id) as count
+      FROM (
+          SELECT idExpert, idTraining as id FROM training
+          UNION ALL
+          SELECT idExpert, idProject as id FROM project
+      ) as all_activities
+      JOIN expert e ON all_activities.idExpert = e.idExpert
+      GROUP BY e.nmExpert
+      ORDER BY count DESC
+    `);
+
+    // 6. Monthly Activity Trend
+    const [monthlyActivityTrend] = await connection.query(`
+      SELECT
+          DATE_FORMAT(activityDate, '%Y-%m') as month,
+          COUNT(*) as count
+      FROM (
+          SELECT startTraining as activityDate FROM training
+          UNION ALL
+          SELECT startProject as activityDate FROM project
+      ) as all_activities
+      WHERE activityDate IS NOT NULL
+      GROUP BY month
+      ORDER BY month ASC
+    `);
+
+    // 7. Top Performing Experts (based on finished activities)
+    const [topExperts] = await connection.query(`
+      SELECT e.nmExpert as expertName, COUNT(all_finished_activities.id) as finishedCount
+      FROM (
+          SELECT idExpert, idTraining as id FROM training WHERE statusTraining = 'Finished'
+          UNION ALL
+          SELECT idExpert, idProject as id FROM project WHERE statusProject = 'Finished'
+      ) as all_finished_activities
+      JOIN expert e ON all_finished_activities.idExpert = e.idExpert
+      GROUP BY e.nmExpert
+      ORDER BY finishedCount DESC
+      LIMIT 5
+    `);
+
+    // 8. Customers Served by Expert (unique customers per expert)
+    const [customersServedByExpert] = await connection.query(`
+      SELECT e.nmExpert as expertName, COUNT(DISTINCT c.idCustomer) as uniqueCustomersCount
+      FROM (
+          SELECT idExpert, idCustomer FROM training
+          UNION ALL
+          SELECT idExpert, idCustomer FROM project
+      ) as expert_customer_activities
+      JOIN expert e ON expert_customer_activities.idExpert = e.idExpert
+      JOIN customer c ON expert_customer_activities.idCustomer = c.idCustomer
+      GROUP BY e.nmExpert
+      ORDER BY uniqueCustomersCount DESC
+    `);
+
+    // 9. Raw Activities List (for breakdown chart)
+    const [activities] = await connection.query(`
+      SELECT 
+        'Training' as type, 
+        t.statusTraining as status
+      FROM training t
+      UNION ALL
+      SELECT 
+        'Project' as type, 
+        p.statusProject as status
+      FROM project p
+    `);
+
+    res.json({
+      totalActivitiesByStatus,
+      trainingTypeDistribution,
+      projectTypeDistribution,
+      skillDistribution,
+      activitiesPerExpert,
+      monthlyActivityTrend,
+      topExperts,
+      customersServedByExpert,
+      activities, // <-- Tambahkan ini
+    });
+
+  } catch (error) {
+    console.error("Error fetching head expert dashboard data:", error);
+    res.status(500).json({ error: "Terjadi kesalahan pada server saat mengambil data dasbor Head of Expert." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 module.exports = { 
   getExperts, 
   createExpertUser, 
-  getMyDashboardData 
+  getMyDashboardData, 
+  getHeadExpertDashboardData 
 };

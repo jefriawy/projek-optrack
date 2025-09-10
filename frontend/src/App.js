@@ -24,6 +24,7 @@ import OutsourcePage from "./pages/OutsourcePage";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import ExpertPage from "./pages/ExpertPage";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
+import HeadOfExpertDashboard from "./pages/HeadOfExpertDashboard"; // New import
 import "./App.css";
 
 const AppRoutes = () => {
@@ -102,14 +103,8 @@ const AppRoutes = () => {
           </Layout>
         }
       />
-      <Route
-        path="/expert"
-        element={
-          <Layout>
-            <ExpertPage />
-          </Layout>
-        }
-      />
+      
+};
       <Route
         path="/customer/add"
         element={
@@ -144,7 +139,11 @@ const AppRoutes = () => {
                 </Layout>
               ) : user.role === "Expert" ? (
                 <Layout>
-                  <ExpertDashboard />   {/* <== ganti ke dashboard expert */}
+                  <ExpertDashboard />
+                </Layout>
+              ) : user.role === "Head of Expert" ? ( // New role check
+                <Layout>
+                  <HeadOfExpertDashboard />
                 </Layout>
               ) : (
                 <Layout>

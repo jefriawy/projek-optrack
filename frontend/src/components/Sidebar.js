@@ -1,6 +1,6 @@
 // frontend/src/components/Sidebar.js
 import React, { useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import homeIcon from "../iconres/home2.png";
 import salesIcon from "../iconres/team.png";
@@ -16,6 +16,7 @@ import logoutIcon from "../iconres/logout2.png";
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -39,10 +40,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
-  } else if (
-    user &&
-    (user.role === "Expert" || user.role === "Head of Expert")
-  ) {
+  } else if (user && (user.role === "Expert" || user.role === "Head of Expert")) {
     menuItems = [
       { icon: homeIcon, name: "Home", link: "/" },
       { icon: trainerIcon, name: "Training", link: "/training" },
@@ -94,31 +92,38 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       </div>
       <nav className="flex-grow px-4">
         <ul>
-          {menuItems.map((item) => (
-            <li key={item.name} className="my-1">
-              <Link
-                to={item.link}
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 ${
-                  !isSidebarOpen && "justify-center"
-                }`}
-              >
-                <img
-                  src={item.icon}
-                  alt={item.name}
-                  className={`object-contain transition-all duration-300 ease-in-out ${
-                    isSidebarOpen ? "mr-4 w-6 h-6" : "w-7 h-7"
-                  }`}
-                />
-                <span
-                  className={`transition-all duration-300 ${
-                    isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.link;
+            return (
+              <li key={item.name} className="my-1">
+                <Link
+                  to={item.link}
+                  className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+                    !isSidebarOpen && "justify-center"
+                  } ${
+                    isActive
+                      ? "bg-[#3682f4] text-white font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  {item.name}
-                </span>
-              </Link>
-            </li>
-          ))}
+                  <img
+                    src={item.icon}
+                    alt={item.name}
+                    className={`object-contain transition-all duration-300 ease-in-out ${
+                      isSidebarOpen ? "mr-4 w-6 h-6" : "w-7 h-7"
+                    }`}
+                  />
+                  <span
+                    className={`transition-all duration-300 ${
+                      isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
       <div className="p-4">

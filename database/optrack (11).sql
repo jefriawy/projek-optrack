@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 08, 2025 at 05:39 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Generation Time: Sep 09, 2025 at 10:00 PM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -41,7 +41,7 @@ CREATE TABLE `admin` (
 
 INSERT INTO `admin` (`idAdmin`, `nmAdmin`, `mobileAdmin`, `emailAdmin`, `password`) VALUES
 (2501003, 'Hidayat Santoso', '08127645123', 'santohidayat09@gmail.com', '$2b$10$JS/3w3s4VN0XQcyhwKF27.a8KEnTtN71gb9OEMClLcaUhwNe5F50i'),
-(2501004, 'Ellie Setiabudi', '08956754987', 'budiel@gmail.com', '$2b$10$rHk8ueRrEotf4c68vDgoQ.MtK5YkSTbO9loLWO/mHiQbWcQ9hBqs6');
+(2501004, 'Ellie Setiabudi', '08956754987', 'budiel@gmail.com', '$2b$10$7/gxUmE3rRCoahqWOCpYCuLcECJjiPPDvJslu4MfJiZgD36iJrW62');
 
 -- --------------------------------------------------------
 
@@ -69,7 +69,7 @@ CREATE TABLE `customer` (
 INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCustomer`, `addrCustomer`, `corpCustomer`, `idStatCustomer`, `descCustomer`, `idSales`, `tglInput`) VALUES
 (2505001, 'Aditya Kusuma', '081298765432', 'aditya.kusuma@gmail.com', 'Jl. Raya Pahlawan No. 25, RT 03/RW 02, Kelurahan Sukamaju, Kecamatan Baru, Jakarta Selatan', 'PT Karya Nusantara', 2, 'Klien dari seminar', 2503003, '2025-09-08 20:00:00'),
 (2505002, 'Amara Putri', '082367890123', 'amara.putri@outlook.com', 'Jl. Cendana Raya No. 10, Komplek Taman Bunga, Bandung Barat, Jawa Barat', 'CV Solusi Inovasi', 2, 'Butuh pelatihan SDM', 2503003, '2025-09-08 20:00:55'),
-(2505003, 'Agung Wicaksono', '085490123456', 'agung.wicaksono@gmail.com', 'Jl. Sudirman Kav. 15, Perumahan Elite, Surabaya Utara, Jawa Timur', 'PT Vision Teknologi', 1, 'Potensi proyek besar', 2503003, '2025-09-08 20:02:01'),
+(2505003, 'Agung Wicaksono', '085490123456', 'agung.wicaksono@gmail.com', 'Jl. Sudirman Kav. 15, Perumahan Elite, Surabaya Utara, Jawa Timur', 'PT Vision Teknologi', 2, 'Potensi proyek besar', 2503003, '2025-09-08 20:02:01'),
 (2505004, 'Chandra Lesmana', '087612345678', 'chandra.lesmana@hotmail.com', 'Jl. Malioboro No. 8, Gang Anggrek, Yogyakarta Selatan, DI Yogyakarta', 'PT Cerdas Mandiri', 2, 'Klien dari website', 2503003, '2025-09-08 20:02:55'),
 (2505005, 'Diah Ayu', '089345678901', 'diah.ayu@gmail.com', 'Jl. Jendral Ahmad Yani No. 12, Komplek Perumahan Harmoni, Semarang Tengah, Jawa Tengah', 'CV Harmoni Jaya', 3, 'Memerlukan konsultasi', 2503003, '2025-09-08 20:03:37'),
 (2505006, 'Bagas Seno', '081276543210', 'bagas.seno@gmail.com', 'Jl. Jenderal Sudirman No. 54, RT 02/RW 01, Karet Tengsin, Tanah Abang, Jakarta Pusat, DKI Jakarta 10220', 'PT Gemilang Teknologi', 2, 'Klien dari pameran', 2503004, '2025-09-08 20:06:08'),
@@ -107,19 +107,22 @@ CREATE TABLE `expert` (
   `password` varchar(255) NOT NULL COMMENT 'Hashed password for expert user',
   `idSkill` int(11) DEFAULT NULL,
   `statExpert` varchar(100) DEFAULT NULL,
-  `Row` text DEFAULT NULL
+  `Row` text DEFAULT NULL,
+  `role` enum('Expert','Head of Expert') NOT NULL DEFAULT 'Expert'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `expert`
 --
 
-INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`) VALUES
-(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', 6, NULL, NULL),
-(2504005, 'Kresna Saraswati', '08129421087', 'saraswatikresna@gmail.com', '$2b$10$KhCOIL/QsPmMmwRV6nfQSurqBXx2Tpnf3piyd2hHZe8MsIhQkvrdi', 10, NULL, NULL),
-(2504006, 'Yudha Pratama', '08128321592', 'yudhapratamaass18@gmail.com', '$2b$10$HUAJLd9Y3wQjcAtJ9jb8ueEklJfA1l8ND5XzZucHjFKbOxrx5QZni', 9, NULL, NULL),
-(2504007, 'Restu Ardianto', '08126754402', 'ardianto812@gmail.com', '$2b$10$Fk0bv7JQf.SMbyPpaoMzguPpmNMTDMed7x9gNsCk15ZRs0m1oaGSa', 2, NULL, NULL),
-(2504008, 'Kania Rahmawati', '08126932444', 'rahmakaniawati@gmail.com', '$2b$10$ckga.EmM0P1K7NCOyfYYSed8zPLM5QdVPDZlGN7NPau.rsReSyXu.', 5, NULL, NULL);
+INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`, `role`) VALUES
+(2503001, 'Arian Willcox', '08957832654', 'willcockxx@outlook.com', '$2b$10$kT5eh7jHNBg5XLMLhzM29OrPU7xZAvVXB5K25VuNn3rVnVlBMyhZC', 9, NULL, NULL, 'Head of Expert'),
+(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', 6, NULL, NULL, 'Expert'),
+(2504005, 'Kresna Saraswati', '08129421087', 'saraswatikresna@gmail.com', '$2b$10$KhCOIL/QsPmMmwRV6nfQSurqBXx2Tpnf3piyd2hHZe8MsIhQkvrdi', 10, NULL, NULL, 'Expert'),
+(2504006, 'Yudha Pratama', '08128321592', 'yudhapratamaass18@gmail.com', '$2b$10$HUAJLd9Y3wQjcAtJ9jb8ueEklJfA1l8ND5XzZucHjFKbOxrx5QZni', 9, NULL, NULL, 'Expert'),
+(2504007, 'Restu Ardianto', '08126754402', 'ardianto812@gmail.com', '$2b$10$Fk0bv7JQf.SMbyPpaoMzguPpmNMTDMed7x9gNsCk15ZRs0m1oaGSa', 2, NULL, NULL, 'Expert'),
+(2504008, 'Kania Rahmawati', '08126932444', 'rahmakaniawati@gmail.com', '$2b$10$ckga.EmM0P1K7NCOyfYYSed8zPLM5QdVPDZlGN7NPau.rsReSyXu.', 5, NULL, NULL, 'Expert'),
+(2510001, 'Harry Haryanto', '08957832655', 'harharyanto@gmail.com', '$2b$10$GlzpT7hgs5fwRErNfwyCCOD.K5.2MSvSsKVOXKu44eZnlNxl9Fw8W', 6, NULL, NULL, 'Head of Expert');
 
 -- --------------------------------------------------------
 
@@ -152,16 +155,17 @@ CREATE TABLE `opti` (
 INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `proposalOpti`, `valOpti`) VALUES
 (2506001, 'Peningkatan Produktivitas Tim dari Klien Seminar', 'Heru Prasetyo', '08126032976', 'herprasetyo876@gmail.com', 'Just Get Info', '2025-09-08', 2505001, 'Klien didapatkan dari seminar dan membutuhkan pelatihan untuk meningkatkan efisiensi kerja tim. Tindakan lanjut yang akan dilakukan adalah menjadwalkan pertemuan untuk presentasi proposal pada 15 September 2025.', 3, 2503003, 'Training', 2504005, '1757342287812.pdf', 50000000),
 (2506002, 'Pelatihan Pengembangan SDM', 'Amara Putri', '08954327654', 'amaraputri@gmail.com', 'Just Get Info', '2025-09-09', 2505002, 'Klien membutuhkan pelatihan SDM. Tindakan lanjut yang akan dilakukan adalah menjadwalkan sesi presentasi tentang modul pelatihan pada 20 September 2025.\r\n', 3, 2503003, 'Training', 2504005, '1757342521657.pdf', 35000000),
-(2506003, 'Pelatihan Analisis Data & Strategi Bisnis', 'Jefri Ramadhan', '08126754097', 'jeefriramadhan@outlook.com', 'Just Get Info', '2025-09-08', 2505004, 'Klien berasal dari website dan membutuhkan pelatihan analisis data. Tindakan lanjutnya adalah menghubungi klien untuk validasi kebutuhan pada 27 September 2025.', 1, 2503003, 'Training', 2504006, '1757342819083.pdf', 45000000),
+(2506003, 'Pelatihan Analisis Data & Strategi Bisnis', 'Jefri Ramadhan', '08126754097', 'jeefriramadhan@outlook.com', 'Follow Up', '2025-09-08', 2505004, 'Klien berasal dari website dan membutuhkan pelatihan analisis data. Tindakan lanjutnya adalah menghubungi klien untuk validasi kebutuhan pada 27 September 2025.', 1, 2503003, 'Training', 2504006, '1757342819083.pdf', 45000000),
 (2506004, 'Pelatihan Digital Marketing', 'Roni Hartono', '08136784932', 'hartono3456@gmail.com', 'Just Get Info', '2025-09-11', 2505007, 'Klien membutuhkan pelatihan online. Tindakan lanjut yang akan dilakukan adalah menjadwalkan sesi demo platform pelatihan online pada 22 September 2025.', 2, 2503004, 'Training', 2504006, '1757343283868.pdf', 40000000),
 (2506005, 'Konsultasi Peningkatan Performa Aplikasi', 'Dimas Prakoso', '08126830980', 'dimaspraks@gmail.com', 'Just Get Info', '2025-09-13', 2505009, ' Klien berasal dari referensi dan membutuhkan peningkatan performa aplikasi. Tindakan lanjutnya adalah menghubungi klien untuk validasi kebutuhan pada 26 September 2025.', 2, 2503004, 'Project', 2504007, '1757343605992.pdf', 60000000),
 (2506006, 'Konsultasi Infrastruktur IT', 'Ratna Cahyani', '08126207645', 'ratnacahyani34@gmail.com', 'Just Get Info', '2025-09-10', 2505008, 'Klien ini memiliki potensi kontrak besar. Tindakan lanjut yang akan dilakukan adalah follow-up untuk mendapatkan detail kebutuhan lebih lanjut pada 23 September 2025.', 1, 2503004, 'Project', 2504004, '1757343898329.pdf', 85000000),
 (2506007, 'Pengembangan Aplikasi Web', 'Aldiansyah Putra', '08126754241', 'aldiputra@gmail.com', 'Just Get Info', '2025-09-11', 2505006, 'Klien didapat dari pameran dan membutuhkan pengembangan aplikasi web. Tindakan lanjut yang akan dilakukan adalah pertemuan untuk presentasi detail proposal teknis pada 22 September 2025.', 3, 2503004, 'Project', 2504007, '1757344250702.pdf', 12000000),
 (2506008, 'Pelatihan Teknologi & Data', 'Rania Salsabila', '08125678400', 'salsabillarania@gmail.com', 'Just Get Info', '2025-09-08', 2505011, 'Klien didapat dari pameran teknologi. Tindakan lanjut yang akan dilakukan adalah menjadwalkan presentasi produk pada 1 Oktober 2025.', 2, 2503005, 'Training', 2504004, '1757344833684.pdf', 40000000),
-(2506009, 'Pengembangan Aplikasi Web', 'Rangga Pranata', '081233335681', 'pranatarangga@gmail.com', 'Just Get Info', '2025-09-11', 2505014, 'Klien didapat dari rekomendasi dan membutuhkan pengembangan aplikasi web. Tindakan lanjut yang akan dilakukan adalah pertemuan untuk presentasi detail proposal teknis pada 4 Oktober 2025.', 1, 2503005, 'Project', 2504007, '1757345070017.pdf', 120000000),
-(2506010, 'Pelatihan Manajemen Proyek Agile', 'Ayunda Prameswari', '08138912666', 'prameswari12@gmail.com', 'Just Get Info', '2025-09-11', 2505019, ' Klien berasal dari media sosial dan membutuhkan pelatihan. Tindakan lanjut yang akan dilakukan adalah menghubungi klien untuk validasi kebutuhan pada 15 Oktober 2025.\r\n', 2, 2503006, 'Training', 2504008, '1757345473483.pdf', 35000000),
-(2506011, 'Proyek Sistem Informasi Maritim', 'Yoga Prasetya', '08126721000', 'prasetya47@gmail.com', 'Just Get Info', '2025-09-11', 2505021, 'Klien ini memiliki potensi proyek sistem informasi. Tindakan lanjut yang akan dilakukan adalah follow-up untuk mendapatkan detail kebutuhan lebih lanjut pada 2 Oktober 2025.\r\n', 2, 2503007, 'Project', 2504007, '1757345711321.pdf', 150000000),
-(2506012, 'Pelatihan Manajemen Program CSR', 'Wulan Ayu', '08125555732', 'wulanahayu@gmail.com', 'Just Get Info', '2025-09-11', 2505024, 'Klien berasal dari program CSR dan membutuhkan pelatihan. Tindakan lanjut yang akan dilakukan adalah menghubungi klien untuk validasi kebutuhan pada 1 Oktober 2025.', 3, 2503007, 'Training', 2504008, '1757345880375.pdf', 25000000);
+(2506009, 'Pengembangan Aplikasi Web', 'Rangga Pranata', '081233335681', 'pranatarangga@gmail.com', 'Success', '2025-09-11', 2505014, 'Klien didapat dari rekomendasi dan membutuhkan pengembangan aplikasi web. Tindakan lanjut yang akan dilakukan adalah pertemuan untuk presentasi detail proposal teknis pada 4 Oktober 2025.', 1, 2503005, 'Training', 2504007, '1757345070017.pdf', 120000000),
+(2506010, 'Pelatihan Manajemen Proyek Agile', 'Ayunda Prameswari', '08138912666', 'prameswari12@gmail.com', 'Success', '2025-09-11', 2505019, ' Klien berasal dari media sosial dan membutuhkan pelatihan. Tindakan lanjut yang akan dilakukan adalah menghubungi klien untuk validasi kebutuhan pada 15 Oktober 2025.\r\n', 2, 2503006, 'Training', 2504008, '1757345473483.pdf', 35000000),
+(2506011, 'Proyek Sistem Informasi Maritim', 'Yoga Prasetya', '08126721000', 'prasetya47@gmail.com', 'Success', '2025-09-11', 2505021, 'Klien ini memiliki potensi proyek sistem informasi. Tindakan lanjut yang akan dilakukan adalah follow-up untuk mendapatkan detail kebutuhan lebih lanjut pada 2 Oktober 2025.\r\n', 2, 2503007, 'Project', 2504007, '1757345711321.pdf', 150000000),
+(2506012, 'Pelatihan Manajemen Program CSR', 'Wulan Ayu', '08125555732', 'wulanahayu@gmail.com', 'Success', '2025-09-11', 2505024, 'Klien berasal dari program CSR dan membutuhkan pelatihan. Tindakan lanjut yang akan dilakukan adalah menghubungi klien untuk validasi kebutuhan pada 1 Oktober 2025.', 3, 2503007, 'Training', 2504008, '1757345880375.pdf', 25000000),
+(2506013, 'Konsultasi Implementasi Teknologi AI', 'Marlina Fitri', '08127865321', 'fitrimarlina32@outlook.com', 'Success', '2025-09-08', 2505003, 'Klien ini memiliki potensi proyek besar dan membutuhkan konsultasi teknologi. Tindakan lanjut yang akan dilakukan adalah follow-up untuk mendapatkan detail kebutuhan lebih lanjut pada 20 Oktober 2025.', 3, 2503003, 'Project', 2504007, '1757354358927.pdf', 150000000);
 
 -- --------------------------------------------------------
 
@@ -198,8 +202,17 @@ CREATE TABLE `project` (
   `idSales` int(11) DEFAULT NULL,
   `idExpert` int(11) DEFAULT NULL,
   `placeProject` varchar(255) DEFAULT NULL,
-  `statusProject` enum('Pending','On Progress','Finished') NOT NULL DEFAULT 'Pending'
+  `statusProject` enum('Pending','On Progress','Finished') NOT NULL DEFAULT 'Pending',
+  `fbProject` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `project`
+--
+
+INSERT INTO `project` (`idProject`, `nmProject`, `idTypeProject`, `startProject`, `endProject`, `idCustomer`, `idOpti`, `idSales`, `idExpert`, `placeProject`, `statusProject`, `fbProject`) VALUES
+(2508001, 'Konsultasi Implementasi Teknologi AI', 2, '2025-09-10 00:05:00', '2025-09-10 00:06:00', 2505003, 2506013, 2503003, 2504007, 'gedung a', 'Finished', NULL),
+(2508002, 'Proyek Sistem Informasi Maritim', 2, '2025-09-10 00:07:00', '2025-09-10 00:08:00', 2505021, 2506011, 2503007, 2504007, 'gedung a', 'Finished', 'test 123');
 
 -- --------------------------------------------------------
 
@@ -318,8 +331,17 @@ CREATE TABLE `training` (
   `examDateTraining` date DEFAULT NULL,
   `idCustomer` int(11) DEFAULT NULL,
   `idOpti` int(11) DEFAULT NULL,
-  `statusTraining` enum('Pending','On Progress','Finished') NOT NULL DEFAULT 'Pending'
+  `statusTraining` enum('Pending','On Progress','Finished') NOT NULL DEFAULT 'Pending',
+  `fbTraining` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `training`
+--
+
+INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTraining`, `endTraining`, `idExpert`, `placeTraining`, `examTraining`, `examDateTraining`, `idCustomer`, `idOpti`, `statusTraining`, `fbTraining`) VALUES
+(2507001, 'Pengembangan Aplikasi Web', 2, '2025-09-10 00:10:00', '2025-09-10 00:11:00', 2504007, 'gedung c', NULL, NULL, 2505014, 2506009, 'Finished', 'test 23456789'),
+(2507002, 'Pelatihan Manajemen Program CSR', 2, '2025-09-10 00:54:00', '2025-09-11 00:53:00', 2504008, 'gedung c', NULL, NULL, 2505024, 2506012, 'On Progress', '');
 
 -- --------------------------------------------------------
 
@@ -489,7 +511,7 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `expert`
 --
 ALTER TABLE `expert`
-  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2504009;
+  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2510002;
 
 --
 -- AUTO_INCREMENT for table `opti`

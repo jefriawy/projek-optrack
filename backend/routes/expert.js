@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const { getExperts, createExpertUser, getMyDashboardData } = require("../controllers/expertController");
+const { getExperts, createExpertUser, getMyDashboardData, getHeadExpertDashboardData } = require("../controllers/expertController");
 const { body, validationResult } = require("express-validator");
 
 // Middleware untuk validasi input (tidak berubah)
@@ -24,5 +24,7 @@ router.get("/", authMiddleware(["Admin"]), getExperts);
 router.post("/", authMiddleware(["Admin"]), validateExpertInput, createExpertUser);
 router.get("/my-dashboard", authMiddleware(["Expert"]), getMyDashboardData);
 
+
+router.get("/head-dashboard", authMiddleware(["Admin", "Head of Expert"]), getHeadExpertDashboardData);
 
 module.exports = router;

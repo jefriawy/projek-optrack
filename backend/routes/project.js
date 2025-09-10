@@ -13,7 +13,7 @@ router.get(
 
 router.get(
   "/",
-  authMiddleware(["Admin", "Expert"]),
+  authMiddleware(["Admin", "Expert", "Head of Expert"]),
   projectController.getProjects
 );
 router.get(

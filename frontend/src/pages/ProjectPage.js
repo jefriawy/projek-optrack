@@ -1,10 +1,12 @@
 // src/pages/ProjectPage.js
-import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
 import FeedbackModal from "../components/FeedbackModal";
 import axios from "axios";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 /* ===== User chip helpers (nama & avatar) ====== */
 const getDisplayName = (user) => {
@@ -19,7 +21,7 @@ const getDisplayName = (user) => {
 };
 const getAvatarUrl = (user) => {
   if (!user) return null;
-  const candidate =
+  const candidate = 
     user.photoURL ||
     user.photoUrl ||
     user.photo ||
@@ -28,7 +30,7 @@ const getAvatarUrl = (user) => {
     user.photoUser ||
     null;
   if (!candidate) return null;
-  if (/^https?:\\\]/i.test(candidate)) return candidate;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
   return `${API_BASE}/uploads/avatars/${String(candidate)
     .split(/[\\/]/)
     .pop()}`;
@@ -46,8 +48,6 @@ const Initials = ({ name }) => {
     </div>
   );
 };
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 /* ===== Helpers tanggal & status (disamakan dengan TrainingPage) ===== */
 const safeTime = (v) => {
@@ -90,7 +90,6 @@ const formatRemaining = (ms) => {
     return `${days} hari ${hours} jam`;
   }
 
-  // If less than a day, show H:M:S
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
@@ -234,38 +233,41 @@ const ProjectPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
+  const fetchProjects = useCallback(async (signal) => {
+    const endpoint = user?.role === 'Head of Expert' ? '' : '/mine';
+    try {
+      setLoading(true);
+      setErr("");
+      const res = await fetch(`${API_BASE}/api/project${endpoint}`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        signal,
+      });
+      if (!res.ok)
+        throw new Error(await res.text().catch(() => res.statusText));
+      const data = await res.json();
+      setProjects(Array.isArray(data) ? data : []);
+    } catch (e) {
+      if (e.name !== "AbortError") {
+        console.error(e);
+        setErr("Gagal memuat data proyek.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.token]);
+
   useEffect(() => {
     if (!user?.token) {
       setLoading(false);
       return;
     }
     const controller = new AbortController();
-    (async () => {
-      try {
-        setLoading(true);
-        setErr("");
-        const res = await fetch(`${API_BASE}/api/project/mine`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          signal: controller.signal,
-        });
-        if (!res.ok)
-          throw new Error(await res.text().catch(() => res.statusText));
-        const data = await res.json();
-        setProjects(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (e.name !== "AbortError") {
-          console.error(e);
-          setErr("Gagal memuat data proyek.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchProjects(controller.signal);
     return () => controller.abort();
-  }, [user?.token]);
+  }, [user?.token, fetchProjects]);
 
   const filtered = useMemo(() => {
     const q = (query || "").toLowerCase();
@@ -316,6 +318,8 @@ const ProjectPage = () => {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setOpenFeedback(false);
+      // Refresh data automatically after submitting feedback
+      fetchProjects();
     } catch (error) {
       console.error("Failed to submit feedback", error);
       alert("Gagal menyimpan feedback.");
@@ -335,6 +339,7 @@ const ProjectPage = () => {
   }
 
   const now = Date.now();
+  const isHeadOfExpert = user?.role === 'Head of Expert';
 
   return (
     <div className="p-6">
@@ -398,9 +403,7 @@ const ProjectPage = () => {
               return (
                 <div
                   key={p.idProject || idx}
-                  className={`rounded-xl border p-4 ${
-                    idx % 2 === 1 ? "border-blue-300" : "border-gray-300"
-                  }`}
+                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -450,17 +453,18 @@ const ProjectPage = () => {
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      className="px-4 py-2 text-xs font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
                       onClick={() => openDetail(p.idProject)}
                     >
                       Lihat Detail
                     </button>
                     <button
                       type="button"
-                      className="border rounded-md px-3 py-1.5 text-xs hover:bg-gray-50"
+                      className="px-4 py-2 text-xs font-semibold text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                       onClick={() => openFeedbackModal(p)}
+                      disabled={st.key !== 'finished'}
                     >
-                      Lihat Feedback
+                      {isHeadOfExpert ? 'Beri/Edit Feedback' : 'Lihat Feedback'}
                     </button>
                   </div>
                 </div>
@@ -511,53 +515,20 @@ const ProjectPage = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Durasi</span>
                   <b>
-                    {diffDays(detail.startProject, detail.endProject) ?? "-"}{" "}
-                    hari
+                    {diffDays(detail.startProject, detail.endProject) ?? "-"}
                   </b>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 text-gray-500">
-                    <IconMap /> Tempat
-                  </span>
-                  <b className="text-right">{detail.placeProject || "-"}</b>
-                </div>
               </div>
             </div>
-
-            {/* ====================== PENAMBAHAN DESKRIPSI & DOKUMEN ====================== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {detail.feedback && (
               <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
-                <div className="text-sm text-gray-700 leading-6">
-                  {detail.kebutuhan || "Belum ada deskripsi."}
-                </div>
+                <div className="text-sm text-gray-500 mb-2">Feedback</div>
+                <p className="text-sm whitespace-pre-wrap">{detail.feedback}</p>
               </div>
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Dokumen</div>
-                {detail.proposalOpti ? (
-                  <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
-                      .split(/[\\/]/)
-                      .pop()}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-black hover:underline flex items-center gap-2"
-                  >
-                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
-                  </a>
-                ) : (
-                  <div className="text-sm text-gray-700">
-                    Belum ada dokumen.
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* ====================== AKHIR PENAMBAHAN ====================== */}
+            )}
           </div>
         )}
       </Modal>
-
       <FeedbackModal
         isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
