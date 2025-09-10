@@ -52,15 +52,17 @@ const Initials = ({ name }) => {
 const ExpertPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [expertData, setExpertData] = useState([]);
+  const [headExpertData, setHeadExpertData] = useState([]);
   const [error, setError] = useState('');
 
   const fetchExpertData = async () => {
-    if (user && user.token && user.role === 'Admin') {
+    if (user && user.token && (user.role === 'Admin' || user.role === 'Head of Expert')) {
       try {
         const response = await axios.get('http://localhost:3000/api/expert', {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setExpertData(response.data || []);
+        setExpertData(response.data.regularExperts || []);
+        setHeadExpertData(response.data.headExperts || []);
       } catch (err) {
         setError(err.response?.data?.error || '❌ Gagal mengambil data expert.');
       }
@@ -73,7 +75,7 @@ const ExpertPage = () => {
   }, [user]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
-  if (!user || user.role !== 'Admin') {
+  if (!user || !['Admin', 'Head of Expert'].includes(user.role)) {
     return <Navigate to="/login" />;
   }
 
@@ -111,7 +113,7 @@ const ExpertPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Data Expert</h2>
           <PDFDownloadLink
-            document={<ExpertListPdf experts={expertData} />}
+            document={<ExpertListPdf experts={[...headExpertData, ...expertData]} />}
             fileName="expert_report.pdf"
             className="px-3 py-1 rounded bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition flex items-center justify-center"
           >
@@ -119,6 +121,20 @@ const ExpertPage = () => {
           </PDFDownloadLink>
         </div>
         <p className="text-gray-500 mb-6">Laporan Data Expert</p>
+
+        {/* Head of Expert */}
+        {user.role === 'Admin' && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Head of Expert</h3>
+            {headExpertData.length > 0 ? (
+              <ExpertTable experts={headExpertData} />
+            ) : (
+              <p className="p-4 text-gray-500 bg-white rounded-lg shadow-sm">
+                Tidak ada data Head of Expert.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Expert */}
         <div>

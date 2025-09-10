@@ -11,7 +11,11 @@ const pool = require('../config/database');
 const getExperts = async (_req, res) => {
   try {
     const experts = await Expert.findAll();
-    res.json(experts);
+    
+    const headExperts = experts.filter(e => e.role === 'Head of Expert');
+    const regularExperts = experts.filter(e => e.role !== 'Head of Expert');
+
+    res.json({ headExperts, regularExperts });
   } catch (err) {
     console.error("getExperts error:", err);
     res.status(500).json({ error: "Server error" });
