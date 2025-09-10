@@ -12,20 +12,28 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
+      // 1) Prioritaskan redirectPath dari backend (login/verify)
+      if (user.redirectPath) {
+        navigate(user.redirectPath, { replace: true });
+        return;
+      }
+      // 2) Fallback ke mapping role -> dashboard
       switch (user.role) {
         case "Admin":
           navigate("/dashboard-admin", { replace: true });
           break;
         case "Head Sales":
+          navigate("/dashboard/head-sales", { replace: true });
+          break;
         case "Sales":
-          navigate("/customer", { replace: true });
+          navigate("/dashboard/sales", { replace: true });
           break;
-        // ====================== PERUBAHAN DI SINI ======================
         case "Expert":
-        case "Head of Expert": // Head of Expert ditambahkan di sini
-          navigate("/training", { replace: true }); // Diarahkan ke halaman training
+          navigate("/dashboard/expert", { replace: true });
           break;
-        // ====================== AKHIR PERUBAHAN ======================
+        case "Head of Expert":
+          navigate("/dashboard/head-expert", { replace: true });
+          break;
         default:
           navigate("/login", { replace: true });
       }
@@ -67,16 +75,14 @@ const LoginPage = () => {
             <img
               src={logo}
               alt="OPTrack Logo"
-              className="mb-8 w-full max-w-md xl:max-w-lg 2xl:max-w-xl"
+              className="mb-8 w/full max-w-md xl:max-w-lg 2xl:max-w-xl"
             />
             <div className="space-y-4">
               <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-bold leading-tight">
-                Selamat datang di{" "}
-                <span className="text-blue-400">OPTrack!</span>
+                Selamat datang di <span className="text-blue-400">OPTrack!</span>
               </h1>
               <p className="text-lg xl:text-xl 2xl:text-2xl leading-relaxed text-gray-200">
-                Platform smart tracking untuk mengoptimalkan operasional
-                perusahaan Anda.
+                Platform smart tracking untuk mengoptimalkan operasional perusahaan Anda.
               </p>
             </div>
           </div>
@@ -99,9 +105,7 @@ const LoginPage = () => {
                 <h2 className="text-2xl xl:text-3xl font-bold text-white mb-2">
                   Masuk ke Akun Anda
                 </h2>
-                <p className="text-gray-300">
-                  Silakan masukkan kredensial Anda
-                </p>
+                <p className="text-gray-300">Silakan masukkan kredensial Anda</p>
               </div>
 
               <LoginForm />
@@ -112,8 +116,7 @@ const LoginPage = () => {
         {/* Mobile Footer Text */}
         <div className="lg:hidden text-center px-6 pb-4">
           <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-            Platform smart tracking untuk mengoptimalkan operasional perusahaan
-            Anda.
+            Platform smart tracking untuk mengoptimalkan operasional perusahaan Anda.
           </p>
         </div>
       </div>

@@ -10,6 +10,25 @@ const comparePassword = async (plainPassword, hashedPassword) => {
   return await bcrypt.compare(plainPassword, hashedPassword);
 };
 
+// NEW: role -> dashboard path
+const roleToRedirect = (role) => {
+  switch (role) {
+    case "Admin":
+      return "/dashboard-admin";
+    case "Head Sales":
+      return "/dashboard/head-sales";
+    case "Sales":
+      return "/dashboard/sales";
+    case "Head of Expert":
+    case "head of expert":
+      return "/dashboard/head-expert";
+    case "Expert":
+      return "/dashboard/expert";
+    default:
+      return "/";
+  }
+};
+
 const login = [
   body("email").isEmail().withMessage("Invalid email format"),
   body("password").notEmpty().withMessage("Password is required"),
@@ -24,6 +43,7 @@ const login = [
     try {
       let user = null;
 
+      // Admin
       const [adminRows] = await pool.query(
         "SELECT * FROM admin WHERE emailAdmin = ?",
         [email]
@@ -40,6 +60,7 @@ const login = [
         }
       }
 
+      // Sales / Head Sales
       if (!user) {
         const salesUser = await Sales.findByEmail(email);
         if (salesUser) {
@@ -48,12 +69,13 @@ const login = [
             user = {
               id: salesUser.idSales,
               name: salesUser.nmSales,
-              role: salesUser.role,
+              role: salesUser.role, // "Sales" | "Head Sales"
             };
           }
         }
       }
 
+      // Expert / Head of Expert
       if (!user) {
         const expertUser = await Expert.findByEmail(email);
         if (expertUser) {
@@ -62,7 +84,7 @@ const login = [
             user = {
               id: expertUser.idExpert,
               name: expertUser.nmExpert,
-              role: expertUser.role,
+              role: expertUser.role, // "Expert" | "Head of Expert"
             };
           }
         }
@@ -70,11 +92,13 @@ const login = [
 
       if (user) {
         const token = generateToken(user);
+        const redirectPath = roleToRedirect(user.role);
         return res.json({
           token,
           role: user.role,
           userId: user.id,
           name: user.name,
+          redirectPath, // <= FE pakai ini buat navigate
         });
       }
 
@@ -86,8 +110,14 @@ const login = [
   },
 ];
 
+// GET /api/auth/verify (pakai authMiddleware di routes)
 const verify = async (req, res) => {
-  res.json({ userId: req.user.id, role: req.user.role, name: req.user.name });
+  res.json({
+    userId: req.user.id,
+    role: req.user.role,
+    name: req.user.name,
+    redirectPath: roleToRedirect(req.user.role), // <= biar FE bisa rehydrate
+  });
 };
 
 module.exports = { login, verify };

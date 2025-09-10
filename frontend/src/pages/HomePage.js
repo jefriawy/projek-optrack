@@ -1,33 +1,27 @@
 // frontend/src/pages/HomePage.js
 import React, { useContext } from "react";
+import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import HeadOfSalesDashboard from "./HeadOfSalesDashboard";
-import SalesDashboard from "./SalesDashboard";
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
 
-  // Head Sales → HeadOfSalesDashboard
-  if (user?.role === "Head Sales") {
-    return <HeadOfSalesDashboard />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
 
-  // Sales → SalesDashboard
-  if (user?.role === "Sales") {
-    return <SalesDashboard />;
+  switch (user.role) {
+    case "Admin":
+      return <Navigate to="/dashboard-admin" replace />;
+    case "Head Sales":
+      return <Navigate to="/dashboard/head-of-sales" replace />;
+    case "Sales":
+      return <Navigate to="/opti/dashboard" replace />;
+    case "Head of Expert":
+      return <Navigate to="/dashboard/head-expert" replace />;
+    case "Expert":
+      return <Navigate to="/dashboard/expert" replace />;
+    default:
+      return <Navigate to="/login" replace />;
   }
-
-  // Role lain → welcome
-  return (
-    <div className="p-4 sm:p-6 md:p-8">
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-        Welcome to the Home Page!
-      </h1>
-      <p className="text-gray-600 mt-4 text-base sm:text-lg">
-        This is a blank home page. You can add your content here.
-      </p>
-    </div>
-  );
 };
 
 export default HomePage;

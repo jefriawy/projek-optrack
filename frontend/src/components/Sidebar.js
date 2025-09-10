@@ -23,17 +23,36 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     navigate("/login");
   };
 
+  // Map Home ke dashboard sesuai role
+  const homeLinkByRole = (() => {
+    if (!user?.role) return "/";
+    switch (user.role) {
+      case "Admin":
+        return "/dashboard-admin";
+      case "Head Sales":
+        return "/dashboard/head-sales";
+      case "Sales":
+        return "/dashboard/sales";
+      case "Expert":
+        return "/dashboard/expert";
+      case "Head of Expert":
+        return "/dashboard/head-expert";
+      default:
+        return "/";
+    }
+  })();
+
   let menuItems = [];
   if (user && user.role === "Admin") {
     menuItems = [
-      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: homeIcon, name: "Home", link: homeLinkByRole },
       { icon: salesIcon, name: "Sales", link: "/sales" },
       { icon: expertIcon, name: "Expert", link: "/expert" },
       { icon: userManageIcon, name: "Manage User", link: "/users" },
     ];
   } else if (user && (user.role === "Sales" || user.role === "Head Sales")) {
     menuItems = [
-      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: homeIcon, name: "Home", link: homeLinkByRole },
       { icon: optiIcon, name: "Opti", link: "/opti" },
       { icon: customerIcon, name: "Customer", link: "/customer" },
       { icon: trainerIcon, name: "Training", link: "/training" },
@@ -42,7 +61,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     ];
   } else if (user && (user.role === "Expert" || user.role === "Head of Expert")) {
     menuItems = [
-      { icon: homeIcon, name: "Home", link: "/" },
+      { icon: homeIcon, name: "Home", link: homeLinkByRole },
       { icon: trainerIcon, name: "Training", link: "/training" },
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
@@ -56,7 +75,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           isSidebarOpen ? "justify-between" : "justify-center"
         }`}
       >
-        <Link to="/">
+        <Link to={homeLinkByRole}>
           <img
             src={
               isSidebarOpen
