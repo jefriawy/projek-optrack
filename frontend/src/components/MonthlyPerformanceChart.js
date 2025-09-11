@@ -12,6 +12,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +22,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ChartDataLabels
 );
 
 const IDR = new Intl.NumberFormat("id-ID", {
@@ -55,6 +57,9 @@ const MonthlyPerformanceChart = ({ data = [] }) => {
         callbacks: {
           label: (ctx) => ` ${IDR.format(ctx.parsed.y || 0)}`,
         },
+      },
+      datalabels: {
+        display: false,
       },
     },
     interaction: { mode: "index", intersect: false },

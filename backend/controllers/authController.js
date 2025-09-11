@@ -64,6 +64,7 @@ const login = [
       if (!user) {
         const salesUser = await Sales.findByEmail(email);
         if (salesUser) {
+          console.log("Sales User found:", salesUser);
           const isMatch = await comparePassword(password, salesUser.password);
           if (isMatch) {
             user = {

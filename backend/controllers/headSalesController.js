@@ -50,21 +50,38 @@ const getHeadSalesDashboardData = async (req, res) => {
     `);
 
     // anggap 'Succed' = closed-won (samakan dengan data kamu)
-    const perfQ = pool.query(`
-      SELECT DATE_FORMAT(o.datePropOpti, '%Y-%m-01') AS month,
-             SUM(COALESCE(o.kebutuhan, 0)) AS totalValue
-      FROM opti o
-      WHERE o.statOpti = 'Succed'
-      GROUP BY month
-      ORDER BY month ASC
-    `);
+    const performanceQueryBody = `
+      SELECT
+        DATE_FORMAT(won_deals.start_date, '%Y-%m') AS month,
+        SUM(won_deals.value) AS totalValue
+      FROM (
+        SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
+        UNION ALL
+        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti = o.idOpti WHERE t.startTraining IS NOT NULL
+      ) AS won_deals
+    `;
 
-    const topDealsQ = pool.query(`
-      SELECT o.nmOpti, c.corpCustomer, o.kebutuhan
-      FROM opti o
-      LEFT JOIN customer c ON c.idCustomer = o.idCustomer
-      WHERE o.statOpti NOT IN ('Closed Won','Closed Lost','Succed')
-      ORDER BY COALESCE(o.kebutuhan, 0) DESC
+    const perfQ = pool.query(`${performanceQueryBody} GROUP BY month ORDER BY month ASC`);
+
+    const topWonDealsQ = pool.query(`
+      SELECT
+        won_deals.name AS nmOpti,
+        won_deals.customer AS corpCustomer,
+        won_deals.value AS valOpti
+      FROM (
+        SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+        FROM project p
+        JOIN opti o ON p.idOpti = o.idOpti
+        JOIN customer c ON p.idCustomer = c.idCustomer
+
+        UNION ALL
+
+        SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
+        FROM training t
+        JOIN opti o ON t.idOpti = o.idOpti
+        JOIN customer c ON t.idCustomer = c.idCustomer
+      ) AS won_deals
+      ORDER BY won_deals.value DESC
       LIMIT 5
     `);
 
@@ -76,7 +93,7 @@ const getHeadSalesDashboardData = async (req, res) => {
       [salesRepCustomers],
       [opportunityTypes],
       [performanceOverTime],
-      [topOpenDeals],
+      [topWonDeals],
     ] = await Promise.all([
       totalSalesQ,
       totalCustomersQ,
@@ -85,7 +102,7 @@ const getHeadSalesDashboardData = async (req, res) => {
       customersPerSalesQ,
       typesQ,
       perfQ,
-      topDealsQ,
+      topWonDealsQ,
     ]);
 
     res.json({
@@ -98,7 +115,7 @@ const getHeadSalesDashboardData = async (req, res) => {
       salesRepCustomers,
       opportunityTypes,
       performanceOverTime,
-      topOpenDeals,
+      topWonDeals,
     });
   } catch (err) {
     console.error("Head Sales dashboard error:", err);

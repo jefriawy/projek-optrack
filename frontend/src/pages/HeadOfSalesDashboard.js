@@ -136,6 +136,9 @@ const HeadOfSalesDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
+  console.log("API_BASE:", API_BASE);
+  console.log("User object:", user ? { id: user.id, role: user.role } : "No user");
+
   // Tabs minimal
   const [tab, setTab] = useState("status"); // customers | status | performance
   // Switch di tab Status: bar (pipeline) vs pie (opportunity type)
@@ -162,6 +165,7 @@ const HeadOfSalesDashboard = () => {
           );
         }
         const data = await res.json();
+        console.log("API Response Data:", data);
         setDashboardData(data);
       } catch (e) {
         if (e.name !== "AbortError") setErr(e.message || "Network error");
@@ -192,7 +196,7 @@ const HeadOfSalesDashboard = () => {
     pipelineStats = [],
     opportunityTypes = [],
     performanceOverTime = [],
-    topOpenDeals = [],
+    topWonDeals = [],
   } = dashboardData || {};
 
   return (
@@ -293,7 +297,7 @@ const HeadOfSalesDashboard = () => {
       {/* ===== Top 5 Deals (bawah, full width) ===== */}
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-5 mt-6">
         <h2 className="font-semibold text-gray-800 mb-3">Top 5 Open Deals</h2>
-        <TopDealsTable data={topOpenDeals} />
+        <TopDealsTable data={topWonDeals} />
       </div>
 
       {/* ===== Overlay expand ===== */}
