@@ -79,6 +79,7 @@ const AdminDashboardPage = () => {
     Sales: 0,
     'Head Sales': 0,
     Admin: 0,
+    'Head of Expert': 0, // Tambahkan Head of Expert
     Expert: 0,
     Semua: 0,
   });
@@ -101,6 +102,7 @@ const AdminDashboardPage = () => {
           Sales: 0,
           'Head Sales': 0,
           Admin: 0,
+          'Head of Expert': 0, // Tambahkan Head of Expert
           Expert: 0,
           Semua: users.length,
         };
@@ -140,22 +142,24 @@ const AdminDashboardPage = () => {
   ];
 
   const chartData = {
-    labels: ['Sales', 'Head Sales', 'Admin', 'Expert'],
+    labels: ['Sales', 'Head Sales', 'Admin', 'Expert', 'Head of Expert'],
     datasets: [
       {
         label: 'Jumlah Pengguna',
-        data: [userCounts.Sales, userCounts['Head Sales'], userCounts.Admin, userCounts.Expert],
+        data: [userCounts.Sales, userCounts['Head Sales'], userCounts.Admin, userCounts.Expert, userCounts['Head of Expert']],
         backgroundColor: [
           'rgba(40, 205, 100, 0.6)',
           'rgba(65, 140, 255, 0.6)',
           'rgba(240, 185, 15, 0.6)',
           'rgba(175, 95, 255, 0.6)',
+          'rgba(255, 99, 132, 0.6)', // Warna baru untuk Head of Expert
         ],
         borderColor: [
           'rgba(40, 205, 100, 1)',
           'rgba(65, 140, 255, 1)',
           'rgba(240, 185, 15, 1)',
           'rgba(175, 95, 255, 1)',
+          'rgba(255, 99, 132, 1)', // Warna baru untuk Head of Expert
         ],
         borderWidth: 1,
         datalabels: { display: false },
@@ -196,12 +200,14 @@ const AdminDashboardPage = () => {
     const backgroundColors = [
           'rgba(40, 205, 100, 0.6)',
           'rgba(65, 140, 255, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
           'rgba(240, 185, 15, 0.6)',
           'rgba(175, 95, 255, 0.6)',
         ];
     const borderColors = [
           'rgba(40, 205, 100, 1)',
           'rgba(65, 140, 255, 1)',
+          'rgba(255, 99, 132, 1)',
           'rgba(240, 185, 15, 1)',
           'rgba(175, 95, 255, 1)',
         ];
