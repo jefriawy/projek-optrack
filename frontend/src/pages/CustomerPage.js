@@ -59,10 +59,7 @@ const CustomerPage = () => {
   const [customers, setCustomers] = useState([]);
   const [error, setError] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
-
-  
-  
+  const [companyFilter, setCompanyFilter] = useState("");
   const [sortOrder, setSortOrder] = useState("name_az");
 
   const [isViewModalOpen, setViewModalOpen] = useState(false);
@@ -99,15 +96,9 @@ const CustomerPage = () => {
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-    const newTimeout = setTimeout(() => {
-      setCurrentPage(1);
-      fetchCustomers(searchTerm, 1);
-    }, 500);
-    setDebounceTimeout(newTimeout);
-
-    return () => clearTimeout(newTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+    // Debounce logic dihapus karena searchTerm sudah tidak dipakai
+    return () => debounceTimeout && clearTimeout(debounceTimeout);
+  }, [debounceTimeout]);
 
   // Fetch opsi status
   const fetchStatusOptions = useCallback(async () => {
@@ -124,17 +115,11 @@ const CustomerPage = () => {
 
   // Panggil semua fungsi fetch saat komponen dimuat
   useEffect(() => {
-    if (user) {
-      fetchCustomers(searchTerm, currentPage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, currentPage]);
-
-  useEffect(() => {
+    fetchCustomers(undefined, currentPage); // Tidak perlu searchTerm
     if (user && (user.role === "Head Sales" || user.role === "Admin")) {
       fetchStatusOptions();
     }
-  }, [user, fetchStatusOptions]);
+  }, [fetchCustomers, fetchStatusOptions, user, currentPage]);
 
   // Handler modal
   const handleViewCustomer = (customer) => {
@@ -195,7 +180,7 @@ const CustomerPage = () => {
       await axios[method](url, formData, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      await fetchCustomers(searchTerm, currentPage); // Pass searchTerm and currentPage
+  await fetchCustomers(undefined, currentPage);
       handleCloseModal();
     } catch (err) {
       console.error("Failed to submit form:", err);
@@ -203,10 +188,23 @@ const CustomerPage = () => {
     }
   };
 
-  
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+  fetchCustomers(undefined, pageNumber);
+  };
 
   const filteredAndSortedCustomers = useMemo(() => {
-    const sorted = [...(Array.isArray(customers) ? customers : [])].sort((a, b) => {
+    let filtered = Array.isArray(customers) ? customers : [];
+
+    // companyFilter tetap di frontend jika ingin filter perusahaan secara lokal
+    if (companyFilter) {
+      filtered = filtered.filter((customer) =>
+        customer.corpCustomer && customer.corpCustomer.toLowerCase().includes(companyFilter.toLowerCase())
+      );
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
       if (sortOrder === "name_az") {
         return a.nmCustomer.localeCompare(b.nmCustomer);
       } else if (sortOrder === "company_az") {
@@ -215,7 +213,7 @@ const CustomerPage = () => {
       return 0;
     });
     return sorted;
-  }, [customers, sortOrder]);
+  }, [customers, companyFilter, sortOrder]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
   if (!user || !["Sales", "Admin", "Head Sales"].includes(user.role)) return <Navigate to="/login" />;
@@ -235,8 +233,8 @@ const CustomerPage = () => {
               type="text"
               placeholder="Search Perusahaan"
               className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={companyFilter}
+              onChange={(e) => setCompanyFilter(e.target.value)}
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
