@@ -60,16 +60,18 @@ const CustomerPage = () => {
   const [error, setError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
+
+  
+  
   const [sortOrder, setSortOrder] = useState("name_az");
 
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
-
   // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
   // State untuk modal Update Status
   const [isUpdateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
@@ -93,9 +95,6 @@ const CustomerPage = () => {
     }
   }, [user]);
 
-  // Debounce untuk search
-  const [debounceTimeout, setDebounceTimeout] = useState(null);
-
   useEffect(() => {
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
@@ -107,7 +106,8 @@ const CustomerPage = () => {
     setDebounceTimeout(newTimeout);
 
     return () => clearTimeout(newTimeout);
-  }, [searchTerm, fetchCustomers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   // Fetch opsi status
   const fetchStatusOptions = useCallback(async () => {
@@ -125,9 +125,10 @@ const CustomerPage = () => {
   // Panggil semua fungsi fetch saat komponen dimuat
   useEffect(() => {
     if (user) {
-      fetchCustomers("", currentPage);
+      fetchCustomers(searchTerm, currentPage);
     }
-  }, [user, currentPage, fetchCustomers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentPage]);
 
   useEffect(() => {
     if (user && (user.role === "Head Sales" || user.role === "Admin")) {
@@ -202,11 +203,7 @@ const CustomerPage = () => {
     }
   };
 
-  const handlePageChange = (pageNumber) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
-    fetchCustomers(searchTerm, pageNumber);
-  };
+  
 
   const filteredAndSortedCustomers = useMemo(() => {
     const sorted = [...(Array.isArray(customers) ? customers : [])].sort((a, b) => {
@@ -279,7 +276,7 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`${companyFilter}-${sortOrder}`}
+                    key={`customer-report-${sortOrder}`}
                     document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
@@ -329,7 +326,7 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`${companyFilter}-${sortOrder}`}
+                    key={`customer-report-${sortOrder}`}
                     document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"

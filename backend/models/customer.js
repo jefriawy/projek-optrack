@@ -13,11 +13,13 @@ const Customer = {
       corpCustomer = null,
       idStatCustomer = 1,
       descCustomer = null,
+      customerCat,
+      NPWP = null,
     } = customerData;
 
     const query = `INSERT INTO customer
-      (idCustomer, nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idSales, idStatCustomer, descCustomer)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      (idCustomer, nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idSales, idStatCustomer, descCustomer, customerCat, NPWP)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [
       idCustomer,
       nmCustomer,
@@ -28,6 +30,8 @@ const Customer = {
       idSales,
       idStatCustomer,
       descCustomer,
+      customerCat,
+      NPWP,
     ];
     const [result] = await pool.query(query, params);
     // kembalikan id yang kita set (jika ingin konsisten)

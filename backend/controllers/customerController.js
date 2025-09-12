@@ -6,6 +6,12 @@ const { generateUserId } = require("../utils/idGenerator");
 const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
+
+    // Server-side validation for NPWP
+    if (customerData.customerCat === 'Perusahaan' && !customerData.NPWP) {
+      return res.status(400).json({ error: "NPWP is required for company customers" });
+    }
+
     // generate idCustomer
     customerData.idCustomer = await generateUserId("Customer");
 
@@ -102,9 +108,15 @@ const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const customerData = req.body;
+
+    // Server-side validation for NPWP on update
+    if (customerData.customerCat === 'Perusahaan' && !customerData.NPWP) {
+      return res.status(400).json({ error: "NPWP is required for company customers" });
+    }
+
     // Lakukan update ke database sesuai kebutuhan
     const [result] = await pool.query(
-      `UPDATE customer SET nmCustomer=?, mobileCustomer=?, emailCustomer=?, addrCustomer=?, corpCustomer=?, idStatCustomer=?, descCustomer=? WHERE idCustomer=?`,
+      `UPDATE customer SET nmCustomer=?, mobileCustomer=?, emailCustomer=?, addrCustomer=?, corpCustomer=?, idStatCustomer=?, descCustomer=?, customerCat=?, NPWP=? WHERE idCustomer=?`,
       [
         customerData.nmCustomer,
         customerData.mobileCustomer || null,
@@ -113,6 +125,8 @@ const updateCustomer = async (req, res) => {
         customerData.corpCustomer || null,
         customerData.idStatCustomer,
         customerData.descCustomer || null,
+        customerData.customerCat,
+        customerData.NPWP || null,
         id,
       ]
     );

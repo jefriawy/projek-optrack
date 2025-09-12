@@ -100,7 +100,7 @@ const HeadSalesCustomerTable = ({ customers, onViewCustomer, openUpdateStatusMod
             ) : (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                 >
                   No customers match the current filters.

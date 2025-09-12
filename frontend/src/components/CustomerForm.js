@@ -17,6 +17,12 @@ const validationSchema = Yup.object({
     otherwise: (schema) => schema.notRequired(),
   }),
   descCustomer: Yup.string().optional(),
+  customerCat: Yup.string().required("Customer category is required"),
+  NPWP: Yup.string().when("customerCat", {
+    is: "Perusahaan",
+    then: (schema) => schema.required("NPWP is required for companies"),
+    otherwise: (schema) => schema.optional(),
+  }),
 });
 
 const CustomerForm = ({ initialData, onSubmit, onClose }) => {
@@ -29,6 +35,8 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
     corpCustomer: "",
     idStatCustomer: "",
     descCustomer: "",
+    customerCat: "Perusahaan",
+    NPWP: "",
   });
   const [statusOptions, setStatusOptions] = useState([]);
   const [errors, setErrors] = useState({});
@@ -53,6 +61,8 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
         corpCustomer: initialData.corpCustomer || "",
         idStatCustomer: initialData.idStatCustomer || "",
         descCustomer: initialData.descCustomer || "",
+        customerCat: initialData.customerCat || "Perusahaan",
+        NPWP: initialData.NPWP || "",
       });
     } else {
       // Mengatur default status untuk Sales saat form kosong
@@ -64,6 +74,8 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
         corpCustomer: "",
         idStatCustomer: user?.role === 'Sales' ? 1 : "", // Default 1 untuk Sales
         descCustomer: "",
+        customerCat: "Perusahaan",
+        NPWP: "",
       });
     }
   }, [user, initialData]);
@@ -71,6 +83,15 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
+  };
+
+  const handleCategoryChange = (value) => {
+    const newFormData = { ...formData, customerCat: value };
+    if (value === 'Pribadi') {
+      newFormData.corpCustomer = ''; // Clear corporation when switching to Pribadi
+    }
+    setFormData(newFormData);
+    setErrors({ ...errors, customerCat: "" }); // Clear potential error on change
   };
 
   const handleSubmit = async (e) => {
@@ -114,9 +135,43 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
           <label>Address</label>
           <input type="text" name="addrCustomer" placeholder="Customer Address" value={formData.addrCustomer} onChange={handleChange} />
         </div>
+        
+        <div className="form-group md:col-span-2">
+          <label>Category</label>
+          <div className="relative flex w-full bg-gray-200 rounded-full p-1 mt-2">
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('Perusahaan')}
+              className={`w-1/2 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
+                formData.customerCat === 'Perusahaan' ? 'bg-blue-600 text-white' : 'text-gray-600'
+              }`}
+            >
+              Perusahaan
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('Pribadi')}
+              className={`w-1/2 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
+                formData.customerCat === 'Pribadi' ? 'bg-blue-600 text-white' : 'text-gray-600'
+              }`}
+            >
+              Pribadi
+            </button>
+          </div>
+          {errors.customerCat && <p className="error">{errors.customerCat}</p>}
+        </div>
+
+        {formData.customerCat === "Perusahaan" && (
+          <div className="form-group md:col-span-2">
+            <label>Corporation</label>
+            <input type="text" name="corpCustomer" placeholder="Customer Corporation" value={formData.corpCustomer} onChange={handleChange} />
+          </div>
+        )}
+
         <div className="form-group">
-          <label>Corporation</label>
-          <input type="text" name="corpCustomer" placeholder="Customer Corporation" value={formData.corpCustomer} onChange={handleChange} />
+          <label>NPWP {formData.customerCat !== 'Perusahaan' && <span className="text-gray-500 text-sm">(optional)</span>}</label>
+          <input type="text" name="NPWP" placeholder="NPWP" value={formData.NPWP} onChange={handleChange} />
+          {errors.NPWP && <p className="error">{errors.NPWP}</p>}
         </div>
 
         {/* Status Customer hanya ditampilkan jika role bukan Sales */}
@@ -139,12 +194,27 @@ const CustomerForm = ({ initialData, onSubmit, onClose }) => {
         <label>Description</label>
         <textarea name="descCustomer" placeholder="Customer Description" value={formData.descCustomer} onChange={handleChange} />
       </div>
-      <div className="flex justify-end space-x-3 pt-4">
-        <button type="button" onClick={onClose} className="btn-secondary">
-          Cancel
-        </button>
-        <button type="submit" className="btn-primary">
-          {initialData ? "Update Customer" : "Add Customer"}
+      <div className="flex justify-between items-center pt-4">
+        <div className="flex space-x-3">
+          <button type="submit" className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800">
+            {initialData ? "Update Customer" : "Add Customer"}
+          </button>
+          <button type="button" onClick={() => setFormData({
+            nmCustomer: "",
+            emailCustomer: "",
+            mobileCustomer: "",
+            addrCustomer: "",
+            corpCustomer: "",
+            idStatCustomer: user?.role === 'Sales' ? 1 : "",
+            descCustomer: "",
+            customerCat: "Perusahaan",
+            NPWP: "",
+          })} className="border border-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-100">
+            Reset Form
+          </button>
+        </div>
+        <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          Close
         </button>
       </div>
     </form>
