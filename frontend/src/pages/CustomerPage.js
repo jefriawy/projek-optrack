@@ -65,10 +65,10 @@ const CustomerPage = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+
   // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
   // State untuk modal Update Status
   const [isUpdateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
@@ -91,6 +91,9 @@ const CustomerPage = () => {
       }
     }
   }, [user]);
+
+  // Debounce untuk search
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
   useEffect(() => {
     if (debounceTimeout) {
@@ -274,7 +277,7 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`customer-report-${sortOrder}`}
+                    key={`${companyFilter}-${sortOrder}`}
                     document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
@@ -324,7 +327,7 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`customer-report-${sortOrder}`}
+                    key={`${companyFilter}-${sortOrder}`}
                     document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
