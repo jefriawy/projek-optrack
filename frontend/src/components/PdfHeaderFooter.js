@@ -72,7 +72,7 @@ export const PdfFooter = ({ timestampLabel = 'Tanggal Dibuat', showTimestamp = t
     <View style={styles.footer} fixed>
       {showTimestamp && <Text style={styles.footerTimestamp}>{timestampLabel}: {getCurrentTimestamp()}</Text>}
       <View style={styles.footerContent}>
-        <Image style={styles.footerLogo} src="/logoenetwoq.PNG" />
+        <Image style={styles.footerLogo} src="/logoenetwoq.png" />
         <View style={styles.footerSeparator}></View>
         <View style={styles.footerText}>
           <Text style={styles.bold}>PT. eNetwoQ ServIT Indonesia</Text>
