@@ -101,9 +101,9 @@ const CustomerPage = () => {
       clearTimeout(debounceTimeout);
     }
     const newTimeout = setTimeout(() => {
-      setCurrentPage(1); // Reset to first page on new search
+      setCurrentPage(1);
       fetchCustomers(searchTerm, 1);
-    }, 500); // Debounce for 500ms
+    }, 500);
     setDebounceTimeout(newTimeout);
 
     return () => clearTimeout(newTimeout);
@@ -124,11 +124,16 @@ const CustomerPage = () => {
 
   // Panggil semua fungsi fetch saat komponen dimuat
   useEffect(() => {
-    fetchCustomers(searchTerm, currentPage); // Pass searchTerm and currentPage
+    if (user) {
+      fetchCustomers("", currentPage);
+    }
+  }, [user, currentPage, fetchCustomers]);
+
+  useEffect(() => {
     if (user && (user.role === "Head Sales" || user.role === "Admin")) {
       fetchStatusOptions();
     }
-  }, [fetchCustomers, fetchStatusOptions, user, searchTerm, currentPage]); // Add searchTerm and currentPage to dependencies
+  }, [user, fetchStatusOptions]);
 
   // Handler modal
   const handleViewCustomer = (customer) => {
@@ -204,23 +209,7 @@ const CustomerPage = () => {
   };
 
   const filteredAndSortedCustomers = useMemo(() => {
-    let filtered = Array.isArray(customers) ? customers : [];
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (customer) =>
-          customer.nmCustomer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          customer.corpCustomer.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (companyFilter) {
-      filtered = filtered.filter((customer) =>
-        customer.corpCustomer.toLowerCase().includes(companyFilter.toLowerCase())
-      );
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
+    const sorted = [...(Array.isArray(customers) ? customers : [])].sort((a, b) => {
       if (sortOrder === "name_az") {
         return a.nmCustomer.localeCompare(b.nmCustomer);
       } else if (sortOrder === "company_az") {
@@ -229,7 +218,7 @@ const CustomerPage = () => {
       return 0;
     });
     return sorted;
-  }, [customers, searchTerm, companyFilter, sortOrder]);
+  }, [customers, sortOrder]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
   if (!user || !["Sales", "Admin", "Head Sales"].includes(user.role)) return <Navigate to="/login" />;
