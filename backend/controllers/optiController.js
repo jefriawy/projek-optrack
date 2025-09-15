@@ -59,7 +59,6 @@ const createOpti = async (req, res) => {
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
 
-      // New program-related fields
       startProgram: toNull(b.startTraining),
       endProgram: toNull(b.endTraining),
       placeProgram: toNull(b.placeTraining),
@@ -76,18 +75,11 @@ const createOpti = async (req, res) => {
             : null
           : null,
 
-      // File uploads
       proposalOpti: null,
-      buktiPembayaran: null,
     };
 
     if (req.file) {
-      if (user.role === "Sales") {
-        optiData.statOpti = "Delivered";
-        optiData.buktiPembayaran = path.basename(req.file.filename);
-      } else {
-        optiData.proposalOpti = path.basename(req.file.filename);
-      }
+      optiData.proposalOpti = path.basename(req.file.filename);
     }
 
     await Opti.create(optiData, idSalesForOpti, connection);
@@ -162,38 +154,25 @@ const updateOpti = async (req, res) => {
           : existingOpti.idTypeProject,
 
       proposalOpti: existingOpti.proposalOpti,
-      buktiPembayaran: existingOpti.buktiPembayaran,
     };
 
+    // Logika yang diubah:
+    // Hapus logika yang mengubah status menjadi "Delivered" saat sales mengunggah file.
     if (req.file) {
-      if (user.role === "Sales") {
-        optiData.statOpti = "Delivered";
-        optiData.buktiPembayaran = path.basename(req.file.filename);
-        if (existingOpti.buktiPembayaran) {
-          const oldFilePath = path.join(
-            __dirname,
-            "..",
-            "uploads",
-            "proposals",
-            existingOpti.buktiPembayaran
-          );
-          fs.unlink(oldFilePath, () => {});
-        }
-      } else {
-        optiData.proposalOpti = path.basename(req.file.filename);
-        if (existingOpti.proposalOpti) {
-          const oldFilePath = path.join(
-            __dirname,
-            "..",
-            "uploads",
-            "proposals",
-            existingOpti.proposalOpti
-          );
-          fs.unlink(oldFilePath, () => {});
-        }
+      optiData.proposalOpti = path.basename(req.file.filename);
+      if (existingOpti.proposalOpti) {
+        const oldFilePath = path.join(
+          __dirname,
+          "..",
+          "uploads",
+          "proposals",
+          existingOpti.proposalOpti
+        );
+        fs.unlink(oldFilePath, () => {});
       }
     }
 
+    // Perubahan status hanya terjadi di sini, jika idExpert diisi (oleh Head Sales/Admin)
     if (user.role !== "Sales" && b.idExpert && !existingOpti.idExpert) {
       optiData.statOpti = "PO Received";
     }

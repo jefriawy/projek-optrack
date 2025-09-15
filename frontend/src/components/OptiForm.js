@@ -254,7 +254,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     const file = e.target.files[0] || null;
     setProposalFile(file);
     if (user?.role === "Sales" && file) {
-      setFormData((s) => ({ ...s, statOpti: "Delivered" }));
+      setFormData((s) => ({ ...s, statOpti: "Entry" }));
     }
   };
 
