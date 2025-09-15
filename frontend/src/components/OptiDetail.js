@@ -12,22 +12,26 @@ import {
 } from "react-icons/fa";
 import pdfIcon from "../iconres/pdf.png";
 
-// Fallback daftar tipe training (sinkronkan dengan tabel 'typetraining')
 const TYPE_TRAININGS = [
   { id: 1, name: "Default Training" },
   { id: 2, name: "Public Training" },
   { id: 3, name: "Inhouse Training" },
   { id: 4, name: "Online Training" },
 ];
+// Tambahkan mapping untuk tipe project
+const TYPE_PROJECTS = [
+  { id: 1, name: "Default Project" },
+  { id: 2, name: "Public Project" },
+  { id: 3, name: "Inhouse Project" },
+  { id: 4, name: "Online Project" },
+];
 
-// Helper: nilai tanggal yang buruk
 const isBadDate = (v) =>
   !v || v === "0000-00-00 00:00:00" || v === "0000-00-00T00:00";
 
 const OptiDetail = ({ opti }) => {
   if (!opti) return null;
 
-  // ---- formatting helpers
   const formatDate = (dateString) => {
     if (!dateString || isBadDate(dateString)) return "N/A";
     const d = new Date(dateString);
@@ -55,35 +59,31 @@ const OptiDetail = ({ opti }) => {
 
   const getStatusInfo = (status) => {
     switch (status) {
-        case "Entry":
+      case "Entry":
         return { text: "Entry", color: "bg-purple-100 text-purple-800" };
-        case "Delivered":
+      case "Delivered":
         return { text: "Delivered", color: "bg-yellow-100 text-yellow-800" };
-        case "PO Received":
+      case "PO Received":
         return { text: "PO Received", color: "bg-green-100 text-green-800" };
-        case "Reject":
+      case "Reject":
         return { text: "Reject", color: "bg-red-100 text-red-800" };
       default:
         return { text: "-", color: "bg-gray-400 text-white" };
     }
   };
-
   const statusInfo = getStatusInfo(opti.statOpti);
 
-  // ---- detail khusus per jenis
   const SpecificDetails = () => {
+    // Backend sudah memetakan (mapping) data project ke field `startTraining`, `idTypeTraining`, dll.
+    // Kita cukup baca field tersebut untuk kedua jenis.
+    const mulai = formatDateTime(opti.startTraining);
+    const selesai = formatDateTime(opti.endTraining);
+    const lokasi = opti.placeTraining || "-";
+
     if (opti.jenisOpti === "Training") {
-      // Ambil nama tipe dari API jika ada, kalau tidak ada pakai mapping berdasarkan idTypeTraining
       const typeName =
-        opti.nmTypeTraining ||
         TYPE_TRAININGS.find((t) => Number(t.id) === Number(opti.idTypeTraining))
-          ?.name ||
-        "-";
-
-      const mulai = formatDateTime(opti.startTraining);
-      const selesai = formatDateTime(opti.endTraining);
-      const lokasi = opti.placeTraining || "-";
-
+          ?.name || "-";
       return (
         <div className="mt-6 p-4 border rounded-lg bg-gray-50">
           <h3 className="flex items-center text-md font-semibold mb-3 text-gray-700">
@@ -108,7 +108,11 @@ const OptiDetail = ({ opti }) => {
       );
     }
 
+    // ====================== BAGIAN INI DIPERBAIKI ======================
     if (opti.jenisOpti === "Project") {
+      const typeName =
+        TYPE_PROJECTS.find((p) => Number(p.id) === Number(opti.idTypeTraining))
+          ?.name || "-";
       return (
         <div className="mt-6 p-4 border rounded-lg bg-gray-50">
           <h3 className="flex items-center text-md font-semibold mb-3 text-gray-700">
@@ -116,15 +120,22 @@ const OptiDetail = ({ opti }) => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <p>
-              <strong>Mulai:</strong> {formatDate(opti.startProject)}
+              <strong>Tipe Proyek:</strong> {typeName}
             </p>
             <p>
-              <strong>Selesai:</strong> {formatDate(opti.endProject)}
+              <strong>Mulai:</strong> {mulai}
+            </p>
+            <p>
+              <strong>Selesai:</strong> {selesai}
+            </p>
+            <p>
+              <strong>Lokasi:</strong> {lokasi}
             </p>
           </div>
         </div>
       );
     }
+    // ====================== AKHIR PERBAIKAN ======================
 
     return null;
   };
@@ -137,8 +148,8 @@ const OptiDetail = ({ opti }) => {
         <span className="font-semibold">{opti.corpCustomer}</span>
       </p>
 
+      {/* ... Sisa dari JSX tidak berubah ... */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Informasi Utama */}
         <div>
           <h2 className="flex items-center text-lg font-semibold mb-3 border-b pb-2">
             <FaInfoCircle className="mr-2" /> Informasi Utama
@@ -155,8 +166,6 @@ const OptiDetail = ({ opti }) => {
             </p>
           </div>
         </div>
-
-        {/* Informasi Bisnis */}
         <div>
           <h2 className="flex items-center text-lg font-semibold mb-3 border-b pb-2">
             <FaBriefcase className="mr-2" /> Informasi Bisnis
@@ -182,10 +191,7 @@ const OptiDetail = ({ opti }) => {
           </div>
         </div>
       </div>
-
       <SpecificDetails />
-
-      {/* Kebutuhan */}
       <div className="my-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileAlt className="mr-2" /> Kebutuhan Klien
@@ -194,8 +200,6 @@ const OptiDetail = ({ opti }) => {
           {opti.kebutuhan || "Tidak ada deskripsi kebutuhan."}
         </p>
       </div>
-
-      {/* Proposal */}
       <div className="mb-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileDownload className="mr-2" /> Dokumen Proposal
@@ -214,8 +218,6 @@ const OptiDetail = ({ opti }) => {
           <p className="text-gray-500 text-sm">Tidak ada dokumen proposal.</p>
         )}
       </div>
-
-      {/* Export PDF */}
       <PDFDownloadLink
         document={<OptiDetailPdf opti={opti} />}
         fileName={`Detail_Opportunity_${opti.nmOpti}.pdf`}
@@ -234,5 +236,4 @@ const OptiDetail = ({ opti }) => {
     </div>
   );
 };
-
 export default OptiDetail;

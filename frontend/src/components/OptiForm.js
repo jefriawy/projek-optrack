@@ -14,24 +14,21 @@ const formatRupiah = (amount) => {
 
 // Function to parse Rupiah currency string to number
 const parseRupiah = (rupiahString) => {
-  if (typeof rupiahString !== 'string') {
+  if (typeof rupiahString !== "string") {
     return rupiahString;
   }
   if (!rupiahString) return null;
-  const cleanedString = rupiahString.replace(/[^,\d]/g, '').replace(/,/g, '.');
+  const cleanedString = rupiahString.replace(/[^,\d]/g, "").replace(/,/g, ".");
   const parsed = parseFloat(cleanedString);
   return isNaN(parsed) ? null : parsed;
 };
 
-// ---- static list: samakan dengan isi tabel `typetraining`
 const TYPE_TRAININGS = [
   { id: 1, name: "Default Training" },
   { id: 2, name: "Public Training" },
   { id: 3, name: "Inhouse Training" },
   { id: 4, name: "Online Training" },
 ];
-
-// ---- static list: samakan dengan isi tabel `typeproject`
 const TYPE_PROJECTS = [
   { id: 1, name: "Default Project" },
   { id: 2, name: "Public Project" },
@@ -74,38 +71,28 @@ const normalizeDateOnly = (val) => {
   }
   return "";
 };
+
+// ====================== FUNGSI INI DIPERBAIKI ======================
 const normalizeInitialData = (data) => {
   if (!data) return {};
-  // eslint-disable-next-line no-console
-  console.log("[OptiForm] initialData:", data);
-  let start = "", end = "", idType = "", place = "";
-  if (data.jenisOpti === "Training") {
-    start = data.startTraining ? normalizeMySQLDateTimeToLocal(data.startTraining) : "";
-    end = data.endTraining ? normalizeMySQLDateTimeToLocal(data.endTraining) : "";
-    idType = data.idTypeTraining === null || data.idTypeTraining === undefined ? "" : String(data.idTypeTraining);
-    place = data.placeTraining || "";
-  } else if (data.jenisOpti === "Project") {
-    start = data.startProject ? normalizeMySQLDateTimeToLocal(data.startProject) : "";
-    end = data.endProject ? normalizeMySQLDateTimeToLocal(data.endProject) : "";
-    idType = data.idTypeProject === null || data.idTypeProject === undefined ? "" : String(data.idTypeProject);
-    place = data.placeProject || "";
-  }
+  // Backend sudah memetakan (mapping) data program ke field `startTraining`, `endTraining`, dll.
+  // Kita cukup menormalisasi formatnya di sini tanpa logika if/else yang rumit.
   const norm = {
     ...data,
     datePropOpti: normalizeDateOnly(data.datePropOpti),
-    startTraining: start,
-    endTraining: end,
-    idTypeTraining: idType,
-    placeTraining: place,
+    startTraining: normalizeMySQLDateTimeToLocal(data.startTraining),
+    endTraining: normalizeMySQLDateTimeToLocal(data.endTraining),
+    idTypeTraining:
+      data.idTypeTraining === null || data.idTypeTraining === undefined
+        ? ""
+        : String(data.idTypeTraining),
+    placeTraining: data.placeTraining || "",
     valOpti: parseRupiah(data.valOpti),
   };
-  // eslint-disable-next-line no-console
-  console.log("[OptiForm] normalized initialData:", norm);
   return norm;
 };
-/* =========================
-   Yup Schema (dinamis by role)
-   ========================= */
+// ====================== AKHIR PERBAIKAN ======================
+
 const emptyToNullNumber = (value, originalValue) => {
   if (originalValue === "" || originalValue === undefined) return null;
   const n = Number(originalValue);
@@ -155,9 +142,7 @@ const getValidationSchema = (role) =>
     kebutuhan: Yup.string().nullable(),
     valOpti: Yup.number().typeError("Value harus berupa angka").nullable(),
   });
-/* =========================
-   Komponen Form
-   ========================= */
+
 const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const { user } = useContext(AuthContext);
   const baseState = {
@@ -178,16 +163,17 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     placeTraining: "",
     valOpti: "",
   };
+
   const seed = normalizeInitialData(initialData);
-  // eslint-disable-next-line no-console
-  console.log("[OptiForm] seed for formData:", seed);
   const [formData, setFormData] = useState({
     ...baseState,
     ...seed,
     statOpti: seed.statOpti || baseState.statOpti,
     datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
-  const [displayValOpti, setDisplayValOpti] = useState(formatRupiah(seed.valOpti));
+  const [displayValOpti, setDisplayValOpti] = useState(
+    formatRupiah(seed.valOpti)
+  );
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
@@ -203,17 +189,22 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
         });
         setCustomers(res.data.customers || []);
         setSumber(res.data.sumber || []);
-        // ====== SATU-SATUNYA PERUBAHAN: normalisasi experts ======
-        const rawExperts = Array.isArray(res.data.experts) ? res.data.experts : [];
+        const rawExperts = Array.isArray(res.data.experts)
+          ? res.data.experts
+          : [];
         const normalizedExperts = rawExperts
           .map((e) => ({
             idExpert: e.idExpert ?? e.id_expert ?? e.id ?? e.ID ?? null,
             nmExpert:
-              e.nmExpert ?? e.nm_expert ?? e.name ?? e.fullName ?? e.username ?? null,
+              e.nmExpert ??
+              e.nm_expert ??
+              e.name ??
+              e.fullName ??
+              e.username ??
+              null,
           }))
           .filter((e) => e.idExpert && e.nmExpert);
         setExperts(normalizedExperts);
-        // =========================================================
       } catch (e) {
         console.error("Error fetching form options:", e);
       }
@@ -223,8 +214,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
   useEffect(() => {
     const safe = normalizeInitialData(initialData);
-    // eslint-disable-next-line no-console
-    console.log("[OptiForm] useEffect initialData changed, safe:", safe);
     setFormData((prev) => ({
       ...baseState,
       ...safe,
@@ -232,14 +221,13 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
     setDisplayValOpti(formatRupiah(safe.valOpti));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
   const inputClass =
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "valOpti") {
       const parsedValue = parseRupiah(value);
       setFormData((s) => ({ ...s, [name]: parsedValue }));
@@ -247,9 +235,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     } else {
       setFormData((s) => ({ ...s, [name]: value }));
     }
-
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
   };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0] || null;
     setProposalFile(file);
@@ -286,15 +274,14 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
       const schema = getValidationSchema(user?.role);
       await schema.validate(payload, { abortEarly: false });
 
-      // === NORMALISASI FIELD JADWAL SESUAI JENIS ===
       if (payload.jenisOpti === "Project") {
         payload.startProject = payload.startTraining || "";
-        payload.endProject   = payload.endTraining   || "";
+        payload.endProject = payload.endTraining || "";
         payload.placeProject = payload.placeTraining || "";
         payload.idTypeProject = payload.idTypeTraining ?? "";
       } else if (payload.jenisOpti === "Training") {
         payload.startTraining = payload.startTraining || "";
-        payload.endTraining   = payload.endTraining   || "";
+        payload.endTraining = payload.endTraining || "";
         payload.placeTraining = payload.placeTraining || "";
         payload.idTypeTraining = payload.idTypeTraining ?? "";
       }
@@ -309,15 +296,15 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
       if (err.inner) err.inner.forEach((e) => (vErr[e.path] = e.message));
       setErrors(vErr);
     }
-  }
+  };
 
   const isExpertRequired =
     formData.jenisOpti === "Training" || formData.jenisOpti === "Project";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* ... Sisa dari JSX form tidak berubah ... */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-        {/* Nama Opti */}
         <div>
           <label className="block text-sm font-medium mb-1">Nama Opti *</label>
           <input
@@ -332,8 +319,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.nmOpti}</p>
           )}
         </div>
-
-        {/* Kontak */}
         <div>
           <label className="block text-sm font-medium mb-1">Kontak Opti</label>
           <input
@@ -345,8 +330,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             className={inputClass}
           />
         </div>
-
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
           <input
@@ -361,8 +344,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.emailOpti}</p>
           )}
         </div>
-
-        {/* Mobile */}
         <div>
           <label className="block text-sm font-medium mb-1">Mobile</label>
           <input
@@ -374,8 +355,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             className={inputClass}
           />
         </div>
-
-        {/* Jenis Opti */}
         <div>
           <label className="block text-sm font-medium mb-1">Jenis Opti *</label>
           <select
@@ -393,8 +372,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.jenisOpti}</p>
           )}
         </div>
-
-        {/* Expert */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Expert {isExpertRequired ? "*" : ""}
@@ -416,8 +393,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.idExpert}</p>
           )}
         </div>
-
-        {/* Status Opti */}
         {user?.role !== "Sales" && (
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -440,8 +415,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             )}
           </div>
         )}
-
-        {/* Sumber */}
         <div>
           <label className="block text-sm font-medium mb-1">Sumber *</label>
           <select
@@ -467,8 +440,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.idSumber}</p>
           )}
         </div>
-
-        {/* Proposal file */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">
             Lampiran Dokumen
@@ -481,8 +452,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             className={`${inputClass} file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
           />
         </div>
-
-        {/* Tanggal Opti */}
         <div>
           <label className="block text-sm font-medium mb-1">Tanggal *</label>
           <input
@@ -496,8 +465,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.datePropOpti}</p>
           )}
         </div>
-
-        {/* Perusahaan */}
         <div>
           <label className="block text-sm font-medium mb-1">Perusahaan *</label>
           <select
@@ -517,8 +484,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.idCustomer}</p>
           )}
         </div>
-
-        {/* Deskripsi */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Deskripsi</label>
           <textarea
@@ -530,13 +495,10 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             rows={3}
           />
         </div>
-
-        {/* ====== Khusus Training atau Project ====== */}
         {(formData.jenisOpti === "Training" ||
           formData.jenisOpti === "Project") && (
           <div className="md:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              {/* Tipe Training / Project */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   {formData.jenisOpti === "Training"
@@ -571,7 +533,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                   </p>
                 )}
               </div>
-              {/* Value */}
               <div>
                 <label className="block text-sm font-medium mb-1">Value</label>
                 <div className="relative">
@@ -594,7 +555,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
-              {/* Mulai */}
               <div>
                 <label className="block text-sm font-medium mb-1">Mulai</label>
                 <input
@@ -606,7 +566,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                   className={inputClass}
                 />
               </div>
-              {/* Selesai */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Selesai
@@ -621,7 +580,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                 />
               </div>
             </div>
-            {/* Tempat/Platform */}
             <div className="mt-2">
               <label className="block text-sm font-medium mb-1">
                 Tempat / Platform
@@ -638,9 +596,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             </div>
           </div>
         )}
-        {/* ====== END khusus Training / Project ====== */}
       </div>
-
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
@@ -668,5 +624,4 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     </form>
   );
 };
-
 export default OptiForm;
