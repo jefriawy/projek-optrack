@@ -15,14 +15,9 @@ const formatRupiah = (amount) => {
 // Function to parse Rupiah currency string to number
 const parseRupiah = (rupiahString) => {
   if (typeof rupiahString !== 'string') {
-    // If it's not a string, assume it's already a number or null/undefined
-    // and return it directly.
     return rupiahString;
   }
   if (!rupiahString) return null;
-  // Remove all non-digit characters except for the comma (if used as decimal separator)
-  // For Indonesian Rupiah, the dot is a thousands separator, and comma is decimal.
-  // Since we only want dot as thousands separator, we remove all non-digits.
   const cleanedString = rupiahString.replace(/[^,\d]/g, '').replace(/,/g, '.');
   const parsed = parseFloat(cleanedString);
   return isNaN(parsed) ? null : parsed;
@@ -192,7 +187,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     statOpti: seed.statOpti || baseState.statOpti,
     datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
-  const [displayValOpti, setDisplayValOpti] = useState(formatRupiah(seed.valOpti)); // New state for displayed value
+  const [displayValOpti, setDisplayValOpti] = useState(formatRupiah(seed.valOpti));
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
@@ -208,7 +203,17 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
         });
         setCustomers(res.data.customers || []);
         setSumber(res.data.sumber || []);
-        setExperts(res.data.experts || []);
+        // ====== SATU-SATUNYA PERUBAHAN: normalisasi experts ======
+        const rawExperts = Array.isArray(res.data.experts) ? res.data.experts : [];
+        const normalizedExperts = rawExperts
+          .map((e) => ({
+            idExpert: e.idExpert ?? e.id_expert ?? e.id ?? e.ID ?? null,
+            nmExpert:
+              e.nmExpert ?? e.nm_expert ?? e.name ?? e.fullName ?? e.username ?? null,
+          }))
+          .filter((e) => e.idExpert && e.nmExpert);
+        setExperts(normalizedExperts);
+        // =========================================================
       } catch (e) {
         console.error("Error fetching form options:", e);
       }
@@ -226,7 +231,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
       statOpti: safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
-    setDisplayValOpti(formatRupiah(safe.valOpti)); // Set display value based on initialData.valOpti
+    setDisplayValOpti(formatRupiah(safe.valOpti));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
@@ -236,10 +241,9 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     const { name, value } = e.target;
 
     if (name === "valOpti") {
-      // Allow only digits for internal storage, but update display value with formatting
       const parsedValue = parseRupiah(value);
       setFormData((s) => ({ ...s, [name]: parsedValue }));
-      setDisplayValOpti(value); // Update display value as user types
+      setDisplayValOpti(value);
     } else {
       setFormData((s) => ({ ...s, [name]: value }));
     }
@@ -249,7 +253,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0] || null;
     setProposalFile(file);
-    // Jika user adalah Sales dan dia upload file, lgsg set status jadi Delivered
     if (user?.role === "Sales" && file) {
       setFormData((s) => ({ ...s, statOpti: "Delivered" }));
     }
@@ -258,7 +261,6 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const handleBlur = (e) => {
     const { name, value } = e.target;
     if (name === "valOpti") {
-      // Format the displayed value when input loses focus
       const parsedValue = parseRupiah(value);
       setDisplayValOpti(formatRupiah(parsedValue));
     }
@@ -274,43 +276,40 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     });
     setProposalFile(null);
     setErrors({});
-    setDisplayValOpti(formatRupiah(safe.valOpti)); // Reset display value
+    setDisplayValOpti(formatRupiah(safe.valOpti));
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const payload = { ...formData };
-    const schema = getValidationSchema(user?.role);
-    await schema.validate(payload, { abortEarly: false });
+    e.preventDefault();
+    try {
+      const payload = { ...formData };
+      const schema = getValidationSchema(user?.role);
+      await schema.validate(payload, { abortEarly: false });
 
-    // === NORMALISASI FIELD JADWAL SESUAI JENIS ===
-    if (payload.jenisOpti === "Project") {
-      // map dari field "training" (yang dipakai form) ke field project
-      payload.startProject = payload.startTraining || "";
-      payload.endProject   = payload.endTraining   || "";
-      payload.placeProject = payload.placeTraining || "";
-      payload.idTypeProject = payload.idTypeTraining ?? "";
-    } else if (payload.jenisOpti === "Training") {
-      // pastikan field training terisi dengan benar
-      payload.startTraining = payload.startTraining || "";
-      payload.endTraining   = payload.endTraining   || "";
-      payload.placeTraining = payload.placeTraining || "";
-      payload.idTypeTraining = payload.idTypeTraining ?? "";
+      // === NORMALISASI FIELD JADWAL SESUAI JENIS ===
+      if (payload.jenisOpti === "Project") {
+        payload.startProject = payload.startTraining || "";
+        payload.endProject   = payload.endTraining   || "";
+        payload.placeProject = payload.placeTraining || "";
+        payload.idTypeProject = payload.idTypeTraining ?? "";
+      } else if (payload.jenisOpti === "Training") {
+        payload.startTraining = payload.startTraining || "";
+        payload.endTraining   = payload.endTraining   || "";
+        payload.placeTraining = payload.placeTraining || "";
+        payload.idTypeTraining = payload.idTypeTraining ?? "";
+      }
+
+      const fd = new FormData();
+      Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
+      if (proposalFile) fd.append("proposalOpti", proposalFile);
+
+      onSubmit(fd);
+    } catch (err) {
+      const vErr = {};
+      if (err.inner) err.inner.forEach((e) => (vErr[e.path] = e.message));
+      setErrors(vErr);
     }
-
-    const fd = new FormData();
-    Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
-    if (proposalFile) fd.append("proposalOpti", proposalFile);
-
-    onSubmit(fd);
-  } catch (err) {
-    const vErr = {};
-    if (err.inner) err.inner.forEach((e) => (vErr[e.path] = e.message));
-    setErrors(vErr);
   }
-}
-
 
   const isExpertRequired =
     formData.jenisOpti === "Training" || formData.jenisOpti === "Project";
@@ -472,7 +471,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
         {/* Proposal file */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">
-            Proposal Opti
+            Lampiran Dokumen
           </label>
           <input
             type="file"
@@ -546,7 +545,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                   *
                 </label>
                 <select
-                  name="idTypeTraining" // Re-use state, backend should handle mapping
+                  name="idTypeTraining"
                   value={formData.idTypeTraining || ""}
                   defaultValue={formData.idTypeTraining || ""}
                   onChange={handleChange}
@@ -580,11 +579,11 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                     Rp.
                   </span>
                   <input
-                    type="text" // Change type to text
+                    type="text"
                     name="valOpti"
-                    value={displayValOpti} // Use displayValOpti for display
+                    value={displayValOpti}
                     onChange={handleChange}
-                    onBlur={handleBlur} // Add onBlur handler
+                    onBlur={handleBlur}
                     placeholder="Value"
                     className={inputClass + " pl-12"}
                   />
@@ -600,7 +599,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                 <label className="block text-sm font-medium mb-1">Mulai</label>
                 <input
                   type="datetime-local"
-                  name="startTraining" // Re-use state
+                  name="startTraining"
                   value={formData.startTraining || ""}
                   defaultValue={formData.startTraining || ""}
                   onChange={handleChange}
@@ -614,7 +613,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
                 </label>
                 <input
                   type="datetime-local"
-                  name="endTraining" // Re-use state
+                  name="endTraining"
                   value={formData.endTraining || ""}
                   defaultValue={formData.endTraining || ""}
                   onChange={handleChange}
@@ -629,7 +628,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               </label>
               <input
                 type="text"
-                name="placeTraining" // Re-use state
+                name="placeTraining"
                 value={formData.placeTraining || ""}
                 defaultValue={formData.placeTraining || ""}
                 onChange={handleChange}

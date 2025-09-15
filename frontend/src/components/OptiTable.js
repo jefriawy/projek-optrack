@@ -15,8 +15,8 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Entry Level":
-        return "bg-blue-100 text-blue-800";
+      case "Entry":
+        return "bg-purple-100 text-purple-800";
       case "Delivered":
         return "bg-yellow-100 text-yellow-800";
       case "PO Received":

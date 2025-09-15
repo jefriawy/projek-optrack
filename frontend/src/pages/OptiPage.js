@@ -18,7 +18,7 @@ import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
 import { FaSearch } from "react-icons/fa";
 
-/* ====== Base URL (untuk avatar jika path relatif) ====== */
+/* ====== Base URL (untuk avatar & API) ====== */
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 /* ====== Helper chip profil (nama & avatar) ====== */
@@ -44,9 +44,7 @@ const getAvatarUrl = (user) => {
     null;
   if (!candidate) return null;
   if (/^https?:\/\//i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate)
-    .split(/[\\/]/)
-    .pop()}`;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -79,7 +77,7 @@ const OptiPage = () => {
     async (searchQuery = "", page = 1) => {
       if (!user?.token) return;
       try {
-        const response = await axios.get("http://localhost:3000/api/opti", {
+        const response = await axios.get(`${API_BASE}/api/opti`, {
           params: { search: searchQuery, page, limit: 10 },
           headers: { Authorization: `Bearer ${user.token}` },
         });
@@ -93,7 +91,7 @@ const OptiPage = () => {
         );
       }
     },
-    [user] // <-- 'user' sudah benar ada di sini
+    [user, API_BASE]
   );
 
   useEffect(() => {
@@ -110,18 +108,12 @@ const OptiPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
-  // ====================== PERUBAHAN DI SINI ======================
-  // useEffect ini sekarang akan memanggil fetchOptis setiap kali
-  // user berubah (misalnya dari null menjadi object setelah login) atau
-  // saat currentPage berubah.
   useEffect(() => {
     if (user) {
-      // Hanya panggil jika user sudah terautentikasi
       fetchOptis(searchTerm, currentPage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, currentPage]);
-  // ====================== AKHIR PERUBAHAN ======================
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
@@ -138,12 +130,9 @@ const OptiPage = () => {
 
   const handleEditOpti = async (opti) => {
     try {
-      const response = await axios.get(
-        `http://localhost:3000/api/opti/${opti.idOpti}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
+      const response = await axios.get(`${API_BASE}/api/opti/${opti.idOpti}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
       setEditingOpti(response.data);
       setFormModalOpen(true);
     } catch (err) {
@@ -156,12 +145,9 @@ const OptiPage = () => {
     setViewModalOpen(true);
     setIsDetailLoading(true);
     try {
-      const response = await axios.get(
-        `http://localhost:3000/api/opti/${opti.idOpti}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
+      const response = await axios.get(`${API_BASE}/api/opti/${opti.idOpti}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
       setEditingOpti(response.data);
     } catch (err) {
       console.error("Error fetching opti detail:", err);
@@ -179,20 +165,25 @@ const OptiPage = () => {
 
   const handleFormSubmit = async (formData) => {
     const url = editingOpti
-      ? `http://localhost:3000/api/opti/${editingOpti.idOpti}`
-      : "http://localhost:3000/api/opti";
+      ? `${API_BASE}/api/opti/${editingOpti.idOpti}`
+      : `${API_BASE}/api/opti`;
     const method = editingOpti ? "put" : "post";
     try {
       await axios[method](url, formData, {
-        headers: { Authorization: `Bearer ${user.token}` },
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          // NOTE: jangan set 'Content-Type' manual; Axios akan set boundary untuk FormData.
+        },
       });
       closeModal();
     } catch (err) {
-      console.error(
-        "Error submitting form:",
-        err.response ? err.response.data : err.message
-      );
-      alert("Gagal menyimpan data. Periksa konsol untuk detail.");
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Gagal menyimpan data.";
+      console.error("Error submitting form:", err?.response?.data || err);
+      alert(`Gagal menyimpan: ${msg}`);
     }
   };
 
@@ -251,7 +242,9 @@ const OptiPage = () => {
             )}
             <div className="leading-5">
               <div className="text-sm font-bold">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+              <div className="text-xs text-gray-500">
+                Logged in • {user?.role || "User"}
+              </div>
             </div>
           </div>
         </div>

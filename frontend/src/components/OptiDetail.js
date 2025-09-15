@@ -55,16 +55,14 @@ const OptiDetail = ({ opti }) => {
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case "Follow Up":
-        return { text: "Follow Up", color: "bg-blue-100 text-blue-800" };
-      case "On-Progress":
-        return { text: "On-Progress", color: "bg-yellow-400 text-white" };
-      case "Success":
-        return { text: "Success", color: "bg-green-500 text-white" };
-      case "Failed":
-        return { text: "Failed", color: "bg-red-500 text-white" };
-      case "Just Get Info":
-        return { text: "Just Get Info", color: "bg-orange-100 text-orange-800" };
+        case "Entry":
+        return { text: "Entry", color: "bg-purple-100 text-purple-800" };
+        case "Delivered":
+        return { text: "Delivered", color: "bg-yellow-100 text-yellow-800" };
+        case "PO Received":
+        return { text: "PO Received", color: "bg-green-100 text-green-800" };
+        case "Reject":
+        return { text: "Reject", color: "bg-red-100 text-red-800" };
       default:
         return { text: "-", color: "bg-gray-400 text-white" };
     }

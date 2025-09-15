@@ -30,6 +30,18 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+/** 
+ * Jalankan multer HANYA jika Content-Type multipart/form-data.
+ * Kalau JSON biasa, langsung next() tanpa parse file.
+ */
+const maybeUpload = (req, res, next) => {
+  const ct = req.headers["content-type"] || "";
+  if (ct.includes("multipart/form-data")) {
+    return upload.single("proposalOpti")(req, res, next);
+  }
+  return next();
+};
+
 // Dashboard Sales
 router.get(
   "/dashboard",
@@ -40,11 +52,11 @@ router.get(
 // List Opti
 router.get("/", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptis);
 
-// Create Opti (boleh Sales & Head Sales; Admin opsional kalau mau)
+// Create Opti
 router.post(
   "/",
   authMiddleware(["Sales", "Head Sales", "Admin"]),
-  upload.single("proposalOpti"),
+  maybeUpload,
   createOpti
 );
 
@@ -58,11 +70,11 @@ router.get(
 // Detail Opti
 router.get("/:id", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptiById);
 
-// Update Opti (perluas agar Admin juga bisa)
+// Update Opti
 router.put(
   "/:id",
   authMiddleware(["Sales", "Head Sales", "Admin"]),
-  upload.single("proposalOpti"),
+  maybeUpload,
   updateOpti
 );
 

@@ -16,6 +16,14 @@ const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ error: "Body kosong. Kirim sebagai multipart/form-data atau JSON." });
+    }
+
     const b = { ...req.body };
     const { user } = req;
 
@@ -35,7 +43,6 @@ const createOpti = async (req, res) => {
 
     const idOpti = await generateUserId("Opti");
 
-    // Prepare data for the new schema
     const optiData = {
       idOpti,
       nmOpti: b.nmOpti,
@@ -43,7 +50,7 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: 'Entry', // Default status
+      statOpti: "Entry",
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
@@ -51,13 +58,23 @@ const createOpti = async (req, res) => {
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
-      
+
       // New program-related fields
       startProgram: toNull(b.startTraining),
       endProgram: toNull(b.endTraining),
       placeProgram: toNull(b.placeTraining),
-      idTypeTraining: b.jenisOpti === 'Training' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : null) : null,
-      idTypeProject: b.jenisOpti === 'Project' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : null) : null,
+      idTypeTraining:
+        b.jenisOpti === "Training"
+          ? toNull(b.idTypeTraining)
+            ? Number(b.idTypeTraining)
+            : null
+          : null,
+      idTypeProject:
+        b.jenisOpti === "Project"
+          ? toNull(b.idTypeTraining)
+            ? Number(b.idTypeTraining)
+            : null
+          : null,
 
       // File uploads
       proposalOpti: null,
@@ -65,8 +82,8 @@ const createOpti = async (req, res) => {
     };
 
     if (req.file) {
-      if (user.role === 'Sales') {
-        optiData.statOpti = 'Delivered';
+      if (user.role === "Sales") {
+        optiData.statOpti = "Delivered";
         optiData.buktiPembayaran = path.basename(req.file.filename);
       } else {
         optiData.proposalOpti = path.basename(req.file.filename);
@@ -126,37 +143,59 @@ const updateOpti = async (req, res) => {
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
           : existingOpti.valOpti,
-      
+
       startProgram: toNull(b.startTraining) ?? existingOpti.startProgram,
       endProgram: toNull(b.endTraining) ?? existingOpti.endProgram,
       placeProgram: toNull(b.placeTraining) ?? existingOpti.placeProgram,
-      
-      idTypeTraining: b.jenisOpti === 'Training' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : existingOpti.idTypeTraining) : existingOpti.idTypeTraining,
-      idTypeProject: b.jenisOpti === 'Project' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : existingOpti.idTypeProject) : existingOpti.idTypeProject,
+
+      idTypeTraining:
+        b.jenisOpti === "Training"
+          ? toNull(b.idTypeTraining)
+            ? Number(b.idTypeTraining)
+            : existingOpti.idTypeTraining
+          : existingOpti.idTypeTraining,
+      idTypeProject:
+        b.jenisOpti === "Project"
+          ? toNull(b.idTypeTraining)
+            ? Number(b.idTypeTraining)
+            : existingOpti.idTypeProject
+          : existingOpti.idTypeProject,
 
       proposalOpti: existingOpti.proposalOpti,
       buktiPembayaran: existingOpti.buktiPembayaran,
     };
 
     if (req.file) {
-      if (user.role === 'Sales') {
-        optiData.statOpti = 'Delivered';
+      if (user.role === "Sales") {
+        optiData.statOpti = "Delivered";
         optiData.buktiPembayaran = path.basename(req.file.filename);
         if (existingOpti.buktiPembayaran) {
-          const oldFilePath = path.join(__dirname, "..", "uploads", "proposals", existingOpti.buktiPembayaran);
+          const oldFilePath = path.join(
+            __dirname,
+            "..",
+            "uploads",
+            "proposals",
+            existingOpti.buktiPembayaran
+          );
           fs.unlink(oldFilePath, () => {});
         }
       } else {
         optiData.proposalOpti = path.basename(req.file.filename);
         if (existingOpti.proposalOpti) {
-          const oldFilePath = path.join(__dirname, "..", "uploads", "proposals", existingOpti.proposalOpti);
+          const oldFilePath = path.join(
+            __dirname,
+            "..",
+            "uploads",
+            "proposals",
+            existingOpti.proposalOpti
+          );
           fs.unlink(oldFilePath, () => {});
         }
       }
     }
-    
-    if (user.role !== 'Sales' && b.idExpert && !existingOpti.idExpert) {
-        optiData.statOpti = 'PO Received';
+
+    if (user.role !== "Sales" && b.idExpert && !existingOpti.idExpert) {
+      optiData.statOpti = "PO Received";
     }
 
     await Opti.update(id, optiData, connection);
@@ -209,27 +248,27 @@ const getOptis = async (req, res) => {
 
 const getFormOptions = async (req, res) => {
   try {
-    let customers;
+    // Selalu kirim experts & sumber terlebih dulu
+    const experts = await Expert.findAll();
+    const [sumberRows] = await pool.query(
+      "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
+    );
+
+    // Customers tergantung role
+    let customers = [];
     if (req.user.role === "Sales") {
       const idSales = req.user.id;
       const [salesRow] = await pool.query(
         "SELECT idSales FROM sales WHERE idSales = ?",
         [idSales]
       );
-      if (!salesRow.length) {
-        return res
-          .status(403)
-          .json({ error: "User is not a registered sales" });
-      }
-      customers = await Customer.findBySalesId(idSales);
+      customers = salesRow.length
+        ? await Customer.findBySalesId(idSales)
+        : []; // jangan 403; biar FE tetap dapat experts/sumber
     } else {
       customers = await Customer.findAll();
     }
 
-    const [sumberRows] = await pool.query(
-      "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
-    );
-    const experts = await Expert.findAll();
     res.json({
       customers,
       sumber: sumberRows ?? [],
@@ -253,30 +292,27 @@ const getOptiById = async (req, res) => {
         .json({ error: "Opportunity not found or not accessible" });
     }
 
-    // Map new DB columns back to old form field names for frontend compatibility
+    // Map kolom program baru ke field form lama (FE)
     const transformedOpti = {
       ...opti,
       startTraining: opti.startProgram ?? null,
       endTraining: opti.endProgram ?? null,
       placeTraining: opti.placeProgram ?? null,
-      // The form reuses idTypeTraining for both projects and trainings
       idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
-      
+
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
       buktiPembayaranPath: opti.buktiPembayaran
-        ? `uploads/proposals/${opti.buktiPembayaran}` // Assuming same folder
+        ? `uploads/proposals/${opti.buktiPembayaran}`
         : null,
     };
-    // Clean up fields that are not directly on the form
     delete transformedOpti.proposalOpti;
     delete transformedOpti.buktiPembayaran;
     delete transformedOpti.startProgram;
     delete transformedOpti.endProgram;
     delete transformedOpti.placeProgram;
     delete transformedOpti.idTypeProject;
-
 
     res.json(transformedOpti);
   } catch (error) {
@@ -291,14 +327,6 @@ const getSalesDashboardData = async (req, res) => {
   try {
     let pipelineQuery, performanceQuery, typesQuery, topWonDealsQuery;
 
-    // Subquery to get IDs of opportunities that are "Closed Won" (i.e., have become a project or training)
-    const wonOptiIdsSubquery = `
-      SELECT idOpti FROM training WHERE idOpti IS NOT NULL
-      UNION
-      SELECT idOpti FROM project WHERE idOpti IS NOT NULL
-    `;
-
-    // Query baru untuk performa bulanan (Closed Won)
     const performanceQueryBody = `
       SELECT
         DATE_FORMAT(won_deals.start_date, '%Y-%m') AS month,
@@ -310,14 +338,21 @@ const getSalesDashboardData = async (req, res) => {
       ) AS won_deals
     `;
 
-    if (role === 'Admin' || role === 'Head Sales') {
-      pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti GROUP BY statOpti`);
-      
-      performanceQuery = pool.query(`${performanceQueryBody} GROUP BY month ORDER BY month ASC`);
-      
-      typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti GROUP BY jenisOpti`);
-      
-      topWonDealsQuery = pool.query(`
+    if (role === "Admin" || role === "Head Sales") {
+      pipelineQuery = pool.query(
+        `SELECT statOpti, COUNT(*) as count FROM opti GROUP BY statOpti`
+      );
+
+      performanceQuery = pool.query(
+        `${performanceQueryBody} GROUP BY month ORDER BY month ASC`
+      );
+
+      typesQuery = pool.query(
+        `SELECT jenisOpti, COUNT(*) as count FROM opti GROUP BY jenisOpti`
+      );
+
+      topWonDealsQuery = pool.query(
+        `
         SELECT
           won_deals.name AS nmOpti,
           won_deals.customer AS corpCustomer,
@@ -337,18 +372,28 @@ const getSalesDashboardData = async (req, res) => {
         ) AS won_deals
         ORDER BY won_deals.value DESC
         LIMIT 5
-      `);
-
+      `
+      );
     } else { // Sales
       const params = [idSales];
       const performanceParams = [idSales];
-      pipelineQuery = pool.query(`SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`, params);
-      
-      performanceQuery = pool.query(`${performanceQueryBody} WHERE won_deals.idSales = ? GROUP BY month ORDER BY month ASC`, performanceParams);
-      
-      typesQuery = pool.query(`SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`, params);
-      
-      topWonDealsQuery = pool.query(`
+      pipelineQuery = pool.query(
+        `SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`,
+        params
+      );
+
+      performanceQuery = pool.query(
+        `${performanceQueryBody} WHERE won_deals.idSales = ? GROUP BY month ORDER BY month ASC`,
+        performanceParams
+      );
+
+      typesQuery = pool.query(
+        `SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`,
+        params
+      );
+
+      topWonDealsQuery = pool.query(
+        `
         SELECT
           won_deals.name AS nmOpti,
           won_deals.customer AS corpCustomer,
@@ -369,7 +414,9 @@ const getSalesDashboardData = async (req, res) => {
         WHERE won_deals.idSales = ?
         ORDER BY won_deals.value DESC
         LIMIT 5
-      `, params);
+      `,
+        params
+      );
     }
 
     const [
@@ -389,9 +436,9 @@ const getSalesDashboardData = async (req, res) => {
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
 
-    const allPipelineStages = ['Entry', 'Delivered', 'PO Received', 'Reject'];
-    const finalPipelineStats = allPipelineStages.map(stage => {
-      const found = pipelineStats.find(s => s.statOpti === stage);
+    const allPipelineStages = ["Entry", "Delivered", "PO Received", "Reject"];
+    const finalPipelineStats = allPipelineStages.map((stage) => {
+      const found = pipelineStats.find((s) => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };
     });
 
@@ -401,7 +448,6 @@ const getSalesDashboardData = async (req, res) => {
       opportunityTypes,
       topWonDeals,
     });
-
   } catch (error) {
     console.error("Error fetching sales dashboard data:", error);
     res.status(500).json({ error: "Server error" });
