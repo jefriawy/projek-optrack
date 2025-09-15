@@ -25,7 +25,7 @@ const BASE_QUERY = `
 // Get all projects (untuk Admin)
 const getAllProjects = async () => {
   const [rows] = await db.query(
-    `${BASE_QUERY} WHERE o.statOpti = 'Success' ORDER BY p.startProject DESC`
+    `${BASE_QUERY} WHERE o.statOpti = 'PO Received' ORDER BY p.startProject DESC`
   );
   return rows;
 };
@@ -46,13 +46,12 @@ async function createProject(data, connection = db) {
     endProject,
     idCustomer,
     idOpti,
-    idSales,
     idExpert,
     placeProject,
   } = data;
   const query = `INSERT INTO project 
-    (idProject, nmProject, idTypeProject, startProject, endProject, idCustomer, idOpti, idSales, idExpert, placeProject) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    (idProject, nmProject, idTypeProject, startProject, endProject, idCustomer, idOpti, idExpert, placeProject) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   await connection.query(query, [
     idProject,
     nmProject,
@@ -61,7 +60,6 @@ async function createProject(data, connection = db) {
     endProject,
     idCustomer,
     idOpti,
-    idSales,
     idExpert,
     placeProject,
   ]);
@@ -108,7 +106,7 @@ const deleteProject = async (id) => {
 // Ambil project berdasarkan idExpert (sekarang menggunakan BASE_QUERY)
 async function getByExpertId(expertId) {
   const [rows] = await db.query(
-    `${BASE_QUERY} WHERE p.idExpert = ? ORDER BY p.startProject DESC`,
+    `${BASE_QUERY} WHERE p.idExpert = ? AND o.statOpti = 'PO Received' ORDER BY p.startProject DESC`,
     [expertId]
   );
   return rows;
@@ -117,7 +115,7 @@ async function getByExpertId(expertId) {
 // Ambil project berdasarkan idSales (sekarang menggunakan BASE_QUERY)
 async function getBySalesId(salesId) {
   const [rows] = await db.query(
-    `${BASE_QUERY} WHERE o.idSales = ? AND o.statOpti = 'Success' ORDER BY p.startProject DESC`,
+    `${BASE_QUERY} WHERE o.idSales = ? AND o.statOpti = 'PO Received' ORDER BY p.startProject DESC`,
     [salesId]
   );
   return rows;

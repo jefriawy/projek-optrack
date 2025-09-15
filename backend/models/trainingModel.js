@@ -7,8 +7,8 @@ async function createTraining(p, connection = pool) {
   const [r] = await connection.query(
     `INSERT INTO training
      (idTraining, idOpti, nmTraining, idTypeTraining, startTraining, endTraining,
-      idExpert, placeTraining, examTraining, examDateTraining, idCustomer)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      idExpert, placeTraining, idCustomer)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
     [
       p.idTraining,
       p.idOpti,
@@ -18,8 +18,6 @@ async function createTraining(p, connection = pool) {
       p.endTraining,
       p.idExpert,
       p.placeTraining,
-      p.examTraining,
-      p.examDateTraining,
       p.idCustomer,
     ]
   );
@@ -35,7 +33,7 @@ async function getAllTraining() {
        LEFT JOIN sales s ON s.idSales = o.idSales
        LEFT JOIN expert e ON e.idExpert = tr.idExpert
        LEFT JOIN customer c ON c.idCustomer = tr.idCustomer
-     WHERE o.statOpti = 'Success'
+     WHERE o.statOpti = 'PO Received'
      ORDER BY tr.startTraining DESC`
   );
   return rows;
@@ -71,8 +69,6 @@ async function updateTraining(idTraining, p) {
        endTraining = COALESCE(?, endTraining),
        idExpert = COALESCE(?, idExpert),
        placeTraining = COALESCE(?, placeTraining),
-       examTraining = COALESCE(?, examTraining),
-       examDateTraining = COALESCE(?, examDateTraining),
        idCustomer = COALESCE(?, idCustomer)
      WHERE idTraining = ?`,
     [
@@ -83,8 +79,6 @@ async function updateTraining(idTraining, p) {
       p.endTraining ?? null,
       p.idExpert ?? null,
       p.placeTraining ?? null,
-      p.examTraining ?? null,
-      p.examDateTraining ?? null,
       p.idCustomer ?? null,
       idTraining,
     ]
@@ -116,7 +110,7 @@ async function getByExpertId(expertId) {
      LEFT JOIN sales s          ON s.idSales       = o.idSales  -- Add this line
      LEFT JOIN expert e         ON e.idExpert      = tr.idExpert -- Add this line
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
-     WHERE tr.idExpert = ? AND o.statOpti = 'Success'
+     WHERE tr.idExpert = ? AND o.statOpti = 'PO Received'
      ORDER BY tr.startTraining DESC`,
     [expertId]
   );
@@ -140,7 +134,7 @@ async function getBySalesId(salesId) {
      LEFT JOIN sales s          ON s.idSales       = o.idSales
      LEFT JOIN expert e         ON e.idExpert      = tr.idExpert
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
-     WHERE o.idSales = ? AND o.statOpti = 'Success'
+     WHERE o.idSales = ? AND o.statOpti = 'PO Received'
      ORDER BY tr.startTraining DESC`,
     [salesId]
   );

@@ -12,13 +12,13 @@ const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
-
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
     const b = { ...req.body };
     const { user } = req;
+
     let idSalesForOpti;
     if (user.role === "Sales") {
       idSalesForOpti = user.id;
@@ -34,25 +34,8 @@ const createOpti = async (req, res) => {
     }
 
     const idOpti = await generateUserId("Opti");
-    const statOpti = user.role === "Sales" ? "Just Get Info" : b.statOpti;
 
-    // Normalisasi field jadwal (support nama field Training dipakai untuk Project)
-    const norm = {
-      idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : null,
-      startTraining: toNull(b.startTraining),
-      endTraining: toNull(b.endTraining),
-      placeTraining: toNull(b.placeTraining),
-
-      idTypeProject: b.idTypeProject
-        ? Number(b.idTypeProject)
-        : b.idTypeTraining
-        ? Number(b.idTypeTraining)
-        : null,
-      startProject: toNull(b.startProject) ?? toNull(b.startTraining),
-      endProject: toNull(b.endProject) ?? toNull(b.endTraining),
-      placeProject: toNull(b.placeProject) ?? toNull(b.placeTraining),
-    };
-
+    // Prepare data for the new schema
     const optiData = {
       idOpti,
       nmOpti: b.nmOpti,
@@ -60,66 +43,37 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti,
+      statOpti: 'Entry', // Default status
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
       jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
-      proposalOpti: req.file ? path.basename(req.file.filename) : null,
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
+      
+      // New program-related fields
+      startProgram: toNull(b.startTraining),
+      endProgram: toNull(b.endTraining),
+      placeProgram: toNull(b.placeTraining),
+      idTypeTraining: b.jenisOpti === 'Training' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : null) : null,
+      idTypeProject: b.jenisOpti === 'Project' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : null) : null,
+
+      // File uploads
+      proposalOpti: null,
+      buktiPembayaran: null,
     };
 
-    await Opti.create(optiData, idSalesForOpti, connection);
-
-    // Hanya buat data training/project jika status sudah Success
-    if (optiData.statOpti === "Success") {
-      if (optiData.jenisOpti === "Training") {
-        const [exists] = await connection.query(
-          "SELECT 1 FROM training WHERE idOpti = ? LIMIT 1",
-          [idOpti]
-        );
-        if (!exists.length) {
-          await Training.createTraining(
-            {
-              idTraining: await generateUserId("Training"),
-              idOpti,
-              nmTraining: optiData.nmOpti,
-              idTypeTraining: norm.idTypeTraining ?? 1,
-              startTraining: norm.startTraining,
-              endTraining: norm.endTraining,
-              idExpert: optiData.idExpert,
-              placeTraining: norm.placeTraining,
-              idCustomer: optiData.idCustomer,
-            },
-            connection
-          );
-        }
-      } else if (optiData.jenisOpti === "Project") {
-        const [exists] = await connection.query(
-          "SELECT 1 FROM project WHERE idOpti = ? LIMIT 1",
-          [idOpti]
-        );
-        if (!exists.length) {
-          await Project.createProject(
-            {
-              idProject: await generateUserId("Project"),
-              idOpti,
-              nmProject: optiData.nmOpti,
-              idTypeProject: norm.idTypeProject ?? 1,
-              startProject: norm.startProject,
-              endProject: norm.endProject,
-              placeProject: norm.placeProject,
-              idCustomer: optiData.idCustomer,
-              idSales: idSalesForOpti,
-              idExpert: optiData.idExpert,
-            },
-            connection
-          );
-        }
+    if (req.file) {
+      if (user.role === 'Sales') {
+        optiData.statOpti = 'Delivered';
+        optiData.buktiPembayaran = path.basename(req.file.filename);
+      } else {
+        optiData.proposalOpti = path.basename(req.file.filename);
       }
     }
+
+    await Opti.create(optiData, idSalesForOpti, connection);
 
     await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
@@ -131,9 +85,6 @@ const createOpti = async (req, res) => {
     connection.release();
   }
 };
-
-// Helper: jika baru kosong/null/undefined, pakai lama
-const getUpdated = (baru, lama) => (baru === undefined || baru === null || baru === "" ? lama : baru);
 
 const updateOpti = async (req, res) => {
   const { id } = req.params;
@@ -150,168 +101,68 @@ const updateOpti = async (req, res) => {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
+    // Authorization Check
     if (user.role === "Sales" && existingOpti.idSales !== user.id) {
       await connection.rollback();
       return res
         .status(403)
-        .json({
-          error: "Forbidden: You can only update your own opportunities.",
-        });
+        .json({ error: "Forbidden: You can only update your own opportunities." });
     }
 
-    // Normalisasi field jadwal dari body (mendukung nama training dipakai project)
-    const norm = {
-      // training
-      idTypeTraining: b.idTypeTraining ? Number(b.idTypeTraining) : null,
-      startTraining: toNull(b.startTraining),
-      endTraining: toNull(b.endTraining),
-      placeTraining: toNull(b.placeTraining),
-      // project
-      idTypeProject: b.idTypeProject
-        ? Number(b.idTypeProject)
-        : b.idTypeTraining
-        ? Number(b.idTypeTraining)
-        : null,
-      startProject: toNull(b.startProject) ?? toNull(b.startTraining),
-      endProject: toNull(b.endProject) ?? toNull(b.endTraining),
-      placeProject: toNull(b.placeProject) ?? toNull(b.placeTraining),
-    };
-
+    // Prepare data for the new schema
     const optiData = {
       nmOpti: b.nmOpti || existingOpti.nmOpti,
       idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
-      contactOpti: toNull(b.contactOpti),
-      emailOpti: toNull(b.emailOpti),
-      mobileOpti: toNull(b.mobileOpti),
-      statOpti: user.role === "Sales" ? existingOpti.statOpti : b.statOpti,
+      contactOpti: toNull(b.contactOpti) ?? existingOpti.contactOpti,
+      emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
+      mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
+      statOpti: b.statOpti || existingOpti.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
-      kebutuhan: toNull(b.kebutuhan),
+      kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
-      proposalOpti: existingOpti.proposalOpti,
       valOpti:
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
           : existingOpti.valOpti,
+      
+      startProgram: toNull(b.startTraining) ?? existingOpti.startProgram,
+      endProgram: toNull(b.endTraining) ?? existingOpti.endProgram,
+      placeProgram: toNull(b.placeTraining) ?? existingOpti.placeProgram,
+      
+      idTypeTraining: b.jenisOpti === 'Training' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : existingOpti.idTypeTraining) : existingOpti.idTypeTraining,
+      idTypeProject: b.jenisOpti === 'Project' ? (toNull(b.idTypeTraining) ? Number(b.idTypeTraining) : existingOpti.idTypeProject) : existingOpti.idTypeProject,
+
+      proposalOpti: existingOpti.proposalOpti,
+      buktiPembayaran: existingOpti.buktiPembayaran,
     };
 
     if (req.file) {
-      optiData.proposalOpti = path.basename(req.file.filename);
-      if (existingOpti.proposalOpti) {
-        const oldFilePath = path.join(
-          __dirname,
-          "..",
-          "uploads",
-          "proposals",
-          existingOpti.proposalOpti
-        );
-        fs.unlink(oldFilePath, () => {});
+      if (user.role === 'Sales') {
+        optiData.statOpti = 'Delivered';
+        optiData.buktiPembayaran = path.basename(req.file.filename);
+        if (existingOpti.buktiPembayaran) {
+          const oldFilePath = path.join(__dirname, "..", "uploads", "proposals", existingOpti.buktiPembayaran);
+          fs.unlink(oldFilePath, () => {});
+        }
+      } else {
+        optiData.proposalOpti = path.basename(req.file.filename);
+        if (existingOpti.proposalOpti) {
+          const oldFilePath = path.join(__dirname, "..", "uploads", "proposals", existingOpti.proposalOpti);
+          fs.unlink(oldFilePath, () => {});
+        }
       }
+    }
+    
+    if (user.role !== 'Sales' && b.idExpert && !existingOpti.idExpert) {
+        optiData.statOpti = 'PO Received';
     }
 
     await Opti.update(id, optiData, connection);
 
-    // ============== SYNC TURUNAN TRAINING/PROJECT (UPSERT) ==============
-    if (optiData.statOpti === "Success") {
-      const idOpti = id;
-
-      if (optiData.jenisOpti === "Training") {
-        const [trainings] = await connection.query(
-          "SELECT idTraining FROM training WHERE idOpti = ?",
-          [idOpti]
-        );
-        if (trainings.length === 0) {
-          await Training.createTraining(
-            {
-              idTraining: await generateUserId("Training"),
-              idOpti,
-              nmTraining: optiData.nmOpti,
-              idTypeTraining: norm.idTypeTraining ?? existingOpti.idTypeTraining ?? 1,
-              startTraining: norm.startTraining ?? existingOpti.startTraining ?? null,
-              endTraining: norm.endTraining ?? existingOpti.endTraining ?? null,
-              idExpert: optiData.idExpert,
-              placeTraining: norm.placeTraining ?? existingOpti.placeTraining ?? null,
-              idCustomer: optiData.idCustomer,
-            },
-            connection
-          );
-        } else {
-          // UPDATE existing training: hanya overwrite jika ada nilai baru
-          await connection.query(
-            `UPDATE training SET
-              nmTraining = COALESCE(?, nmTraining),
-              idTypeTraining = COALESCE(?, idTypeTraining),
-              startTraining = COALESCE(?, startTraining),
-              endTraining = COALESCE(?, endTraining),
-              placeTraining = COALESCE(?, placeTraining),
-              idExpert = COALESCE(?, idExpert),
-              idCustomer = COALESCE(?, idCustomer)
-            WHERE idOpti = ?`,
-            [
-              optiData.nmOpti || null,
-              norm.idTypeTraining,
-              norm.startTraining,
-              norm.endTraining,
-              norm.placeTraining,
-              optiData.idExpert ?? null,
-              optiData.idCustomer ?? null,
-              idOpti,
-            ]
-          );
-        }
-      } else if (optiData.jenisOpti === "Project") {
-        const [projects] = await connection.query(
-          "SELECT idProject FROM project WHERE idOpti = ?",
-          [idOpti]
-        );
-        if (projects.length === 0) {
-          await Project.createProject(
-            {
-              idProject: await generateUserId("Project"),
-              idOpti,
-              nmProject: optiData.nmOpti,
-              idTypeProject: norm.idTypeProject ?? existingOpti.idTypeProject ?? 1,
-              startProject: norm.startProject ?? existingOpti.startProject ?? null,
-              endProject: norm.endProject ?? existingOpti.endProject ?? null,
-              placeProject: norm.placeProject ?? existingOpti.placeProject ?? null,
-              idCustomer: optiData.idCustomer,
-              idSales: existingOpti.idSales,
-              idExpert: optiData.idExpert,
-            },
-            connection
-          );
-        } else {
-          // UPDATE existing project
-          await connection.query(
-            `UPDATE project SET
-              nmProject = COALESCE(?, nmProject),
-              idTypeProject = COALESCE(?, idTypeProject),
-              startProject = COALESCE(?, startProject),
-              endProject = COALESCE(?, endProject),
-              placeProject = COALESCE(?, placeProject),
-              idCustomer = COALESCE(?, idCustomer),
-              idSales = COALESCE(?, idSales),
-              idExpert = COALESCE(?, idExpert)
-            WHERE idOpti = ?`,
-            [
-              optiData.nmOpti || null,
-              norm.idTypeProject,
-              norm.startProject,
-              norm.endProject,
-              norm.placeProject,
-              optiData.idCustomer ?? null,
-              existingOpti.idSales ?? null,
-              optiData.idExpert ?? null,
-              idOpti,
-            ]
-          );
-        }
-      }
-    }
-
     await connection.commit();
-    res.json({ message: "Opportunity updated & schedule synced" });
+    res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
     await connection.rollback();
     console.error("Error updating opportunity:", error);
@@ -323,7 +174,6 @@ const updateOpti = async (req, res) => {
   }
 };
 
-// ... (sisa kode seperti getOptis, getFormOptions, dll. tidak perlu diubah) ...
 const getOptis = async (req, res) => {
   try {
     const searchTerm = req.query.search;
@@ -403,17 +253,30 @@ const getOptiById = async (req, res) => {
         .json({ error: "Opportunity not found or not accessible" });
     }
 
+    // Map new DB columns back to old form field names for frontend compatibility
     const transformedOpti = {
       ...opti,
-      idTypeTraining: opti.idTypeTraining ?? null,
-      startTraining: opti.startTraining ?? null,
-      endTraining: opti.endTraining ?? null,
-      placeTraining: opti.placeTraining ?? null,
+      startTraining: opti.startProgram ?? null,
+      endTraining: opti.endProgram ?? null,
+      placeTraining: opti.placeProgram ?? null,
+      // The form reuses idTypeTraining for both projects and trainings
+      idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
+      
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
+      buktiPembayaranPath: opti.buktiPembayaran
+        ? `uploads/proposals/${opti.buktiPembayaran}` // Assuming same folder
+        : null,
     };
+    // Clean up fields that are not directly on the form
     delete transformedOpti.proposalOpti;
+    delete transformedOpti.buktiPembayaran;
+    delete transformedOpti.startProgram;
+    delete transformedOpti.endProgram;
+    delete transformedOpti.placeProgram;
+    delete transformedOpti.idTypeProject;
+
 
     res.json(transformedOpti);
   } catch (error) {
@@ -526,7 +389,7 @@ const getSalesDashboardData = async (req, res) => {
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
 
-    const allPipelineStages = ['Follow Up', 'On-Progress', 'Success', 'Failed', 'Just Get Info'];
+    const allPipelineStages = ['Entry', 'Delivered', 'PO Received', 'Reject'];
     const finalPipelineStats = allPipelineStages.map(stage => {
       const found = pipelineStats.find(s => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };

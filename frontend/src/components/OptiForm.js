@@ -171,7 +171,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     contactOpti: "",
     emailOpti: "",
     mobileOpti: "",
-    statOpti: user?.role === "Sales" ? "Just Get Info" : "",
+    statOpti: "Entry",
     datePropOpti: new Date().toISOString().slice(0, 10),
     idSumber: "",
     kebutuhan: "",
@@ -189,10 +189,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
   const [formData, setFormData] = useState({
     ...baseState,
     ...seed,
-    statOpti:
-      user?.role === "Sales"
-        ? "Just Get Info"
-        : seed.statOpti || baseState.statOpti,
+    statOpti: seed.statOpti || baseState.statOpti,
     datePropOpti: seed.datePropOpti || baseState.datePropOpti,
   });
   const [displayValOpti, setDisplayValOpti] = useState(formatRupiah(seed.valOpti)); // New state for displayed value
@@ -226,10 +223,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     setFormData((prev) => ({
       ...baseState,
       ...safe,
-      statOpti:
-        user?.role === "Sales"
-          ? "Just Get Info"
-          : safe.statOpti || baseState.statOpti,
+      statOpti: safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     }));
     setDisplayValOpti(formatRupiah(safe.valOpti)); // Set display value based on initialData.valOpti
@@ -252,7 +246,14 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
 
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
   };
-  const handleFileChange = (e) => setProposalFile(e.target.files[0] || null);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0] || null;
+    setProposalFile(file);
+    // Jika user adalah Sales dan dia upload file, lgsg set status jadi Delivered
+    if (user?.role === "Sales" && file) {
+      setFormData((s) => ({ ...s, statOpti: "Delivered" }));
+    }
+  };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
@@ -268,10 +269,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
     setFormData({
       ...baseState,
       ...safe,
-      statOpti:
-        user?.role === "Sales"
-          ? "Just Get Info"
-          : safe.statOpti || baseState.statOpti,
+      statOpti: safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
     });
     setProposalFile(null);
@@ -433,11 +431,10 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               className={inputClass}
             >
               <option value="">Pilih status opportunity</option>
-              <option value="Follow Up">Follow Up</option>
-              <option value="On-Progress">On-Progress</option>
-              <option value="Success">Success</option>
-              <option value="Failed">Failed</option>
-              <option value="Just Get Info">Just Get Info</option>
+              <option value="Entry">Entry</option>
+              <option value="Delivered">Delivered</option>
+              <option value="PO Received">PO Received</option>
+              <option value="Reject">Reject</option>
             </select>
             {errors.statOpti && (
               <p className="text-red-600 text-sm">{errors.statOpti}</p>
