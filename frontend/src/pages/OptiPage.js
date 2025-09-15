@@ -73,12 +73,13 @@ const OptiPage = () => {
   const [debounceTimeout, setDebounceTimeout] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
+  // Search only by company name
   const fetchOptis = useCallback(
-    async (searchQuery = "", page = 1) => {
+    async (companyName = "", page = 1) => {
       if (!user?.token) return;
       try {
         const response = await axios.get(`${API_BASE}/api/opti`, {
-          params: { search: searchQuery, page, limit: 10 },
+          params: { companyName, page, limit: 10 },
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setOptis(response.data.data);
@@ -117,11 +118,17 @@ const OptiPage = () => {
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
+    // Filter by nama perusahaan (corpCustomer) jika searchTerm tidak kosong
+    if (searchTerm.trim() !== "") {
+      data = data.filter((opti) =>
+        (opti.corpCustomer || "").toLowerCase().includes(searchTerm.trim().toLowerCase())
+      );
+    }
     if (statusFilter) {
       data = data.filter((opti) => opti.statOpti === statusFilter);
     }
     return data;
-  }, [optis, statusFilter]);
+  }, [optis, statusFilter, searchTerm]);
 
   const handleAddOpti = () => {
     setEditingOpti(null);
@@ -223,10 +230,11 @@ const OptiPage = () => {
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
-              placeholder="Search Perusahaan..."
+              placeholder="Cari Nama Perusahaan..."
               className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Cari Nama Perusahaan"
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
@@ -281,11 +289,10 @@ const OptiPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">Semua Status</option>
-              <option value="Follow Up">Follow Up</option>
-              <option value="On-Progress">On-Progress</option>
-              <option value="Success">Success</option>
-              <option value="Failed">Failed</option>
-              <option value="Just Get Info">Just Get Info</option>
+              <option value="Entry">Entry</option>
+              <option value="Delivered">Delivered</option>
+              <option value="PO Received">PO Received</option>
+              <option value="reject">Reject</option>
             </select>
           </div>
         </div>
