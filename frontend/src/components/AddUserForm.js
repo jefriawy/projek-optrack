@@ -32,10 +32,19 @@ const expertSchema = Yup.object({
   Row: Yup.string().optional(),
 });
 
+const judgeSchema = Yup.object({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string().email("Invalid email format").required("Email is required"),
+  password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+  mobile: Yup.string().optional(),
+  role: Yup.string().oneOf(["Akademik", "Project Manager"]).required("Role is required"),
+});
+
 const validationSchemaMap = {
   Admin: adminSchema,
   Sales: salesSchema,
   Expert: expertSchema,
+  Judge: judgeSchema,
 };
 
 const AddUserForm = ({ userType, onClose, onSubmit }) => {
@@ -47,7 +56,14 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
     email: "",
     password: "",
     mobile: "",
-    role: userType === "Expert" ? "Expert" : "Sales", // Default sesuai tipe user
+    role:
+      userType === "Expert"
+        ? "Expert"
+        : userType === "Sales"
+        ? "Sales"
+        : userType === "Judge"
+        ? "Akademik"
+        : "",
     descSales: "",
     idSkill: "",
     statExpert: "",
@@ -142,6 +158,21 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
           <div>
             <label className="block text-gray-700 font-semibold mb-1">Description (Optional)</label>
             <textarea name="descSales" value={formData.descSales} onChange={handleChange} className="w-full p-2 border rounded-md" rows="3" />
+          </div>
+        </div>
+      )}
+
+      {/* --- Conditional Fields for Judge (Akademik/Project Manager) --- */}
+      {userType === 'Judge' && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Judge Details</h3>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="Akademik">Akademik</option>
+              <option value="Project Manager">Project Manager</option>
+            </select>
+            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
           </div>
         </div>
       )}

@@ -5,20 +5,22 @@ const pool = require("../config/database");
 const getAllUsers = async (req, res) => {
   try {
     // Query all tables in parallel
-    const [adminPromise, salesPromise, expertPromise] = [
-  pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
-  pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
-  pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, role FROM expert"),
+    const [adminPromise, salesPromise, expertPromise, judgePromise] = [
+      pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
+      pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
+      pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, role FROM expert"),
+      pool.query("SELECT idJudge as id, nmJudge as name, emailJudge as email, roleJudge as role FROM judge"),
     ];
 
-    const [[admins], [sales], [experts]] = await Promise.all([
+    const [[admins], [sales], [experts], [judges]] = await Promise.all([
       adminPromise,
       salesPromise,
       expertPromise,
+      judgePromise,
     ]);
 
     // Combine all users into a single array
-    const allUsers = [...admins, ...sales, ...experts];
+    const allUsers = [...admins, ...sales, ...experts, ...judges];
 
     res.json(allUsers);
   } catch (error) {
@@ -52,6 +54,11 @@ const deleteUserByRole = async (req, res) => {
     case 'head of expert':
       tableName = 'expert';
       idColumn = 'idExpert';
+      break;
+    case 'Akademik':
+    case 'Project Manager':
+      tableName = 'judge';
+      idColumn = 'idJudge';
       break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
