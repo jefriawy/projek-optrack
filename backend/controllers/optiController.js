@@ -195,6 +195,7 @@ const updateOpti = async (req, res) => {
 const getOptis = async (req, res) => {
   try {
     const searchTerm = req.query.search;
+    const program = req.query.program;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -204,7 +205,8 @@ const getOptis = async (req, res) => {
       searchTerm,
       limit,
       offset,
-      user
+      user,
+      program
     );
     const transformedOptis = optis.map((opti) => ({
       ...opti,

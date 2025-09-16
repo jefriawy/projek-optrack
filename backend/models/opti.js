@@ -24,7 +24,7 @@ const Opti = {
     return { idOpti };
   },
 
-  async findAllPaginated(searchTerm, limit, offset, user) {
+  async findAllPaginated(searchTerm, limit, offset, user, program) {
     let baseQuery = `
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
@@ -43,6 +43,11 @@ const Opti = {
     if (user && user.role === "Sales") {
       whereClauses.push(`o.idSales = ?`);
       params.push(user.id);
+    }
+
+    if (program && program !== 'Semua Program') {
+      whereClauses.push('o.jenisOpti = ?');
+      params.push(program);
     }
 
     if (whereClauses.length > 0) {

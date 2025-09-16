@@ -1,12 +1,6 @@
 // frontend/src/pages/OptiPage.js
 
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useContext, useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -64,6 +58,7 @@ const OptiPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [optis, setOptis] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeProgram, setActiveProgram] = useState('Semua Program');
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [editingOpti, setEditingOpti] = useState(null);
@@ -75,11 +70,11 @@ const OptiPage = () => {
 
   // Search only by company name
   const fetchOptis = useCallback(
-    async (companyName = "", page = 1) => {
+    async (companyName = "", page = 1, program = 'Semua Program') => {
       if (!user?.token) return;
       try {
         const response = await axios.get(`${API_BASE}/api/opti`, {
-          params: { companyName, page, limit: 10 },
+          params: { companyName, page, limit: 10, program },
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setOptis(response.data.data);
@@ -101,20 +96,20 @@ const OptiPage = () => {
     }
     const newTimeout = setTimeout(() => {
       setCurrentPage(1);
-      fetchOptis(searchTerm, 1);
+      fetchOptis(searchTerm, 1, activeProgram);
     }, 500);
     setDebounceTimeout(newTimeout);
 
     return () => clearTimeout(newTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [searchTerm, activeProgram]);
 
   useEffect(() => {
     if (user) {
-      fetchOptis(searchTerm, currentPage);
+      fetchOptis(searchTerm, currentPage, activeProgram);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, currentPage]);
+  }, [user, currentPage, activeProgram]);
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
@@ -167,7 +162,7 @@ const OptiPage = () => {
     setFormModalOpen(false);
     setViewModalOpen(false);
     setEditingOpti(null);
-    fetchOptis(searchTerm, currentPage);
+    fetchOptis(searchTerm, currentPage, activeProgram);
   };
 
   const handleFormSubmit = async (formData) => {
@@ -217,6 +212,21 @@ const OptiPage = () => {
 
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+
+  const ProgramTabs = () => (
+    <div className="mb-4 border-b border-gray-200">
+      <div className="flex space-x-6">
+        {['Semua Program', 'Training', 'Project', 'Outsource'].map((program) => (
+          <button
+            key={program}
+            onClick={() => setActiveProgram(program)}
+            className={`pb-2 text-sm font-medium transition-colors duration-200 ${activeProgram === program ? 'text-blue-600 font-semibold border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            {program}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex-grow p-8 bg-gray-100">
@@ -286,8 +296,7 @@ const OptiPage = () => {
               id="statusFilter"
               className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
+              onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">Semua Status</option>
               <option value="Entry">Entry</option>
               <option value="Delivered">Delivered</option>
@@ -296,6 +305,8 @@ const OptiPage = () => {
             </select>
           </div>
         </div>
+
+        <ProgramTabs />
 
         <div className="overflow-x-auto">
           <OptiTable
