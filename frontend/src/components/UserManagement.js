@@ -59,7 +59,7 @@ const UserManagement = () => {
   const [success, setSuccess] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', or 'Expert'
+  const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', 'Expert', atau 'Judge'
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null); // Will store { id, role, name }
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -156,6 +156,16 @@ const UserManagement = () => {
           role: formData.role, // Kirim role ke backend
         };
         break;
+      case 'Judge':
+        url = "http://localhost:3000/api/admin/judge";
+        payload = {
+          nmJudge: formData.name,
+          emailJudge: formData.email,
+          password: formData.password,
+          mobileJudge: formData.mobile,
+          roleJudge: formData.role, // 'Akademik' atau 'Project Manager'
+        };
+        break;
       default:
         setErrorMessage("Invalid user type to add.");
         return;
@@ -241,6 +251,12 @@ const UserManagement = () => {
           className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
         >
           + Tambah Expert
+        </button>
+        <button
+          onClick={() => handleOpenModal('Judge')}
+          className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition"
+        >
+          + Tambah Akademik/Project Manager
         </button>
       </div>
 
