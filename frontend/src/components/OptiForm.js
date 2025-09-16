@@ -438,28 +438,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             )}
         </div>
         )}
-        {user?.role !== "Sales" && (
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Status Opti *
-            </label>
-            <select
-              name="statOpti"
-              value={formData.statOpti || ""}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="">Pilih status opportunity</option>
-              <option value="Entry">Entry</option>
-              <option value="Delivered">Delivered</option>
-              <option value="PO Received">PO Received</option>
-              <option value="Failed">Failed</option>
-            </select>
-            {errors.statOpti && (
-              <p className="text-red-600 text-sm">{errors.statOpti}</p>
-            )}
-          </div>
-        )}
+
         <div>
           <label className="block text-sm font-medium mb-1">Sumber *</label>
           <select
