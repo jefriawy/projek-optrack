@@ -131,7 +131,7 @@ const getValidationSchema = (role) =>
       .when("jenisOpti", {
         is: (val) => val === "Training" || val === "Project",
         then: (s) => s.required("Tipe wajib dipilih"),
-        otherwise: (s) => s.nullable(),
+        otherwise: (s) => s.nullable().strip(),
       }),
     startTraining: Yup.string().nullable(),
     endTraining: Yup.string().nullable(),
@@ -417,6 +417,27 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
             <p className="text-red-600 text-sm">{errors.idExpert}</p>
           )}
         </div>
+        {initialData && (formData.jenisOpti === 'Training' || formData.jenisOpti === 'Project') && (
+        <div>
+            <label className="block text-sm font-medium mb-1">Ubah Status Program</label>
+            <select
+              name="statOpti"
+              value={formData.statOpti === 'Reject' ? 'Failed' : formData.statOpti}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              {/* Opsi default dari database */}
+              {initialData.statOpti && <option value={initialData.statOpti === 'Reject' ? 'Failed' : initialData.statOpti}>{initialData.statOpti === 'Reject' ? 'Failed' : initialData.statOpti}</option>}
+              {/* Opsi perubahan */}
+              {initialData.statOpti !== 'PO Received' && <option value="PO Received">PO Received</option>}
+              {initialData.statOpti !== 'Success' && <option value="Success">Success</option>}
+              {initialData.statOpti !== 'Reject' && <option value="Failed">Failed</option>}
+            </select>
+            {errors.statOpti && (
+              <p className="text-red-600 text-sm">{errors.statOpti}</p>
+            )}
+        </div>
+        )}
         {user?.role !== "Sales" && (
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -432,7 +453,7 @@ const OptiForm = ({ initialData, onSubmit, onClose, mode = "create" }) => {
               <option value="Entry">Entry</option>
               <option value="Delivered">Delivered</option>
               <option value="PO Received">PO Received</option>
-              <option value="Reject">Reject</option>
+              <option value="Failed">Failed</option>
             </select>
             {errors.statOpti && (
               <p className="text-red-600 text-sm">{errors.statOpti}</p>

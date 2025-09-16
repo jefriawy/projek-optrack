@@ -301,7 +301,7 @@ const OptiPage = () => {
               <option value="Entry">Entry</option>
               <option value="Delivered">Delivered</option>
               <option value="PO Received">PO Received</option>
-              <option value="reject">Reject</option>
+              <option value="Reject">Failed</option>
             </select>
           </div>
         </div>

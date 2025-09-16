@@ -50,7 +50,11 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: "Entry",
+      statOpti: (() => {
+        if (user.role === "Sales") return "Entry"; 
+        // Langsung gunakan status dari form, termasuk "Failed"
+        return b.statOpti || 'Entry';
+      })(),
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
@@ -110,12 +114,9 @@ const updateOpti = async (req, res) => {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
-    // Authorization Check
     if (user.role === "Sales" && existingOpti.idSales !== user.id) {
       await connection.rollback();
-      return res
-        .status(403)
-        .json({ error: "Forbidden: You can only update your own opportunities." });
+      return res.status(403).json({ error: "Forbidden: You can only update your own opportunities." });
     }
 
     // Prepare data for the new schema
@@ -125,7 +126,13 @@ const updateOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti) ?? existingOpti.contactOpti,
       emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
       mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
-      statOpti: b.statOpti || existingOpti.statOpti,
+      statOpti: (() => { // Logika yang disederhanakan untuk update status
+        if (b.statOpti) { 
+          // Langsung gunakan status dari form jika ada (termasuk "Failed", "Success", dll)
+          return b.statOpti;
+        }
+        return existingOpti.statOpti; // Jika tidak, gunakan status lama
+      })(),
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
@@ -170,11 +177,6 @@ const updateOpti = async (req, res) => {
         );
         fs.unlink(oldFilePath, () => {});
       }
-    }
-
-    // Perubahan status hanya terjadi di sini, jika idExpert diisi (oleh Head Sales/Admin)
-    if (user.role !== "Sales" && b.idExpert && !existingOpti.idExpert) {
-      optiData.statOpti = "PO Received";
     }
 
     await Opti.update(id, optiData, connection);

@@ -63,10 +63,12 @@ const OptiDetail = ({ opti }) => {
         return { text: "Entry", color: "bg-purple-100 text-purple-800" };
       case "Delivered":
         return { text: "Delivered", color: "bg-yellow-100 text-yellow-800" };
+      case "Success":
       case "PO Received":
-        return { text: "PO Received", color: "bg-green-100 text-green-800" };
+        return { text: status, color: "bg-green-100 text-green-800" };
+      case "Failed": // Digunakan di frontend
       case "Reject":
-        return { text: "Reject", color: "bg-red-100 text-red-800" };
+        return { text: "Failed", color: "bg-red-100 text-red-800" };
       default:
         return { text: "-", color: "bg-gray-400 text-white" };
     }
@@ -179,7 +181,7 @@ const OptiDetail = ({ opti }) => {
               <span
                 className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${statusInfo.color}`}
               >
-                {statusInfo.text}
+                {statusInfo.text} 
               </span>
             </p>
             <p>

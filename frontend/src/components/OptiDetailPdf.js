@@ -92,7 +92,7 @@ const OptiDetailPdf = ({ opti }) => (
           <View style={styles.column}>
             <View style={styles.infoGroup}>
               <Text style={styles.label}>Status:</Text>
-              <Text style={styles.value}>{opti && opti.statOpti ? opti.statOpti : "-"}</Text>
+              <Text style={styles.value}>{opti && opti.statOpti ? (opti.statOpti === 'Reject' ? 'Failed' : opti.statOpti) : "-"}</Text>
             </View>
             <View style={styles.infoGroup}>
               <Text style={styles.label}>Sumber:</Text>
