@@ -8,10 +8,9 @@ const Akademik = {
   },
 
   async create({ nmAkademik, emailAkademik, password, mobileAkademik, idAkademik }) {
-    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO akademik (idAkademik, nmAkademik, emailAkademik, password, mobileAkademik) VALUES (?, ?, ?, ?, ?)",
-      [idAkademik, nmAkademik, emailAkademik, hashedPassword, mobileAkademik || null]
+      [idAkademik, nmAkademik, emailAkademik, password, mobileAkademik || null]
     );
     return result[0];
   },
