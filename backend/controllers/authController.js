@@ -1,13 +1,22 @@
 // backend/controllers/authController.js
 const bcrypt = require("bcrypt");
-const { generateToken } = require("../utils/jwt");
+const jwt = require("jsonwebtoken"); // Import jsonwebtoken directly
 const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const Sales = require("../models/sales");
 const Expert = require("../models/expert");
+const Akademik = require("../models/akademik");
+const PM = require("../models/pm");
 
-const comparePassword = async (plainPassword, hashedPassword) => {
-  return await bcrypt.compare(plainPassword, hashedPassword);
+// Helper function to generate JWT
+const generateToken = (user) => {
+  const payload = {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+  };
+  // Token expires in 1 hour
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 };
 
 // NEW: role -> dashboard path
@@ -19,9 +28,12 @@ const roleToRedirect = (role) => {
       return "/dashboard/head-sales";
     case "Sales":
       return "/dashboard/sales";
-    
     case "Expert":
       return "/dashboard/expert";
+    case "Akademik":
+      return "/dashboard/akademik";
+    case "PM":
+      return "/dashboard/pm";
     default:
       return "/";
   }
@@ -38,70 +50,73 @@ const login = [
     }
 
     const { email, password } = req.body;
+
     try {
       let user = null;
 
-      // Admin
+      // Try to find user in Admin table
       const [adminRows] = await pool.query(
-        "SELECT * FROM admin WHERE emailAdmin = ?",
+        "SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, password, 'Admin' as role FROM admin WHERE emailAdmin = ?",
         [email]
       );
       if (adminRows.length > 0) {
-        const adminUser = adminRows[0];
-        const isMatch = await comparePassword(password, adminUser.password);
-        if (isMatch) {
-          user = {
-            id: adminUser.idAdmin,
-            name: adminUser.nmAdmin,
-            role: "Admin",
-          };
-        }
+        user = adminRows[0];
       }
 
-      // Sales / Head Sales
+      // Try to find user in Sales table
       if (!user) {
         const salesUser = await Sales.findByEmail(email);
         if (salesUser) {
-          console.log("Sales User found:", salesUser);
-          const isMatch = await comparePassword(password, salesUser.password);
-          if (isMatch) {
-            user = {
-              id: salesUser.idSales,
-              name: salesUser.nmSales,
-              role: salesUser.role, // "Sales" | "Head Sales"
-            };
-          }
+          user = { ...salesUser, id: salesUser.idSales, name: salesUser.nmSales };
         }
       }
 
-      // Expert
+      // Try to find user in Expert table
       if (!user) {
         const expertUser = await Expert.findByEmail(email);
         if (expertUser) {
-          const isMatch = await comparePassword(password, expertUser.password);
-          if (isMatch) {
-            user = {
-              id: expertUser.idExpert,
-              name: expertUser.nmExpert,
-              role: expertUser.role, // "Expert"
-            };
-          }
+          user = { ...expertUser, id: expertUser.idExpert, name: expertUser.nmExpert };
         }
       }
 
-      if (user) {
-        const token = generateToken(user);
-        const redirectPath = roleToRedirect(user.role);
-        return res.json({
-          token,
-          role: user.role,
-          userId: user.id,
-          name: user.name,
-          redirectPath, // <= FE pakai ini buat navigate
-        });
+      // Try to find user in Akademik table
+      if (!user) {
+        const akademikUser = await Akademik.findByEmail(email);
+        if (akademikUser) {
+          user = { ...akademikUser, id: akademikUser.idAkademik, name: akademikUser.nmAkademik, role: "Akademik", password: akademikUser.password };
+        }
       }
 
-      return res.status(401).json({ error: "Invalid credentials" });
+      // Try to find user in PM table
+      if (!user) {
+        const pmUser = await PM.findByEmail(email);
+        if (pmUser) {
+          user = { ...pmUser, id: pmUser.idPM, name: pmUser.nmPM, role: "PM", password: pmUser.password };
+        }
+      }
+
+      // If user not found in any table
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Compare password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Generate token and send response
+      const token = generateToken(user);
+      const redirectPath = roleToRedirect(user.role);
+
+      return res.json({
+        token,
+        role: user.role,
+        userId: user.id,
+        name: user.name,
+        redirectPath,
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Server error" });

@@ -33,7 +33,7 @@ const getAvatarUrl = (user) => {
     user.photoUser || 
     null;
   if (!candidate) return null;
-  if (/^https?:\\\]/i.test(candidate)) return candidate;
+  if (/^https?:\\\\]/i.test(candidate)) return candidate;
   return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
 };
 const Initials = ({ name }) => {
@@ -59,7 +59,7 @@ const UserManagement = () => {
   const [success, setSuccess] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', 'Expert', atau 'Judge'
+  const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', 'Expert', Akademik, PM
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null); // Will store { id, role, name }
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -156,14 +156,22 @@ const UserManagement = () => {
           role: formData.role, // Kirim role ke backend
         };
         break;
-      case 'Judge':
-        url = "http://localhost:3000/api/admin/judge";
+      case 'Akademik':
+        url = "http://localhost:3000/api/admin/akademik";
         payload = {
-          nmJudge: formData.name,
-          emailJudge: formData.email,
+          nmAkademik: formData.name,
+          emailAkademik: formData.email,
           password: formData.password,
-          mobileJudge: formData.mobile,
-          roleJudge: formData.role, // 'Akademik' atau 'Project Manager'
+          mobileAkademik: formData.mobile,
+        };
+        break;
+      case 'PM':
+        url = "http://localhost:3000/api/admin/pm";
+        payload = {
+          nmPM: formData.name,
+          emailPM: formData.email,
+          password: formData.password,
+          mobilePM: formData.mobile,
         };
         break;
       default:
@@ -223,6 +231,10 @@ const UserManagement = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'Expert':
         return 'bg-purple-100 text-purple-800';
+      case 'Akademik':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'PM':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -250,7 +262,18 @@ const UserManagement = () => {
         >
           + Tambah Expert
         </button>
-        
+        <button
+          onClick={() => handleOpenModal('Akademik')}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+        >
+          + Tambah Akademik
+        </button>
+        <button
+          onClick={() => handleOpenModal('PM')}
+          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+        >
+          + Tambah Project Manager
+        </button>
       </div>
 
       {success && <p className="mb-4 p-2 bg-green-100 text-green-700 rounded">{success}</p>}

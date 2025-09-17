@@ -32,19 +32,26 @@ const expertSchema = Yup.object({
   Row: Yup.string().optional(),
 });
 
-const judgeSchema = Yup.object({
+const akademikSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email format").required("Email is required"),
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
   mobile: Yup.string().optional(),
-  role: Yup.string().oneOf(["Akademik", "Project Manager"]).required("Role is required"),
+});
+
+const pmSchema = Yup.object({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string().email("Invalid email format").required("Email is required"),
+  password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+  mobile: Yup.string().optional(),
 });
 
 const validationSchemaMap = {
   Admin: adminSchema,
   Sales: salesSchema,
   Expert: expertSchema,
-  Judge: judgeSchema,
+  Akademik: akademikSchema,
+  PM: pmSchema,
 };
 
 const AddUserForm = ({ userType, onClose, onSubmit }) => {
@@ -61,8 +68,10 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         ? "Expert"
         : userType === "Sales"
         ? "Sales"
-        : userType === "Judge"
+        : userType === "Akademik"
         ? "Akademik"
+        : userType === "PM"
+        ? "PM"
         : "",
     descSales: "",
     idSkill: "",
@@ -162,7 +171,33 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         </div>
       )}
 
-      
+      {/* --- Conditional Fields for Akademik --- */}
+      {userType === 'Akademik' && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Akademik Details</h3>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="Akademik">Akademik</option>
+            </select>
+            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* --- Conditional Fields for PM --- */}
+      {userType === 'PM' && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Project Manager Details</h3>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="PM">PM</option>
+            </select>
+            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+          </div>
+        </div>
+      )}
 
       {/* --- Conditional Fields for Expert --- */}
       {userType === 'Expert' && (

@@ -27,6 +27,8 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
+import AkademikDashboard from "./pages/AkademikDashboard";
+import PMDashboard from "./pages/PMDashboard";
 
 
 import Layout from "./components/Layout";
@@ -41,9 +43,12 @@ const pathByRole = (role) => {
       return "/dashboard/head-sales";
     case "Sales":
       return "/dashboard/sales";
-    
     case "Expert":
       return "/dashboard/expert";
+    case "Akademik":
+      return "/dashboard/akademik";
+    case "PM":
+      return "/dashboard/pm";
     default:
       return "/login";
   }
@@ -134,6 +139,24 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/dashboard/akademik"
+        element={
+          <Protected allow={["Akademik"]}>
+            <Layout><AkademikDashboard /></Layout>
+          </Protected>
+        }
+      />
+
+      <Route
+        path="/dashboard/pm"
+        element={
+          <Protected allow={["PM"]}>
+            <Layout><PMDashboard /></Layout>
+          </Protected>
+        }
+      />
+
       
 
       {/* ===== MODULE PAGES ===== */}
@@ -186,7 +209,7 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Admin", "Akademik"]}>
             <Layout><TrainingPage /></Layout>
           </Protected>
         }
@@ -195,7 +218,7 @@ const AppRoutes = () => {
       <Route
         path="/project"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Admin", "PM"]}>
             <Layout><ProjectPage /></Layout>
           </Protected>
         }

@@ -35,6 +35,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         return "/dashboard/sales";
       case "Expert":
         return "/dashboard/expert";
+      case "Akademik":
+        return "/dashboard/akademik";
+      case "PM":
+        return "/dashboard/pm";
       default:
         return "/";
     }
@@ -63,6 +67,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: trainerIcon, name: "Training", link: "/training" },
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
+    ];
+  } else if (user && user.role === "Akademik") {
+    menuItems = [
+      { icon: homeIcon, name: "Home", link: homeLinkByRole },
+      { icon: trainerIcon, name: "Training", link: "/training" },
+    ];
+  } else if (user && user.role === "PM") {
+    menuItems = [
+      { icon: homeIcon, name: "Home", link: homeLinkByRole },
+      { icon: projectIcon, name: "Project", link: "/project" },
     ];
   }
 
