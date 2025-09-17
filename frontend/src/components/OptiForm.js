@@ -6,13 +6,11 @@ import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-// Function to format number to Rupiah currency string
 const formatRupiah = (amount) => {
   if (amount === null || amount === undefined || amount === "") return "";
   return new Intl.NumberFormat("id-ID").format(amount);
 };
 
-// Function to parse Rupiah currency string to number
 const parseRupiah = (rupiahString) => {
   if (typeof rupiahString !== "string") {
     return rupiahString;
@@ -38,12 +36,6 @@ const TYPE_PROJECTS = [
 
 const normalizeMySQLDateTimeToLocal = (val) => {
   if (!val) return "";
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return val.slice(0, 16);
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(val)) {
-    const [d, t] = val.split(" ");
-    const [hh, mm] = t.split(":");
-    return `${d}T${hh.padStart(2, "0")}:${mm.padStart(2, "0")}`;
-  }
   const d = new Date(val);
   if (!isNaN(d.getTime())) {
     const y = d.getFullYear();
@@ -55,10 +47,9 @@ const normalizeMySQLDateTimeToLocal = (val) => {
   }
   return "";
 };
+
 const normalizeDateOnly = (val) => {
   if (!val) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-  if (/^\d{4}-\d{2}-\d{2}\b/.test(val)) return val.slice(0, 10);
   const d = new Date(val);
   if (!isNaN(d.getTime())) {
     const y = d.getFullYear();
@@ -76,11 +67,11 @@ const normalizeInitialData = (data) => {
     datePropOpti: normalizeDateOnly(data.datePropOpti),
     startTraining: normalizeMySQLDateTimeToLocal(data.startTraining),
     endTraining: normalizeMySQLDateTimeToLocal(data.endTraining),
+    placeTraining: data.placeTraining || "",
     idTypeTraining:
       data.idTypeTraining === null || data.idTypeTraining === undefined
         ? ""
         : String(data.idTypeTraining),
-    placeTraining: data.placeTraining || "",
     valOpti: parseRupiah(data.valOpti),
   };
   return norm;
@@ -302,23 +293,18 @@ const OptiForm = ({
       const payload = { ...formData };
       const schema = getValidationSchema(user?.role);
       await schema.validate(payload, { abortEarly: false });
-
-      if (payload.jenisOpti === "Project") {
-        payload.startProject = payload.startTraining || "";
-        payload.endProject = payload.endTraining || "";
-        payload.placeProject = payload.placeTraining || "";
-        payload.idTypeProject = payload.idTypeTraining ?? "";
-      } else if (payload.jenisOpti === "Training") {
-        payload.startTraining = payload.startTraining || "";
-        payload.endTraining = payload.endTraining || "";
-        payload.placeTraining = payload.placeTraining || "";
-        payload.idTypeTraining = payload.idTypeTraining ?? "";
-      }
-
+    
       const fd = new FormData();
-      Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
-      if (proposalFile) fd.append("proposalOpti", proposalFile);
-
+      Object.entries(payload).forEach(([k, v]) => {
+          if (v !== null && v !== undefined) {
+              fd.append(k, v);
+          }
+      });
+      
+      if (proposalFile) {
+          fd.append("proposalOpti", proposalFile);
+      }
+      
       onSubmit(fd);
     } catch (err) {
       const vErr = {};
@@ -477,7 +463,6 @@ const OptiForm = ({
                   <p className="text-red-600 text-sm">{errors.idExpert}</p>
                 )}
               </div>
-              {/* ====================== PERUBAHAN DI SINI ====================== */}
               {user?.role === "Head Sales" && initialData && (
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -499,7 +484,6 @@ const OptiForm = ({
                   )}
                 </div>
               )}
-              {/* ====================== AKHIR PERUBAHAN ====================== */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Sumber *

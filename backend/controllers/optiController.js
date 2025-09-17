@@ -12,6 +12,17 @@ const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
+// Fungsi helper untuk memastikan format tanggal sesuai dengan MySQL
+const formatDateForDB = (dateString) => {
+  if (!dateString) return null;
+  const dateObj = new Date(dateString);
+  if (isNaN(dateObj.getTime())) {
+    console.error(`Invalid date format detected: ${dateString}`);
+    return null;
+  }
+  return dateObj.toISOString().slice(0, 19).replace('T', ' ');
+};
+
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -62,8 +73,8 @@ const createOpti = async (req, res) => {
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
 
-      startProgram: toNull(b.startTraining),
-      endProgram: toNull(b.endTraining),
+      startProgram: formatDateForDB(b.startTraining),
+      endProgram: formatDateForDB(b.endTraining),
       placeProgram: toNull(b.placeTraining),
       idTypeTraining:
         b.jenisOpti === "Training"
@@ -137,8 +148,8 @@ const updateOpti = async (req, res) => {
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
           : existingOpti.valOpti,
-      startProgram: toNull(b.startTraining) ?? existingOpti.startProgram,
-      endProgram: toNull(b.endTraining) ?? existingOpti.endProgram,
+      startProgram: formatDateForDB(b.startTraining) ?? existingOpti.startProgram,
+      endProgram: formatDateForDB(b.endTraining) ?? existingOpti.endProgram,
       placeProgram: toNull(b.placeTraining) ?? existingOpti.placeProgram,
       idTypeTraining:
         b.jenisOpti === "Training"
@@ -171,82 +182,106 @@ const updateOpti = async (req, res) => {
       }
     }
 
-    // Langkah 1: Update tabel 'opti'
     await Opti.update(id, optiData, connection);
 
-    // Langkah 2: Logika Otomatis saat status berubah menjadi 'Received'
     const isStatusChangedToReceived =
       optiData.statOpti === "Received" && existingOpti.statOpti !== "Received";
 
-    if (isStatusChangedToReceived && optiData.jenisOpti === "Training") {
-      const [existingTrainings] = await connection.query(
-        "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1",
-        [id]
-      );
-
-      if (existingTrainings.length === 0) {
-        console.log(`Creating new Training for Opti ${id}`);
-        const newTrainingId = await generateUserId("Training");
-        const trainingPayload = {
-          idTraining: newTrainingId,
-          idOpti: id,
-          nmTraining: optiData.nmOpti,
-          idTypeTraining: optiData.idTypeTraining,
-          startTraining: optiData.startProgram,
-          endTraining: optiData.endProgram,
-          idExpert: optiData.idExpert,
-          placeTraining: optiData.placeProgram,
-          idCustomer: optiData.idCustomer,
-        };
-        await Training.createTraining(trainingPayload, connection);
+    if (isStatusChangedToReceived) {
+      if (optiData.jenisOpti === "Training") {
+        const [existingTrainings] = await connection.query(
+          "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1",
+          [id]
+        );
+        if (existingTrainings.length === 0) {
+          console.log(`Creating new Training for Opti ${id}`);
+          const newTrainingId = await generateUserId("Training");
+          const trainingPayload = {
+            idTraining: newTrainingId,
+            idOpti: id,
+            nmTraining: optiData.nmOpti,
+            idTypeTraining: optiData.idTypeTraining,
+            startTraining: optiData.startProgram,
+            endTraining: optiData.endProgram,
+            idExpert: optiData.idExpert,
+            placeTraining: optiData.placeProgram,
+            idCustomer: optiData.idCustomer,
+          };
+          await Training.createTraining(trainingPayload, connection);
+        }
+      } else if (optiData.jenisOpti === "Project") {
+        const [existingProjects] = await connection.query(
+          "SELECT idProject FROM project WHERE idOpti = ? LIMIT 1",
+          [id]
+        );
+        if (existingProjects.length === 0) {
+          console.log(`Creating new Project for Opti ${id}`);
+          const newProjectId = await generateUserId("Project");
+          const projectPayload = {
+            idProject: newProjectId,
+            idOpti: id,
+            nmProject: optiData.nmOpti,
+            idTypeProject: optiData.idTypeProject,
+            startProject: optiData.startProgram,
+            endProject: optiData.endProgram,
+            idExpert: optiData.idExpert,
+            placeProject: optiData.placeProgram,
+            idCustomer: optiData.idCustomer,
+          };
+          await Project.createProject(projectPayload, connection);
+        }
       }
     }
-
-    // ====================== PERBAIKAN DIMULAI DI SINI ======================
-    // Langkah 3: Sinkronisasi pembaruan data dari Opti ke Training yang sudah ada
-    else if (
-      optiData.jenisOpti === "Training" &&
-      (existingOpti.statOpti === "Received" ||
-        existingOpti.statOpti === "Success")
-    ) {
-      console.log(`Syncing updates from Opti ${id} to existing Training...`);
+    
+    // Perbaikan: Sinkronisasi data ke tabel training/project saat di-update
+    if (optiData.jenisOpti === "Training" && (existingOpti.statOpti === "Received" || existingOpti.statOpti === "Success")) {
       const [trainingsToUpdate] = await connection.query(
         "SELECT idTraining FROM training WHERE idOpti = ?",
         [id]
       );
-
       if (trainingsToUpdate.length > 0) {
         const trainingId = trainingsToUpdate[0].idTraining;
-        const syncPayload = {
-          nmTraining: optiData.nmOpti,
-          startTraining: optiData.startProgram,
-          endTraining: optiData.endProgram,
-          placeTraining: optiData.placeProgram,
-          idExpert: optiData.idExpert,
-          idTypeTraining: optiData.idTypeTraining,
-        };
-
-        // Query UPDATE langsung ke tabel training
         await connection.query(
           `UPDATE training SET 
              nmTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, 
              idExpert = ?, idTypeTraining = ? 
            WHERE idTraining = ?`,
           [
-            syncPayload.nmTraining,
-            syncPayload.startTraining,
-            syncPayload.endTraining,
-            syncPayload.placeTraining,
-            syncPayload.idExpert,
-            syncPayload.idTypeTraining,
+            optiData.nmOpti,
+            optiData.startProgram,
+            optiData.endProgram,
+            optiData.placeProgram,
+            optiData.idExpert,
+            optiData.idTypeTraining,
             trainingId,
           ]
         );
-        console.log(`Training ${trainingId} has been synced successfully.`);
+      }
+    } else if (optiData.jenisOpti === "Project" && (existingOpti.statOpti === "Received" || existingOpti.statOpti === "Success")) {
+      const [projectsToUpdate] = await connection.query(
+        "SELECT idProject FROM project WHERE idOpti = ?",
+        [id]
+      );
+      if (projectsToUpdate.length > 0) {
+        const projectId = projectsToUpdate[0].idProject;
+        await connection.query(
+          `UPDATE project SET 
+             nmProject = ?, startProject = ?, endProject = ?, placeProject = ?, 
+             idExpert = ?, idTypeProject = ? 
+           WHERE idProject = ?`,
+          [
+            optiData.nmOpti,
+            optiData.startProgram,
+            optiData.endProgram,
+            optiData.placeProgram,
+            optiData.idExpert,
+            optiData.idTypeProject,
+            projectId,
+          ]
+        );
       }
     }
-    // ====================== AKHIR PERBAIKAN ======================
-
+    
     await connection.commit();
     res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
@@ -429,9 +464,7 @@ const getSalesDashboardData = async (req, res) => {
       FROM (
         SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
         UNION ALL
-        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti 
- 
- = o.idOpti WHERE t.startTraining IS NOT NULL
+        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti = o.idOpti WHERE t.startTraining IS NOT NULL
       ) AS won_deals
     `;
     if (role === "Admin" || role === "Head Sales") {
@@ -453,18 +486,13 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
-     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
-
           UNION ALL
-
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-         
-           JOIN customer c ON 
- t.idCustomer = c.idCustomer
+          JOIN customer c ON t.idCustomer = c.idCustomer
         ) AS won_deals
         ORDER BY won_deals.value DESC
         LIMIT 5
@@ -494,18 +522,13 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
-     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
-
           UNION ALL
-
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-         
-           JOIN customer c ON 
- t.idCustomer = c.idCustomer
+          JOIN customer c ON t.idCustomer = c.idCustomer
         ) AS won_deals
         WHERE won_deals.idSales = ?
         ORDER BY won_deals.value DESC

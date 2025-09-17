@@ -1,4 +1,5 @@
 // frontend/src/pages/OptiPage.js
+
 import React, {
   useContext,
   useState,
@@ -334,7 +335,6 @@ const OptiPage = () => {
             <label htmlFor="statusFilter" className="text-gray-700 mr-2">
               Status:
             </label>
-            {/* ====================== PERUBAHAN DI SINI ====================== */}
             <select
               id="statusFilter"
               className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -347,7 +347,6 @@ const OptiPage = () => {
               <option value="Success">Success</option>
               <option value="Received">Received</option>
             </select>
-            {/* ====================== AKHIR PERUBAHAN ====================== */}
           </div>
         </div>
 
