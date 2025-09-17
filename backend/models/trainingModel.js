@@ -33,7 +33,7 @@ async function getAllTraining() {
        LEFT JOIN sales s ON s.idSales = o.idSales
        LEFT JOIN expert e ON e.idExpert = tr.idExpert
        LEFT JOIN customer c ON c.idCustomer = tr.idCustomer
-     WHERE o.statOpti = 'PO Received'
+     WHERE o.statOpti = 'Received'
      ORDER BY tr.startTraining DESC`
   );
   return rows;
@@ -110,7 +110,7 @@ async function getByExpertId(expertId) {
      LEFT JOIN sales s          ON s.idSales       = o.idSales  -- Add this line
      LEFT JOIN expert e         ON e.idExpert      = tr.idExpert -- Add this line
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
-     WHERE tr.idExpert = ? AND o.statOpti = 'PO Received'
+     WHERE tr.idExpert = ? AND o.statOpti = 'Received'
      ORDER BY tr.startTraining DESC`,
     [expertId]
   );
@@ -134,7 +134,7 @@ async function getBySalesId(salesId) {
      LEFT JOIN sales s          ON s.idSales       = o.idSales
      LEFT JOIN expert e         ON e.idExpert      = tr.idExpert
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
-     WHERE o.idSales = ? AND o.statOpti = 'PO Received'
+     WHERE o.idSales = ? AND o.statOpti = 'Received'
      ORDER BY tr.startTraining DESC`,
     [salesId]
   );

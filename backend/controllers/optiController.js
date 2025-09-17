@@ -11,6 +11,7 @@ const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
+
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -94,6 +95,7 @@ const createOpti = async (req, res) => {
     connection.release();
   }
 };
+
 const updateOpti = async (req, res) => {
   const { id } = req.params;
   const b = { ...req.body };
@@ -123,7 +125,7 @@ const updateOpti = async (req, res) => {
       emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
       mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
       statOpti:
-        user.role === "Head Sales"
+        user.role === "Head Sales" || user.role === "Admin"
           ? b.statOpti || existingOpti.statOpti
           : existingOpti.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
@@ -169,7 +171,81 @@ const updateOpti = async (req, res) => {
       }
     }
 
+    // Langkah 1: Update tabel 'opti'
     await Opti.update(id, optiData, connection);
+
+    // Langkah 2: Logika Otomatis saat status berubah menjadi 'Received'
+    const isStatusChangedToReceived =
+      optiData.statOpti === "Received" && existingOpti.statOpti !== "Received";
+
+    if (isStatusChangedToReceived && optiData.jenisOpti === "Training") {
+      const [existingTrainings] = await connection.query(
+        "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1",
+        [id]
+      );
+
+      if (existingTrainings.length === 0) {
+        console.log(`Creating new Training for Opti ${id}`);
+        const newTrainingId = await generateUserId("Training");
+        const trainingPayload = {
+          idTraining: newTrainingId,
+          idOpti: id,
+          nmTraining: optiData.nmOpti,
+          idTypeTraining: optiData.idTypeTraining,
+          startTraining: optiData.startProgram,
+          endTraining: optiData.endProgram,
+          idExpert: optiData.idExpert,
+          placeTraining: optiData.placeProgram,
+          idCustomer: optiData.idCustomer,
+        };
+        await Training.createTraining(trainingPayload, connection);
+      }
+    }
+
+    // ====================== PERBAIKAN DIMULAI DI SINI ======================
+    // Langkah 3: Sinkronisasi pembaruan data dari Opti ke Training yang sudah ada
+    else if (
+      optiData.jenisOpti === "Training" &&
+      (existingOpti.statOpti === "Received" ||
+        existingOpti.statOpti === "Success")
+    ) {
+      console.log(`Syncing updates from Opti ${id} to existing Training...`);
+      const [trainingsToUpdate] = await connection.query(
+        "SELECT idTraining FROM training WHERE idOpti = ?",
+        [id]
+      );
+
+      if (trainingsToUpdate.length > 0) {
+        const trainingId = trainingsToUpdate[0].idTraining;
+        const syncPayload = {
+          nmTraining: optiData.nmOpti,
+          startTraining: optiData.startProgram,
+          endTraining: optiData.endProgram,
+          placeTraining: optiData.placeProgram,
+          idExpert: optiData.idExpert,
+          idTypeTraining: optiData.idTypeTraining,
+        };
+
+        // Query UPDATE langsung ke tabel training
+        await connection.query(
+          `UPDATE training SET 
+             nmTraining = ?, startTraining = ?, endTraining = ?, placeTraining = ?, 
+             idExpert = ?, idTypeTraining = ? 
+           WHERE idTraining = ?`,
+          [
+            syncPayload.nmTraining,
+            syncPayload.startTraining,
+            syncPayload.endTraining,
+            syncPayload.placeTraining,
+            syncPayload.idExpert,
+            syncPayload.idTypeTraining,
+            trainingId,
+          ]
+        );
+        console.log(`Training ${trainingId} has been synced successfully.`);
+      }
+    }
+    // ====================== AKHIR PERBAIKAN ======================
 
     await connection.commit();
     res.json({ message: "Opportunity updated successfully" });
@@ -217,6 +293,7 @@ const getOptis = async (req, res) => {
     res.status(500).json({ error: error.sqlMessage || "Server error" });
   }
 };
+
 const getFormOptions = async (req, res) => {
   try {
     const experts = await Expert.findAll();
@@ -245,6 +322,7 @@ const getFormOptions = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -321,14 +399,10 @@ const uploadPaymentProof = async (req, res) => {
     }
 
     await Opti.updatePaymentProof(id, req.file.filename, connection);
-
-    // ====================== PERUBAHAN DI SINI ======================
-    // Otomatis ubah status menjadi "Success" setelah upload bukti bayar
     await connection.query(
       "UPDATE opti SET statOpti = 'Success' WHERE idOpti = ?",
       [id]
     );
-    // ====================== AKHIR PERUBAHAN ======================
 
     await connection.commit();
     res.json({
@@ -356,6 +430,7 @@ const getSalesDashboardData = async (req, res) => {
         SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
         UNION ALL
         SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti 
+ 
  = o.idOpti WHERE t.startTraining IS NOT NULL
       ) AS won_deals
     `;
@@ -387,7 +462,8 @@ const getSalesDashboardData = async (req, res) => {
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON 
+         
+           JOIN customer c ON 
  t.idCustomer = c.idCustomer
         ) AS won_deals
         ORDER BY won_deals.value DESC
@@ -395,7 +471,6 @@ const getSalesDashboardData = async (req, res) => {
       `
       );
     } else {
-      // Sales
       const params = [idSales];
       const performanceParams = [idSales];
       pipelineQuery = pool.query(
@@ -428,7 +503,8 @@ const getSalesDashboardData = async (req, res) => {
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON 
+         
+           JOIN customer c ON 
  t.idCustomer = c.idCustomer
         ) AS won_deals
         WHERE won_deals.idSales = ?
@@ -466,6 +542,7 @@ const getSalesDashboardData = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 module.exports = {
   createOpti,
   getOptis,
