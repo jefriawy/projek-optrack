@@ -298,11 +298,6 @@ const UserManagement = () => {
                       Delete
                     </button>
                   </td>
-      {isEditModalOpen && (
-        <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title={"Edit User"}>
-          <EditUserForm user={userToEdit} onClose={handleCloseEditModal} onSubmit={handleEditUserSubmit} />
-        </Modal>
-      )}
                 </tr>
               ))
             ) : (
@@ -313,6 +308,14 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
+
+
+      {/* Modal Edit User, render di luar table agar tidak nested di <tr> */}
+      {isEditModalOpen && (
+        <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title={"Edit User"}>
+          <EditUserForm user={userToEdit} onClose={handleCloseEditModal} onSubmit={handleEditUserSubmit} />
+        </Modal>
+      )}
 
       {isModalOpen && (
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={`Tambah Pengguna ${addUserType}`}>
