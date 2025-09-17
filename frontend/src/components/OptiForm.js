@@ -492,7 +492,7 @@ const OptiForm = ({
                     <option value="Entry">Entry</option>
                     <option value="Failed">Failed</option>
                     <option value="Success">Success</option>
-                    <option value="Receive">Receive</option>
+                    <option value="Received">Received</option>
                   </select>
                   {errors.statOpti && (
                     <p className="text-red-600 text-sm">{errors.statOpti}</p>

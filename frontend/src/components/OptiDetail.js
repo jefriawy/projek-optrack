@@ -65,8 +65,8 @@ const OptiDetail = ({ opti }) => {
         return { text: "Failed", color: "bg-red-100 text-red-800" };
       case "Success":
         return { text: "Success", color: "bg-green-100 text-green-800" };
-      case "Receive":
-        return { text: "Receive", color: "bg-blue-100 text-blue-800" };
+      case "Received":
+        return { text: "Received", color: "bg-blue-100 text-blue-800" };
       default:
         return { text: "-", color: "bg-gray-100 text-gray-800" };
     }

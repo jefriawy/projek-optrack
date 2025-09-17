@@ -18,11 +18,9 @@ const createOpti = async (req, res) => {
 
     if (!req.body || Object.keys(req.body).length === 0) {
       await connection.rollback();
-      return res
-        .status(400)
-        .json({
-          error: "Body kosong. Kirim sebagai multipart/form-data atau JSON.",
-        });
+      return res.status(400).json({
+        error: "Body kosong. Kirim sebagai multipart/form-data atau JSON.",
+      });
     }
 
     const b = { ...req.body };
@@ -113,11 +111,9 @@ const updateOpti = async (req, res) => {
 
     if (user.role === "Sales" && existingOpti.idSales !== user.id) {
       await connection.rollback();
-      return res
-        .status(403)
-        .json({
-          error: "Forbidden: You can only update your own opportunities.",
-        });
+      return res.status(403).json({
+        error: "Forbidden: You can only update your own opportunities.",
+      });
     }
 
     const optiData = {
@@ -454,7 +450,7 @@ const getSalesDashboardData = async (req, res) => {
     const performanceOverTime = performanceResult[0];
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
-    const allPipelineStages = ["Entry", "Delivered", "PO Received", "Reject"];
+    const allPipelineStages = ["Entry", "Failed", "Success", "Received"];
     const finalPipelineStats = allPipelineStages.map((stage) => {
       const found = pipelineStats.find((s) => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };

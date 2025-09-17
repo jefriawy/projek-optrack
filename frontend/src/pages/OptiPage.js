@@ -345,7 +345,7 @@ const OptiPage = () => {
               <option value="Entry">Entry</option>
               <option value="Failed">Failed</option>
               <option value="Success">Success</option>
-              <option value="Receive">Receive</option>
+              <option value="Received">Received</option>
             </select>
             {/* ====================== AKHIR PERUBAHAN ====================== */}
           </div>
