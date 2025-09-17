@@ -60,30 +60,30 @@ const computeStatus = (start, end, now = Date.now()) => {
   const e = safeTime(end);
   if (s && now < s) {
     return {
-      key: "pending",
-      label: "Pending",
+      key: "received",
+      label: "Received",
       className: "bg-amber-500 text-white",
     };
   }
   if (s && (!e || now <= e) && now >= s) {
     const remaining = e ? e - now : 0;
     return {
-      key: "running",
-      label: e ? `Berjalan · ${formatRemaining(remaining)}` : "Berjalan",
+      key: "onprogress",
+      label: e ? `On Progress · ${formatRemaining(remaining)}` : "On Progress",
       className: "bg-blue-600 text-white",
       remaining,
     };
   }
   if (e && now > e) {
     return {
-      key: "finished",
-      label: "Finished",
+      key: "delivered",
+      label: "Delivered",
       className: "bg-green-500 text-white",
     };
   }
   return {
-    key: "pending",
-    label: "Pending",
+    key: "received",
+    label: "Received",
     className: "bg-amber-500 text-white",
   };
 };
@@ -433,9 +433,9 @@ const TrainingPage = () => {
                     <div className="flex items-center gap-2">
                       <IconClock />
                       <span>
-                        {st.key === "running"
+                        {st.key === "onprogress"
                           ? `Sisa: ${formatRemaining(st.remaining)}`
-                          : st.key === "pending"
+                          : st.key === "received"
                           ? "Belum mulai"
                           : "Selesai"}
                       </span>
@@ -453,7 +453,7 @@ const TrainingPage = () => {
                       type="button"
                       className="px-4 py-2 text-xs font-semibold text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                       onClick={() => openFeedbackModal(t)}
-                      disabled={st.key !== "finished"}
+                      disabled={st.key !== "delivered"}
                     >
                       {canGiveFeedback
                         ? "Beri/Edit Feedback"

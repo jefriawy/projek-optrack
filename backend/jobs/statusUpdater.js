@@ -8,10 +8,10 @@ async function updateTrainingStatuses(conn) {
 
   await conn.query(
     `UPDATE training
-       SET statusTraining = 'Finished'
+       SET statusTraining = 'Delivered'
      WHERE endTraining IS NOT NULL
        AND NOW() > endTraining
-       AND statusTraining <> 'Finished'`
+       AND statusTraining <> 'Delivered'`
   );
 
   await conn.query(
@@ -25,9 +25,9 @@ async function updateTrainingStatuses(conn) {
 
   await conn.query(
     `UPDATE training
-       SET statusTraining = 'Pending'
+       SET statusTraining = 'Received'
      WHERE (startTraining IS NULL OR NOW() < startTraining)
-       AND statusTraining <> 'Pending'`
+       AND statusTraining <> 'Received'`
   );
 }
 
