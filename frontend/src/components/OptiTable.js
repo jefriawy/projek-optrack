@@ -1,8 +1,7 @@
 // frontend/src/components/OptiTable.js
-import pdfIcon from '../iconres/pdf.png';
+import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
 const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -13,22 +12,23 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
     });
   };
 
+  // ====================== PERUBAHAN DI SINI ======================
   const getStatusColor = (status) => {
     switch (status) {
       case "Entry":
         return "bg-purple-100 text-purple-800";
-      case "Delivered":
-        return "bg-yellow-100 text-yellow-800";
-      case "Success":
-      case "PO Received":
-        return "bg-green-100 text-green-800";
-      case "Failed": // Digunakan di frontend
+      case "Failed":
       case "Reject":
         return "bg-red-100 text-red-800";
+      case "Success":
+        return "bg-green-100 text-green-800";
+      case "Receive":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+  // ====================== AKHIR PERUBAHAN ======================
 
   return (
     <div>
@@ -52,7 +52,6 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA EXPERT
               </th>
-              
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 STATUS OPTI
               </th>
@@ -83,18 +82,20 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmExpert || "-"}
                   </td>
-                  
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                         opti.statOpti
                       )}`}
                     >
-                      {opti.statOpti === 'Reject' ? 'Failed' : (opti.statOpti || "-")}
+                      {/* ====================== PERUBAHAN DI SINI ====================== */}
+                      {opti.statOpti === "Reject"
+                        ? "Failed"
+                        : opti.statOpti || "-"}
+                      {/* ====================== AKHIR PERUBAHAN ====================== */}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {console.log("OptiTable - opti.proposalPath:", opti.proposalPath)}
                     {opti.proposalPath ? (
                       <a
                         href={`${API_BASE}/${opti.proposalPath}`}
@@ -142,18 +143,25 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
       <div className="md:hidden">
         {optis.length > 0 ? (
           optis.map((opti) => (
-            <div key={opti.idOpti} className="bg-white rounded-lg shadow-md mb-4 p-4">
+            <div
+              key={opti.idOpti}
+              className="bg-white rounded-lg shadow-md mb-4 p-4"
+            >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-lg font-bold text-gray-900">{opti.nmOpti}</p>
-                  <p className="text-sm text-gray-500">{opti.corpCustomer || "-"}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {opti.nmOpti}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {opti.corpCustomer || "-"}
+                  </p>
                 </div>
                 <span
                   className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                     opti.statOpti
                   )}`}
                 >
-                  {opti.statOpti === 'Reject' ? 'Failed' : (opti.statOpti || "-")}
+                  {opti.statOpti === "Reject" ? "Failed" : opti.statOpti || "-"}
                 </span>
               </div>
               <div className="mt-4">
@@ -169,7 +177,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                 <p className="text-sm text-gray-500">
                   <strong>Tanggal:</strong> {formatDate(opti.datePropOpti)}
                 </p>
-                                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500">
                   <strong>Dokumen:</strong>
                   {opti.proposalPath ? (
                     <a
@@ -200,7 +208,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                 </button>
               </div>
             </div>
-          )) 
+          ))
         ) : (
           <div className="text-center text-gray-500 mt-4">
             Belum ada data opportunity. Klik "Tambah Opti" untuk memulai.

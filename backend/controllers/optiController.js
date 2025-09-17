@@ -11,7 +11,6 @@ const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
-
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -21,7 +20,9 @@ const createOpti = async (req, res) => {
       await connection.rollback();
       return res
         .status(400)
-        .json({ error: "Body kosong. Kirim sebagai multipart/form-data atau JSON." });
+        .json({
+          error: "Body kosong. Kirim sebagai multipart/form-data atau JSON.",
+        });
     }
 
     const b = { ...req.body };
@@ -42,7 +43,6 @@ const createOpti = async (req, res) => {
     }
 
     const idOpti = await generateUserId("Opti");
-
     const optiData = {
       idOpti,
       nmOpti: b.nmOpti,
@@ -51,10 +51,10 @@ const createOpti = async (req, res) => {
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
       statOpti: (() => {
-        if (user.role === "Sales") return "Entry"; 
-        // Langsung gunakan status dari form, termasuk "Failed"
-        return b.statOpti || 'Entry';
+        if (user.role === "Sales") return "Entry";
+        return b.statOpti || "Entry";
       })(),
+
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
@@ -81,13 +81,11 @@ const createOpti = async (req, res) => {
 
       proposalOpti: null,
     };
-
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
     }
 
     await Opti.create(optiData, idSalesForOpti, connection);
-
     await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
@@ -98,7 +96,6 @@ const createOpti = async (req, res) => {
     connection.release();
   }
 };
-
 const updateOpti = async (req, res) => {
   const { id } = req.params;
   const b = { ...req.body };
@@ -116,37 +113,35 @@ const updateOpti = async (req, res) => {
 
     if (user.role === "Sales" && existingOpti.idSales !== user.id) {
       await connection.rollback();
-      return res.status(403).json({ error: "Forbidden: You can only update your own opportunities." });
+      return res
+        .status(403)
+        .json({
+          error: "Forbidden: You can only update your own opportunities.",
+        });
     }
 
-    // Prepare data for the new schema
     const optiData = {
       nmOpti: b.nmOpti || existingOpti.nmOpti,
       idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
       contactOpti: toNull(b.contactOpti) ?? existingOpti.contactOpti,
       emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
       mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
-      statOpti: (() => { // Logika yang disederhanakan untuk update status
-        if (b.statOpti) { 
-          // Langsung gunakan status dari form jika ada (termasuk "Failed", "Success", dll)
-          return b.statOpti;
-        }
-        return existingOpti.statOpti; // Jika tidak, gunakan status lama
-      })(),
+      statOpti:
+        user.role === "Head Sales"
+          ? b.statOpti || existingOpti.statOpti
+          : existingOpti.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
       valOpti:
-        b.valOpti !== undefined && b.valOpti !== "" 
+        b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
           : existingOpti.valOpti,
-
       startProgram: toNull(b.startTraining) ?? existingOpti.startProgram,
       endProgram: toNull(b.endTraining) ?? existingOpti.endProgram,
       placeProgram: toNull(b.placeTraining) ?? existingOpti.placeProgram,
-
       idTypeTraining:
         b.jenisOpti === "Training"
           ? toNull(b.idTypeTraining)
@@ -159,14 +154,11 @@ const updateOpti = async (req, res) => {
             ? Number(b.idTypeTraining)
             : existingOpti.idTypeProject
           : existingOpti.idTypeProject,
-
       proposalOpti: existingOpti.proposalOpti,
-      // Bug 2 Fix: Preserve existing buktiPembayaran if not provided in the body
-      buktiPembayaran: toNull(b.buktiPembayaran) ?? existingOpti.buktiPembayaran,
+      buktiPembayaran:
+        toNull(b.buktiPembayaran) ?? existingOpti.buktiPembayaran,
     };
 
-    // Logika yang diubah:
-    // Hapus logika yang mengubah status menjadi "Delivered" saat sales mengunggah file.
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
       if (existingOpti.proposalOpti) {
@@ -204,7 +196,6 @@ const getOptis = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
     const { user } = req;
-
     const [optis, totalCount] = await Opti.findAllPaginated(
       searchTerm,
       limit,
@@ -230,16 +221,12 @@ const getOptis = async (req, res) => {
     res.status(500).json({ error: error.sqlMessage || "Server error" });
   }
 };
-
 const getFormOptions = async (req, res) => {
   try {
-    // Selalu kirim experts & sumber terlebih dulu
     const experts = await Expert.findAll();
     const [sumberRows] = await pool.query(
       "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
     );
-
-    // Customers tergantung role
     let customers = [];
     if (req.user.role === "Sales") {
       const idSales = req.user.id;
@@ -247,9 +234,7 @@ const getFormOptions = async (req, res) => {
         "SELECT idSales FROM sales WHERE idSales = ?",
         [idSales]
       );
-      customers = salesRow.length
-        ? await Customer.findBySalesId(idSales)
-        : []; // jangan 403; biar FE tetap dapat experts/sumber
+      customers = salesRow.length ? await Customer.findBySalesId(idSales) : [];
     } else {
       customers = await Customer.findAll();
     }
@@ -264,7 +249,6 @@ const getFormOptions = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 const getOptiById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -276,8 +260,6 @@ const getOptiById = async (req, res) => {
         .status(404)
         .json({ error: "Opportunity not found or not accessible" });
     }
-
-    // Map kolom program baru ke field form lama (FE)
     const transformedOpti = {
       ...opti,
       startTraining: opti.startProgram ?? null,
@@ -293,7 +275,6 @@ const getOptiById = async (req, res) => {
         : null,
     };
     delete transformedOpti.proposalOpti;
-    // delete transformedOpti.buktiPembayaran; // Keep for form state
     delete transformedOpti.startProgram;
     delete transformedOpti.endProgram;
     delete transformedOpti.placeProgram;
@@ -311,7 +292,9 @@ const uploadPaymentProof = async (req, res) => {
   const { user } = req;
 
   if (!req.file) {
-    return res.status(400).json({ error: "File bukti pembayaran tidak ditemukan." });
+    return res
+      .status(400)
+      .json({ error: "File bukti pembayaran tidak ditemukan." });
   }
 
   const connection = await pool.getConnection();
@@ -324,7 +307,6 @@ const uploadPaymentProof = async (req, res) => {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
-    // Bug 1 Fix: Check for and delete the old payment proof file before saving the new one.
     if (existingOpti.buktiPembayaran) {
       const oldFilePath = path.join(
         __dirname,
@@ -338,17 +320,24 @@ const uploadPaymentProof = async (req, res) => {
           fs.unlinkSync(oldFilePath);
         }
       } catch (unlinkErr) {
-        // Log the error but don't block the upload process
         console.error("Gagal menghapus bukti pembayaran lama:", unlinkErr);
       }
     }
 
     await Opti.updatePaymentProof(id, req.file.filename, connection);
 
+    // ====================== PERUBAHAN DI SINI ======================
+    // Otomatis ubah status menjadi "Success" setelah upload bukti bayar
+    await connection.query(
+      "UPDATE opti SET statOpti = 'Success' WHERE idOpti = ?",
+      [id]
+    );
+    // ====================== AKHIR PERUBAHAN ======================
+
     await connection.commit();
-    res.json({ 
+    res.json({
       message: "Bukti pembayaran berhasil diunggah.",
-      filePath: `uploads/invoice/${req.file.filename}`
+      filePath: `uploads/invoice/${req.file.filename}`,
     });
   } catch (error) {
     await connection.rollback();
@@ -361,10 +350,8 @@ const uploadPaymentProof = async (req, res) => {
 
 const getSalesDashboardData = async (req, res) => {
   const { id: idSales, role } = req.user;
-
   try {
     let pipelineQuery, performanceQuery, typesQuery, topWonDealsQuery;
-
     const performanceQueryBody = `
       SELECT
         DATE_FORMAT(won_deals.start_date, '%Y-%m') AS month,
@@ -372,23 +359,20 @@ const getSalesDashboardData = async (req, res) => {
       FROM (
         SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
         UNION ALL
-        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti = o.idOpti WHERE t.startTraining IS NOT NULL
+        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti 
+ = o.idOpti WHERE t.startTraining IS NOT NULL
       ) AS won_deals
     `;
-
     if (role === "Admin" || role === "Head Sales") {
       pipelineQuery = pool.query(
         `SELECT statOpti, COUNT(*) as count FROM opti GROUP BY statOpti`
       );
-
       performanceQuery = pool.query(
         `${performanceQueryBody} GROUP BY month ORDER BY month ASC`
       );
-
       typesQuery = pool.query(
         `SELECT jenisOpti, COUNT(*) as count FROM opti GROUP BY jenisOpti`
       );
-
       topWonDealsQuery = pool.query(
         `
         SELECT
@@ -398,6 +382,7 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
+     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
 
@@ -406,30 +391,29 @@ const getSalesDashboardData = async (req, res) => {
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON t.idCustomer = c.idCustomer
+          JOIN customer c ON 
+ t.idCustomer = c.idCustomer
         ) AS won_deals
         ORDER BY won_deals.value DESC
         LIMIT 5
       `
       );
-    } else { // Sales
+    } else {
+      // Sales
       const params = [idSales];
       const performanceParams = [idSales];
       pipelineQuery = pool.query(
         `SELECT statOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY statOpti`,
         params
       );
-
       performanceQuery = pool.query(
         `${performanceQueryBody} WHERE won_deals.idSales = ? GROUP BY month ORDER BY month ASC`,
         performanceParams
       );
-
       typesQuery = pool.query(
         `SELECT jenisOpti, COUNT(*) as count FROM opti WHERE idSales = ? GROUP BY jenisOpti`,
         params
       );
-
       topWonDealsQuery = pool.query(
         `
         SELECT
@@ -439,6 +423,7 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
+     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
 
@@ -447,7 +432,8 @@ const getSalesDashboardData = async (req, res) => {
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON t.idCustomer = c.idCustomer
+          JOIN customer c ON 
+ t.idCustomer = c.idCustomer
         ) AS won_deals
         WHERE won_deals.idSales = ?
         ORDER BY won_deals.value DESC
@@ -457,29 +443,22 @@ const getSalesDashboardData = async (req, res) => {
       );
     }
 
-    const [
-      pipelineResult,
-      performanceResult,
-      typesResult,
-      topWonDealsResult,
-    ] = await Promise.all([
-      pipelineQuery,
-      performanceQuery,
-      typesQuery,
-      topWonDealsQuery,
-    ]);
-
+    const [pipelineResult, performanceResult, typesResult, topWonDealsResult] =
+      await Promise.all([
+        pipelineQuery,
+        performanceQuery,
+        typesQuery,
+        topWonDealsQuery,
+      ]);
     const pipelineStats = pipelineResult[0];
     const performanceOverTime = performanceResult[0];
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
-
     const allPipelineStages = ["Entry", "Delivered", "PO Received", "Reject"];
     const finalPipelineStats = allPipelineStages.map((stage) => {
       const found = pipelineStats.find((s) => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };
     });
-
     res.json({
       pipelineStats: finalPipelineStats,
       performanceOverTime,
@@ -491,7 +470,6 @@ const getSalesDashboardData = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 module.exports = {
   createOpti,
   getOptis,

@@ -1,6 +1,11 @@
 // frontend/src/pages/OptiPage.js
-
-import React, { useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -12,10 +17,8 @@ import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
 import { FaSearch } from "react-icons/fa";
 
-/* ====== Base URL (untuk avatar & API) ====== */
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ====== Helper chip profil (nama & avatar) ====== */
 const getDisplayName = (user) => {
   if (!user) return "User";
   return (
@@ -38,7 +41,9 @@ const getAvatarUrl = (user) => {
     null;
   if (!candidate) return null;
   if (/^https?:\/\//i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -58,7 +63,7 @@ const OptiPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [optis, setOptis] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeProgram, setActiveProgram] = useState('Semua Program');
+  const [activeProgram, setActiveProgram] = useState("Semua Program");
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [editingOpti, setEditingOpti] = useState(null);
@@ -68,9 +73,8 @@ const OptiPage = () => {
   const [debounceTimeout, setDebounceTimeout] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
-  // Search only by company name
   const fetchOptis = useCallback(
-    async (companyName = "", page = 1, program = 'Semua Program') => {
+    async (companyName = "", page = 1, program = "Semua Program") => {
       if (!user?.token) return;
       try {
         const response = await axios.get(`${API_BASE}/api/opti`, {
@@ -87,7 +91,7 @@ const OptiPage = () => {
         );
       }
     },
-    [user, API_BASE]
+    [user]
   );
 
   useEffect(() => {
@@ -113,10 +117,11 @@ const OptiPage = () => {
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
-    // Filter by nama perusahaan (corpCustomer) jika searchTerm tidak kosong
     if (searchTerm.trim() !== "") {
       data = data.filter((opti) =>
-        (opti.corpCustomer || "").toLowerCase().includes(searchTerm.trim().toLowerCase())
+        (opti.corpCustomer || "")
+          .toLowerCase()
+          .includes(searchTerm.trim().toLowerCase())
       );
     }
     if (statusFilter) {
@@ -174,7 +179,6 @@ const OptiPage = () => {
       await axios[method](url, formData, {
         headers: {
           Authorization: `Bearer ${user.token}`,
-          // NOTE: jangan set 'Content-Type' manual; Axios akan set boundary untuk FormData.
         },
       });
       closeModal();
@@ -191,17 +195,19 @@ const OptiPage = () => {
 
   const handlePaymentSubmit = async (paymentFile) => {
     if (!editingOpti) return;
-
     const formData = new FormData();
     formData.append("buktiPembayaran", paymentFile);
-
     try {
-      await axios.put(`${API_BASE}/api/opti/${editingOpti.idOpti}/payment`, formData, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await axios.put(
+        `${API_BASE}/api/opti/${editingOpti.idOpti}/payment`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       alert("Bukti pembayaran berhasil diunggah.");
       closeModal();
     } catch (err) {
@@ -210,7 +216,10 @@ const OptiPage = () => {
         err?.response?.data?.message ||
         err?.message ||
         "Gagal mengunggah file.";
-      console.error("Error uploading payment proof:", err?.response?.data || err);
+      console.error(
+        "Error uploading payment proof:",
+        err?.response?.data || err
+      );
       alert(`Gagal mengunggah: ${msg}`);
     }
   };
@@ -242,14 +251,21 @@ const OptiPage = () => {
   const ProgramTabs = () => (
     <div className="mb-4 border-b border-gray-200">
       <div className="flex space-x-6">
-        {['Semua Program', 'Training', 'Project', 'Outsource'].map((program) => (
-          <button
-            key={program}
-            onClick={() => setActiveProgram(program)}
-            className={`pb-2 text-sm font-medium transition-colors duration-200 ${activeProgram === program ? 'text-blue-600 font-semibold border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
-            {program}
-          </button>
-        ))}
+        {["Semua Program", "Training", "Project", "Outsource"].map(
+          (program) => (
+            <button
+              key={program}
+              onClick={() => setActiveProgram(program)}
+              className={`pb-2 text-sm font-medium transition-colors duration-200 ${
+                activeProgram === program
+                  ? "text-blue-600 font-semibold border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {program}
+            </button>
+          )
+        )}
       </div>
     </div>
   );
@@ -318,17 +334,20 @@ const OptiPage = () => {
             <label htmlFor="statusFilter" className="text-gray-700 mr-2">
               Status:
             </label>
+            {/* ====================== PERUBAHAN DI SINI ====================== */}
             <select
               id="statusFilter"
               className="w-full md:w-auto p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}>
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="">Semua Status</option>
               <option value="Entry">Entry</option>
-              <option value="Delivered">Delivered</option>
-              <option value="PO Received">PO Received</option>
-              <option value="Reject">Failed</option>
+              <option value="Failed">Failed</option>
+              <option value="Success">Success</option>
+              <option value="Receive">Receive</option>
             </select>
+            {/* ====================== AKHIR PERUBAHAN ====================== */}
           </div>
         </div>
 

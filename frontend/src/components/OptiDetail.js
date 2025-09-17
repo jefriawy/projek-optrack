@@ -18,7 +18,6 @@ const TYPE_TRAININGS = [
   { id: 3, name: "Inhouse Training" },
   { id: 4, name: "Online Training" },
 ];
-// Tambahkan mapping untuk tipe project
 const TYPE_PROJECTS = [
   { id: 1, name: "Default Project" },
   { id: 2, name: "Public Project" },
@@ -61,23 +60,20 @@ const OptiDetail = ({ opti }) => {
     switch (status) {
       case "Entry":
         return { text: "Entry", color: "bg-purple-100 text-purple-800" };
-      case "Delivered":
-        return { text: "Delivered", color: "bg-yellow-100 text-yellow-800" };
-      case "Success":
-      case "PO Received":
-        return { text: status, color: "bg-green-100 text-green-800" };
-      case "Failed": // Digunakan di frontend
+      case "Failed":
       case "Reject":
         return { text: "Failed", color: "bg-red-100 text-red-800" };
+      case "Success":
+        return { text: "Success", color: "bg-green-100 text-green-800" };
+      case "Receive":
+        return { text: "Receive", color: "bg-blue-100 text-blue-800" };
       default:
-        return { text: "-", color: "bg-gray-400 text-white" };
+        return { text: "-", color: "bg-gray-100 text-gray-800" };
     }
   };
   const statusInfo = getStatusInfo(opti.statOpti);
 
   const SpecificDetails = () => {
-    // Backend sudah memetakan (mapping) data project ke field `startTraining`, `idTypeTraining`, dll.
-    // Kita cukup baca field tersebut untuk kedua jenis.
     const mulai = formatDateTime(opti.startTraining);
     const selesai = formatDateTime(opti.endTraining);
     const lokasi = opti.placeTraining || "-";
@@ -110,7 +106,6 @@ const OptiDetail = ({ opti }) => {
       );
     }
 
-    // ====================== BAGIAN INI DIPERBAIKI ======================
     if (opti.jenisOpti === "Project") {
       const typeName =
         TYPE_PROJECTS.find((p) => Number(p.id) === Number(opti.idTypeTraining))
@@ -137,8 +132,6 @@ const OptiDetail = ({ opti }) => {
         </div>
       );
     }
-    // ====================== AKHIR PERBAIKAN ======================
-
     return null;
   };
 
@@ -150,7 +143,6 @@ const OptiDetail = ({ opti }) => {
         <span className="font-semibold">{opti.corpCustomer}</span>
       </p>
 
-      {/* ... Sisa dari JSX tidak berubah ... */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
           <h2 className="flex items-center text-lg font-semibold mb-3 border-b pb-2">
@@ -181,7 +173,7 @@ const OptiDetail = ({ opti }) => {
               <span
                 className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${statusInfo.color}`}
               >
-                {statusInfo.text} 
+                {statusInfo.text}
               </span>
             </p>
             <p>
@@ -204,7 +196,7 @@ const OptiDetail = ({ opti }) => {
       </div>
       <div className="mb-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
-          <FaFileDownload className="mr-2" /> Dokumen Proposal
+          <FaFileDownload className="mr-2" /> Dokumen Lampiran
         </h2>
         {opti.proposalPath ? (
           <a
@@ -214,12 +206,36 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
-            Unduh Dokumen
+            Lihat Dokumen
           </a>
         ) : (
-          <p className="text-gray-500 text-sm">Tidak ada dokumen proposal.</p>
+          <p className="text-gray-500 text-sm">Tidak ada dokumen Lampiran.</p>
         )}
       </div>
+
+      <div className="mb-8">
+        {/* ====================== PERUBAHAN DI SINI ====================== */}
+        <h2 className="flex items-center text-lg font-semibold mb-2">
+          <FaFileDownload className="mr-2" /> Bukti Pembayaran
+        </h2>
+        {/* ====================== AKHIR PERUBAHAN ====================== */}
+        {opti.buktiPembayaranPath ? (
+          <a
+            href={`http://localhost:3000/${opti.buktiPembayaranPath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline flex items-center text-sm"
+          >
+            <img src={pdfIcon} alt="File Icon" className="mr-2 w-5 h-5" />
+            Lihat Bukti Pembayaran
+          </a>
+        ) : (
+          <p className="text-gray-500 text-sm">
+            Belum ada bukti pembayaran yang diunggah.
+          </p>
+        )}
+      </div>
+
       <PDFDownloadLink
         document={<OptiDetailPdf opti={opti} />}
         fileName={`Detail_Opportunity_${opti.nmOpti}.pdf`}

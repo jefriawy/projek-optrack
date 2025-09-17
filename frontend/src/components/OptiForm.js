@@ -36,9 +36,6 @@ const TYPE_PROJECTS = [
   { id: 4, name: "Online Project" },
 ];
 
-/* =========================
-   Helpers normalisasi waktu
-   ========================= */
 const normalizeMySQLDateTimeToLocal = (val) => {
   if (!val) return "";
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return val.slice(0, 16);
@@ -72,11 +69,8 @@ const normalizeDateOnly = (val) => {
   return "";
 };
 
-// ====================== FUNGSI INI DIPERBAIKI ======================
 const normalizeInitialData = (data) => {
   if (!data) return {};
-  // Backend sudah memetakan (mapping) data program ke field `startTraining`, `endTraining`, dll.
-  // Kita cukup menormalisasi formatnya di sini tanpa logika if/else yang rumit.
   const norm = {
     ...data,
     datePropOpti: normalizeDateOnly(data.datePropOpti),
@@ -91,7 +85,6 @@ const normalizeInitialData = (data) => {
   };
   return norm;
 };
-// ====================== AKHIR PERBAIKAN ======================
 
 const emptyToNullNumber = (value, originalValue) => {
   if (originalValue === "" || originalValue === undefined) return null;
@@ -145,12 +138,17 @@ const getValidationSchema = (role) =>
     valOpti: Yup.number().typeError("Value harus berupa angka").nullable(),
   });
 
-const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "create" }) => {
+const OptiForm = ({
+  initialData,
+  onSubmit,
+  onPaymentSubmit,
+  onClose,
+  mode = "create",
+}) => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("Training");
-  const [editTab, setEditTab] = useState('edit_details');
+  const [editTab, setEditTab] = useState("edit_details");
   const [paymentProofFile, setPaymentProofFile] = useState(null);
-
   const baseState = {
     nmOpti: "",
     idCustomer: "",
@@ -161,7 +159,7 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
     datePropOpti: new Date().toISOString().slice(0, 10),
     idSumber: "",
     kebutuhan: "",
-    jenisOpti: activeTab, // Initialize with active tab
+    jenisOpti: activeTab,
     idExpert: "",
     idTypeTraining: "",
     startTraining: "",
@@ -239,11 +237,10 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
       jenisOpti: safe.jenisOpti || activeTab,
     }));
     setDisplayValOpti(formatRupiah(safe.valOpti));
-  }, [initialData, activeTab]); // Add activeTab dependency
+  }, [initialData, activeTab]);
 
   const inputClass =
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "valOpti") {
@@ -286,13 +283,13 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
 
   const handleReset = () => {
     const safe = normalizeInitialData(initialData);
-    setActiveTab(initialData?.jenisOpti || 'Training');
+    setActiveTab(initialData?.jenisOpti || "Training");
     setFormData({
       ...baseState,
       ...safe,
       statOpti: safe.statOpti || baseState.statOpti,
       datePropOpti: safe.datePropOpti || baseState.datePropOpti,
-      jenisOpti: safe.jenisOpti || 'Training',
+      jenisOpti: safe.jenisOpti || "Training",
     });
     setProposalFile(null);
     setErrors({});
@@ -305,6 +302,18 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
       const payload = { ...formData };
       const schema = getValidationSchema(user?.role);
       await schema.validate(payload, { abortEarly: false });
+
+      if (payload.jenisOpti === "Project") {
+        payload.startProject = payload.startTraining || "";
+        payload.endProject = payload.endTraining || "";
+        payload.placeProject = payload.placeTraining || "";
+        payload.idTypeProject = payload.idTypeTraining ?? "";
+      } else if (payload.jenisOpti === "Training") {
+        payload.startTraining = payload.startTraining || "";
+        payload.endTraining = payload.endTraining || "";
+        payload.placeTraining = payload.placeTraining || "";
+        payload.idTypeTraining = payload.idTypeTraining ?? "";
+      }
 
       const fd = new FormData();
       Object.entries(payload).forEach(([k, v]) => fd.append(k, v ?? ""));
@@ -336,28 +345,66 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
   );
 
   return (
-    <form onSubmit={editTab === 'edit_details' ? handleSubmit : handlePaymentSubmit} className="space-y-5">
+    <form
+      onSubmit={editTab === "edit_details" ? handleSubmit : handlePaymentSubmit}
+      className="space-y-5"
+    >
       {!initialData ? (
         <div className="flex border-b mb-4">
-          <TabButton tabName="Training" activeTab={activeTab} onClick={setActiveTab}>Training</TabButton>
-          <TabButton tabName="Project" activeTab={activeTab} onClick={setActiveTab}>Project</TabButton>
-          <TabButton tabName="Outsource" activeTab={activeTab} onClick={setActiveTab}>Outsource</TabButton>
+          <TabButton
+            tabName="Training"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          >
+            Training
+          </TabButton>
+          <TabButton
+            tabName="Project"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          >
+            Project
+          </TabButton>
+          <TabButton
+            tabName="Outsource"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          >
+            Outsource
+          </TabButton>
         </div>
       ) : (
         <div className="flex border-b mb-4">
-          <TabButton tabName="edit_details" activeTab={editTab} onClick={setEditTab}>Edit Opportunity</TabButton>
-          <TabButton tabName="upload_payment" activeTab={editTab} onClick={setEditTab}>Upload Bukti Pembayaran</TabButton>
+          <TabButton
+            tabName="edit_details"
+            activeTab={editTab}
+            onClick={setEditTab}
+          >
+            Edit Opportunity
+          </TabButton>
+          <TabButton
+            tabName="upload_payment"
+            activeTab={editTab}
+            onClick={setEditTab}
+          >
+            Upload Bukti Pembayaran
+          </TabButton>
         </div>
       )}
 
       <div className="min-h-[55vh]">
-        {(!initialData || editTab === 'edit_details') && (
+        {(!initialData || editTab === "edit_details") && (
           <>
-            {/* Bug 2 Fix: Add hidden input to preserve existing buktiPembayaran on general form submission */}
-            <input type="hidden" name="buktiPembayaran" value={formData.buktiPembayaran || ''} />
+            <input
+              type="hidden"
+              name="buktiPembayaran"
+              value={formData.buktiPembayaran || ""}
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1">Nama Opti *</label>
+                <label className="block text-sm font-medium mb-1">
+                  Nama Opti *
+                </label>
                 <input
                   type="text"
                   name="nmOpti"
@@ -371,7 +418,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Kontak Opti</label>
+                <label className="block text-sm font-medium mb-1">
+                  Kontak Opti
+                </label>
                 <input
                   type="text"
                   name="contactOpti"
@@ -406,9 +455,6 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                   className={inputClass}
                 />
               </div>
-              
-              {/* This is where the Jenis Opti dropdown was. It is now removed. */}
-
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Expert {isExpertRequired ? "*" : ""}
@@ -431,30 +477,33 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                   <p className="text-red-600 text-sm">{errors.idExpert}</p>
                 )}
               </div>
-              {initialData && (formData.jenisOpti === 'Training' || formData.jenisOpti === 'Project') && (
-              <div>
-                  <label className="block text-sm font-medium mb-1">Ubah Status Program</label>
+              {/* ====================== PERUBAHAN DI SINI ====================== */}
+              {user?.role === "Head Sales" && initialData && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Ubah Status Program
+                  </label>
                   <select
                     name="statOpti"
-                    value={formData.statOpti === 'Reject' ? 'Failed' : formData.statOpti}
+                    value={formData.statOpti}
                     onChange={handleChange}
                     className={inputClass}
                   >
-                    {/* Opsi default dari database */}
-                    {initialData.statOpti && <option value={initialData.statOpti === 'Reject' ? 'Failed' : initialData.statOpti}>{initialData.statOpti === 'Reject' ? 'Failed' : initialData.statOpti}</option>}
-                    {/* Opsi perubahan */}
-                    {initialData.statOpti !== 'PO Received' && <option value="PO Received">PO Received</option>}
-                    {initialData.statOpti !== 'Success' && <option value="Success">Success</option>}
-                    {initialData.statOpti !== 'Reject' && <option value="Failed">Failed</option>}
+                    <option value="Entry">Entry</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Success">Success</option>
+                    <option value="Receive">Receive</option>
                   </select>
                   {errors.statOpti && (
                     <p className="text-red-600 text-sm">{errors.statOpti}</p>
                   )}
-              </div>
+                </div>
               )}
-
+              {/* ====================== AKHIR PERUBAHAN ====================== */}
               <div>
-                <label className="block text-sm font-medium mb-1">Sumber *</label>
+                <label className="block text-sm font-medium mb-1">
+                  Sumber *
+                </label>
                 <select
                   name="idSumber"
                   value={formData.idSumber || ""}
@@ -491,7 +540,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Tanggal *</label>
+                <label className="block text-sm font-medium mb-1">
+                  Tanggal *
+                </label>
                 <input
                   type="date"
                   name="datePropOpti"
@@ -504,7 +555,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Perusahaan *</label>
+                <label className="block text-sm font-medium mb-1">
+                  Perusahaan *
+                </label>
                 <select
                   name="idCustomer"
                   value={formData.idCustomer || ""}
@@ -523,7 +576,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Deskripsi</label>
+                <label className="block text-sm font-medium mb-1">
+                  Deskripsi
+                </label>
                 <textarea
                   name="kebutuhan"
                   value={formData.kebutuhan || ""}
@@ -533,143 +588,287 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose, mode = "cre
                   rows={3}
                 />
               </div>
-
-              {/* Conditional Fields based on Tab */}
               <div className="md:col-span-2">
-                {activeTab === 'Training' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                {activeTab === "Training" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipe Training *</label>
-                      <select name="idTypeTraining" value={formData.idTypeTraining || ""} onChange={handleChange} className={inputClass}>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipe Training *
+                      </label>
+                      <select
+                        name="idTypeTraining"
+                        value={formData.idTypeTraining || ""}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
                         <option value="">Pilih tipe training</option>
-                        {TYPE_TRAININGS.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
+                        {TYPE_TRAININGS.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
                       </select>
-                      {errors.idTypeTraining && (<p className="text-red-600 text-sm">{errors.idTypeTraining}</p>)}
+                      {errors.idTypeTraining && (
+                        <p className="text-red-600 text-sm">
+                          {errors.idTypeTraining}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Value
+                      </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
-                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"}/>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
+                          Rp.
+                        </span>
+                        <input
+                          type="text"
+                          name="valOpti"
+                          value={displayValOpti}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Value"
+                          className={inputClass + " pl-12"}
+                        />
                       </div>
-                      {errors.valOpti && (<p className="text-red-600 text-sm">{errors.valOpti}</p>)}
+                      {errors.valOpti && (
+                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
+                      )}
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Mulai</label>
-                        <input type="datetime-local" name="startTraining" value={formData.startTraining || ""} onChange={handleChange} className={inputClass}/>
+                        <label className="block text-sm font-medium mb-1">
+                          Mulai
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="startTraining"
+                          value={formData.startTraining || ""}
+                          onChange={handleChange}
+                          className={inputClass}
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Selesai</label>
-                        <input type="datetime-local" name="endTraining" value={formData.endTraining || ""} onChange={handleChange} className={inputClass}/>
+                        <label className="block text-sm font-medium mb-1">
+                          Selesai
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="endTraining"
+                          value={formData.endTraining || ""}
+                          onChange={handleChange}
+                          className={inputClass}
+                        />
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
-                      <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
-                      <input type="text" name="placeTraining" value={formData.placeTraining || ""} onChange={handleChange} placeholder="Online / alamat / venue" className={inputClass}/>
+                      <label className="block text-sm font-medium mb-1">
+                        Tempat / Platform
+                      </label>
+                      <input
+                        type="text"
+                        name="placeTraining"
+                        value={formData.placeTraining || ""}
+                        onChange={handleChange}
+                        placeholder="Online / alamat / venue"
+                        className={inputClass}
+                      />
                     </div>
                   </div>
                 )}
-
-                {activeTab === 'Project' && (
+                {activeTab === "Project" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipe Proyek *</label>
-                      <select name="idTypeTraining" value={formData.idTypeTraining || ""} onChange={handleChange} className={inputClass}>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipe Proyek *
+                      </label>
+                      <select
+                        name="idTypeTraining"
+                        value={formData.idTypeTraining || ""}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
                         <option value="">Pilih tipe proyek</option>
-                        {TYPE_PROJECTS.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
+                        {TYPE_PROJECTS.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
                       </select>
-                      {errors.idTypeTraining && (<p className="text-red-600 text-sm">{errors.idTypeTraining}</p>)}
+                      {errors.idTypeTraining && (
+                        <p className="text-red-600 text-sm">
+                          {errors.idTypeTraining}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Value
+                      </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
-                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"}/>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
+                          Rp.
+                        </span>
+                        <input
+                          type="text"
+                          name="valOpti"
+                          value={displayValOpti}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Value"
+                          className={inputClass + " pl-12"}
+                        />
                       </div>
-                      {errors.valOpti && (<p className="text-red-600 text-sm">{errors.valOpti}</p>)}
+                      {errors.valOpti && (
+                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
+                      )}
                     </div>
-                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Mulai</label>
-                        <input type="datetime-local" name="startTraining" value={formData.startTraining || ""} onChange={handleChange} className={inputClass}/>
+                        <label className="block text-sm font-medium mb-1">
+                          Mulai
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="startTraining"
+                          value={formData.startTraining || ""}
+                          onChange={handleChange}
+                          className={inputClass}
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Selesai</label>
-                        <input type="datetime-local" name="endTraining" value={formData.endTraining || ""} onChange={handleChange} className={inputClass}/>
+                        <label className="block text-sm font-medium mb-1">
+                          Selesai
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="endTraining"
+                          value={formData.endTraining || ""}
+                          onChange={handleChange}
+                          className={inputClass}
+                        />
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
-                      <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
-                      <input type="text" name="placeTraining" value={formData.placeTraining || ""} onChange={handleChange} placeholder="Online / alamat / venue" className={inputClass}/>
+                      <label className="block text-sm font-medium mb-1">
+                        Tempat / Platform
+                      </label>
+                      <input
+                        type="text"
+                        name="placeTraining"
+                        value={formData.placeTraining || ""}
+                        onChange={handleChange}
+                        placeholder="Online / alamat / venue"
+                        className={inputClass}
+                      />
                     </div>
                   </div>
                 )}
-                
-                {activeTab === 'Outsource' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                {activeTab === "Outsource" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Value
+                      </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
-                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"}/>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
+                          Rp.
+                        </span>
+                        <input
+                          type="text"
+                          name="valOpti"
+                          value={displayValOpti}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Value"
+                          className={inputClass + " pl-12"}
+                        />
                       </div>
-                      {errors.valOpti && (<p className="text-red-600 text-sm">{errors.valOpti}</p>)}
+                      {errors.valOpti && (
+                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
+                      )}
                     </div>
-                   </div>
+                  </div>
                 )}
               </div>
             </div>
           </>
         )}
-
-        {initialData && editTab === 'upload_payment' && (
+        {initialData && editTab === "upload_payment" && (
           <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Upload Bukti Pembayaran</h3>
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
-              onDrop={(e) => { e.preventDefault(); handlePaymentFileChange({ target: { files: e.dataTransfer.files } }); }}
+            <h3 className="text-lg font-semibold mb-4">
+              Upload Bukti Pembayaran
+            </h3>
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-40 text-center cursor-pointer hover:border-blue-500 transition-colors"
+              onDrop={(e) => {
+                e.preventDefault();
+                handlePaymentFileChange({
+                  target: { files: e.dataTransfer.files },
+                });
+              }}
               onDragOver={(e) => e.preventDefault()}
             >
-              <input 
-                type="file" 
-                className="hidden" 
-                onChange={handlePaymentFileChange} 
+              <input
+                type="file"
+                className="hidden"
+                onChange={handlePaymentFileChange}
                 accept="image/*,.pdf"
                 id="payment-upload"
               />
               <label htmlFor="payment-upload" className="cursor-pointer">
-                <p className="text-gray-500">Drag & drop file di sini, atau klik untuk memilih file</p>
+                <p className="text-gray-500">
+                  Drag & drop file di sini, atau klik untuk memilih file
+                </p>
                 {paymentProofFile && (
-                  <p className="text-green-600 mt-2">File terpilih: {paymentProofFile.name}</p>
+                  <p className="text-green-600 mt-2">
+                    File terpilih: {paymentProofFile.name}
+                  </p>
                 )}
               </label>
             </div>
             {initialData.buktiPembayaranPath && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Bukti pembayaran yang sudah ada:</p>
-                <a 
+                <p className="text-sm text-gray-600 mb-2">
+                  Bukti pembayaran yang sudah ada:
+                </p>
+                <a
                   href={`${API_BASE}/${initialData.buktiPembayaranPath}`}
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center p-3 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 transition-colors"
                 >
-                  <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                  <span className="text-sm font-medium text-gray-800 truncate">{initialData.buktiPembayaranPath.split('_').pop()}</span>
+                  <svg
+                    className="w-6 h-6 text-red-500 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                  <span className="text-sm font-medium text-gray-800 truncate">
+                    {initialData.buktiPembayaranPath.split("_").pop()}
+                  </span>
                 </a>
               </div>
             )}
           </div>
         )}
       </div>
-
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
           className="bg-black text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-          disabled={editTab === 'upload_payment' && !paymentProofFile}
+          disabled={editTab === "upload_payment" && !paymentProofFile}
         >
-          {editTab === 'upload_payment' ? 'Upload File' : 'Simpan Data'}
+          {editTab === "upload_payment" ? "Upload File" : "Simpan Data"}
         </button>
         <button
           type="button"
