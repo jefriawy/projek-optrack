@@ -41,28 +41,20 @@ const diffDays = (start, end) => {
   if (!s || !e) return null;
   return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
-
-// format sisa waktu dalam hari, jam, menit, detik
 const formatRemaining = (ms) => {
   if (!ms || ms <= 0) return "0:00:00";
-
   const totalSec = Math.floor(ms / 1000);
   const days = Math.floor(totalSec / (24 * 3600));
-
   if (days > 0) {
     const hours = Math.floor((totalSec % (24 * 3600)) / 3600);
     return `${days} hari ${hours} jam`;
   }
-
-  // If less than a day, show H:M:S
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
   const pad = (n) => String(n).padStart(2, "0");
   return `${hours}:${pad(minutes)}:${pad(seconds)}`;
 };
-
-// return {key: 'pending'|'running'|'finished', label, className}
 const computeStatus = (start, end, now = Date.now()) => {
   const s = safeTime(start);
   const e = safeTime(end);
@@ -89,7 +81,6 @@ const computeStatus = (start, end, now = Date.now()) => {
       className: "bg-green-500 text-white",
     };
   }
-  // fallback jika tanggal tak lengkap
   return {
     key: "pending",
     label: "Pending",
@@ -117,19 +108,6 @@ const IconClock = ({ className = "w-4 h-4" }) => (
   >
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 3" />
-  </svg>
-);
-const IconUsers = ({ className = "w-4 h-4" }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
 const IconMap = ({ className = "w-4 h-4" }) => (
@@ -234,7 +212,6 @@ const TrainingPage = () => {
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
 
-  // ticker untuk hitung mundur realtime
   const [, forceTick] = useState(0);
   const tickRef = useRef(null);
   useEffect(() => {
@@ -244,7 +221,10 @@ const TrainingPage = () => {
 
   const fetchTrainings = useCallback(
     async (signal) => {
-      const endpoint = user?.role === "Admin" ? "" : "/mine";
+      // ====================== PERBAIKAN FETCH DATA ======================
+      const endpoint =
+        user?.role === "Admin" || user?.role === "Akademik" ? "" : "/mine";
+      // ====================== AKHIR PERBAIKAN ======================
       try {
         setLoading(true);
         setErr("");
@@ -268,7 +248,7 @@ const TrainingPage = () => {
         setLoading(false);
       }
     },
-    [user?.token]
+    [user?.token, user?.role] // Tambahkan user.role sebagai dependency
   );
 
   useEffect(() => {
@@ -330,8 +310,8 @@ const TrainingPage = () => {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setOpenFeedback(false);
-      // Refresh data automatically after submitting feedback
-      fetchTrainings();
+      const controller = new AbortController();
+      fetchTrainings(controller.signal);
     } catch (error) {
       console.error("Failed to submit feedback", error);
       alert("Gagal menyimpan feedback.");
@@ -343,40 +323,36 @@ const TrainingPage = () => {
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-2">Training Page</h1>
         <p className="text-gray-600">
-          Silakan login sebagai <b>Expert</b> untuk melihat jadwal training
-          Anda.
+          Silakan login untuk melihat jadwal training Anda.
         </p>
       </div>
     );
   }
 
   const now = Date.now();
-  const isAdmin = user?.role === "Admin";
+  // ====================== PERBAIKAN HAK AKSES FEEDBACK ======================
+  const canGiveFeedback = user?.role === "Admin" || user?.role === "Akademik";
+  // ====================== AKHIR PERBAIKAN ======================
 
   return (
     <div className="p-6">
-      {/* Header Konten Utama */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
             Training Page
           </h1>
         </div>
-
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          {/* Search */}
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search..."
               className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
-
-          {/* User chip (senada) */}
           <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
@@ -397,12 +373,10 @@ const TrainingPage = () => {
         </div>
       </header>
 
-      {/* List */}
       <div className="rounded-2xl border border-gray-300 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50 text-lg font-semibold">
           Jadwal Training
         </div>
-
         <div className="p-5 space-y-5">
           {loading && (
             <div className="text-center text-gray-500 py-10">Memuat data…</div>
@@ -410,7 +384,6 @@ const TrainingPage = () => {
           {!loading && err && (
             <div className="text-center text-red-600 py-10">{err}</div>
           )}
-
           {!loading &&
             !err &&
             filtered.map((t, idx) => {
@@ -450,7 +423,6 @@ const TrainingPage = () => {
                       {badge.text}
                     </span>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
                     <div className="flex items-center gap-2">
                       <IconCalendar />
@@ -469,7 +441,6 @@ const TrainingPage = () => {
                       </span>
                     </div>
                   </div>
-
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       type="button"
@@ -484,13 +455,14 @@ const TrainingPage = () => {
                       onClick={() => openFeedbackModal(t)}
                       disabled={st.key !== "finished"}
                     >
-                      {isAdmin ? "Beri/Edit Feedback" : "Lihat Feedback"}
+                      {canGiveFeedback
+                        ? "Beri/Edit Feedback"
+                        : "Lihat Feedback"}
                     </button>
                   </div>
                 </div>
               );
             })}
-
           {!loading && !err && filtered.length === 0 && (
             <div className="text-center text-gray-500 py-10">
               Belum ada training.
@@ -499,7 +471,6 @@ const TrainingPage = () => {
         </div>
       </div>
 
-      {/* Modal Detail */}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
@@ -555,7 +526,6 @@ const TrainingPage = () => {
                 </div>
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
@@ -588,12 +558,11 @@ const TrainingPage = () => {
         )}
       </Modal>
 
-      {/* Modal Feedback */}
       <FeedbackModal
         isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
         targetData={feedbackTarget}
-        canEdit={isAdmin}
+        canEdit={canGiveFeedback}
         onSubmit={handleFeedbackSubmit}
       />
     </div>

@@ -12,10 +12,8 @@ const getTraining = async (_req, res) => {
   }
 };
 
-// ====================== PERUBAHAN DI FUNGSI INI ======================
 const getTrainingById = async (req, res) => {
   try {
-    // Memanggil fungsi dari model yang query-nya sudah lengkap
     const training = await Training.getTrainingById(req.params.id);
     if (!training) return res.status(404).json({ error: "Training not found" });
     res.json(training);
@@ -24,7 +22,6 @@ const getTrainingById = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// ====================== AKHIR PERUBAHAN ======================
 
 const createTraining = async (req, res) => {
   try {
@@ -72,8 +69,15 @@ const getMyTrainings = async (req, res) => {
       data = await Training.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Training.getBySalesId(id);
-    } else if (role === "Head Sales" || role === "Admin") {
+      // ====================== PERBAIKAN DI SINI ======================
+      // Tambahkan 'Akademik' agar bisa melihat semua training, sama seperti Admin dan Head Sales
+    } else if (
+      role === "Head Sales" ||
+      role === "Admin" ||
+      role === "Akademik"
+    ) {
       data = await Training.getAllTraining();
+      // ====================== AKHIR PERBAIKAN ======================
     } else {
       return res.status(403).json({ error: "Unauthorized access" });
     }

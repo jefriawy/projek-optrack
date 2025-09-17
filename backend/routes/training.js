@@ -8,19 +8,19 @@ const authMiddleware = require("../middleware/authMiddleware");
 // => izinkan juga Sales supaya user Sales dapat melihat daftar training terkait
 router.get(
   "/mine",
-  authMiddleware(["Expert", "Sales", "Head Sales"]),
+  authMiddleware(["Expert", "Sales", "Head Sales", "Akademik"]),
   trainingController.getMyTrainings
 );
 
 // existing endpoints
 router.get(
   "/",
-  authMiddleware(["Admin", "Expert"]),
+  authMiddleware(["Admin", "Expert", "Akademik"]),
   trainingController.getTraining
 );
 router.get(
   "/:id",
-  authMiddleware(["Admin", "Expert", "Sales", "Head Sales"]),
+  authMiddleware(["Admin", "Expert", "Sales", "Head Sales", "Akademik"]),
   trainingController.getTrainingById
 );
 router.post("/", authMiddleware(["Admin"]), trainingController.createTraining);
@@ -37,7 +37,7 @@ router.delete(
 
 router.put(
   "/:id/feedback",
-  authMiddleware(["Admin"]),
+  authMiddleware(["Admin", "Akademik"]),
   trainingController.submitTrainingFeedback
 );
 
