@@ -20,7 +20,15 @@ const formatDateForDB = (dateString) => {
     console.error(`Invalid date format detected: ${dateString}`);
     return null;
   }
-  return dateObj.toISOString().slice(0, 19).replace('T', ' ');
+  // Mengubah format string datetime menjadi format yang dikenali MySQL
+  // tanpa terpengaruh zona waktu server.
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  const h = String(dateObj.getHours()).padStart(2, '0');
+  const mi = String(dateObj.getMinutes()).padStart(2, '0');
+  const s = String(dateObj.getSeconds()).padStart(2, '0');
+  return `${y}-${m}-${d} ${h}:${mi}:${s}`;
 };
 
 const createOpti = async (req, res) => {
