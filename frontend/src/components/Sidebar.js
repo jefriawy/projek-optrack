@@ -49,6 +49,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     menuItems = [
       { icon: homeIcon, name: "Home", link: homeLinkByRole },
       { icon: salesIcon, name: "Sales", link: "/sales" },
+      { icon: trainerIcon, name: "Akademik", link: "/akademik-list" }, // <-- Ditambahkan
+      { icon: projectIcon, name: "PM", link: "/pm-list" }, // <-- Ditambahkan
       { icon: expertIcon, name: "Expert", link: "/expert" },
       { icon: userManageIcon, name: "Manage User", link: "/users" },
     ];

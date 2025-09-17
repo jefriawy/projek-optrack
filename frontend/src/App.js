@@ -21,6 +21,8 @@ import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
 import ExpertPage from "./pages/ExpertPage"; // <- penting utk /expert (Admin)
+import AkademikPage from "./pages/AkademikPage"; // <- Halaman list Akademik untuk Admin
+import PmPage from "./pages/PmPage"; // <- Halaman list PM untuk Admin
 
 // Dashboards
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -248,6 +250,25 @@ const AppRoutes = () => {
         element={
           <Protected allow={["Admin"]}>
             <Layout><UserManagementPage /></Layout>
+          </Protected>
+        }
+      />
+
+      {/* >>> HALAMAN LIST UNTUK ADMIN <<< */}
+      <Route
+        path="/akademik-list"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><AkademikPage /></Layout>
+          </Protected>
+        }
+      />
+
+      <Route
+        path="/pm-list"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><PmPage /></Layout>
           </Protected>
         }
       />

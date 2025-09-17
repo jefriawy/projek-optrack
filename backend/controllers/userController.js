@@ -6,11 +6,11 @@ const getAllUsers = async (req, res) => {
   try {
     // Query all tables in parallel
     const [adminPromise, salesPromise, expertPromise, akademikPromise, pmPromise] = [
-      pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
-      pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
-      pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, role FROM expert"),
-      pool.query("SELECT idAkademik as id, nmAkademik as name, emailAkademik as email, 'Akademik' as role FROM akademik"),
-      pool.query("SELECT idPM as id, nmPM as name, emailPM as email, 'PM' as role FROM pm"),
+      pool.query("SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"),
+      pool.query("SELECT idSales, nmSales, emailSales, role, mobileSales FROM sales"),
+      pool.query("SELECT idExpert, nmExpert, emailExpert, 'Expert' as role, mobileExpert FROM expert"),
+      pool.query("SELECT idAkademik, nmAkademik, emailAkademik, 'Akademik' as role, mobileAkademik FROM akademik"),
+      pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
     ];
 
     const [[admins], [sales], [experts], [akademiks], [pms]] = await Promise.all([
@@ -22,7 +22,13 @@ const getAllUsers = async (req, res) => {
     ]);
 
     // Combine all users into a single array
-    const allUsers = [...admins, ...sales, ...experts, ...akademiks, ...pms];
+    const allUsers = [
+      ...admins.map(u => ({ ...u, id: u.idAdmin, name: u.nmAdmin, email: u.emailAdmin })),
+      ...sales.map(u => ({ ...u, id: u.idSales, name: u.nmSales, email: u.emailSales })),
+      ...experts.map(u => ({ ...u, id: u.idExpert, name: u.nmExpert, email: u.emailExpert })),
+      ...akademiks.map(u => ({ ...u, id: u.idAkademik, name: u.nmAkademik, email: u.emailAkademik })),
+      ...pms.map(u => ({ ...u, id: u.idPM, name: u.nmPM, email: u.emailPM })),
+    ];
 
     res.json(allUsers);
   } catch (error) {

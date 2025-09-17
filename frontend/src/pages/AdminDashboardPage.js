@@ -79,6 +79,8 @@ const AdminDashboardPage = () => {
     Sales: 0,
     'Head Sales': 0,
     Admin: 0,
+    Akademik: 0,
+    PM: 0,
 
     Expert: 0,
     Semua: 0,
@@ -102,6 +104,8 @@ const AdminDashboardPage = () => {
           Sales: 0,
           'Head Sales': 0,
           Admin: 0,
+          Akademik: 0,
+          PM: 0,
       
           Expert: 0,
           Semua: users.length,
@@ -137,20 +141,24 @@ const AdminDashboardPage = () => {
     { name: "Sales", count: userCounts.Sales, link: "/sales" },
     { name: "Head Sales", count: userCounts['Head Sales'], link: "/sales" },
     { name: "Admin", count: userCounts.Admin, link: "/users" },
+    { name: "Akademik", count: userCounts.Akademik, link: "/akademik-list" },
+    { name: "PM", count: userCounts.PM, link: "/pm-list" },
     { name: "Expert", count: userCounts.Expert, link: "/expert" },
     { name: "Semua", count: userCounts.Semua, link: "/users" },
   ];
 
   const chartData = {
-    labels: ['Sales', 'Head Sales', 'Admin', 'Expert'],
+    labels: ['Sales', 'Head Sales', 'Admin', 'Akademik', 'PM', 'Expert'],
     datasets: [
       {
         label: 'Jumlah Pengguna',
-        data: [userCounts.Sales, userCounts['Head Sales'], userCounts.Admin, userCounts.Expert],
+        data: [userCounts.Sales, userCounts['Head Sales'], userCounts.Admin, userCounts.Akademik, userCounts.PM, userCounts.Expert],
         backgroundColor: [
           'rgba(40, 205, 100, 0.6)',
           'rgba(65, 140, 255, 0.6)',
           'rgba(240, 185, 15, 0.6)',
+          'rgba(100, 100, 255, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
           'rgba(175, 95, 255, 0.6)',
         ],
         borderColor: [
@@ -199,12 +207,16 @@ const AdminDashboardPage = () => {
           'rgba(40, 205, 100, 0.6)',
           'rgba(65, 140, 255, 0.6)',
           'rgba(240, 185, 15, 0.6)',
+          'rgba(100, 100, 255, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
           'rgba(175, 95, 255, 0.6)',
         ];
     const borderColors = [
           'rgba(40, 205, 100, 1)',
           'rgba(65, 140, 255, 1)',
           'rgba(240, 185, 15, 1)',
+          'rgba(100, 100, 255, 1)',
+          'rgba(255, 99, 132, 1)',
           'rgba(175, 95, 255, 1)',
         ];
     return {
