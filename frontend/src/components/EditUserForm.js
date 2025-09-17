@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import axios from "axios";
 
 const EditUserForm = ({ user, onSubmit, onClose }) => {
 
@@ -9,7 +11,13 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
     role: user.role || "",
     mobile: user.mobile || "",
     descSales: user.descSales || "",
+    idSkill: user.idSkill || "",
+    statExpert: user.statExpert || "",
+    Row: user.Row || "",
   });
+
+  const { user: authUser } = useContext(AuthContext);
+  const [skills, setSkills] = useState([]);
 
   // Update formData setiap kali user berubah
   useEffect(() => {
@@ -20,8 +28,30 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
       role: user.role || "",
       mobile: user.mobile || "",
       descSales: user.descSales || "",
+      idSkill: user.idSkill || "",
+      statExpert: user.statExpert || "",
+      Row: user.Row || "",
     });
   }, [user]);
+
+  // Fetch skills jika role Expert
+  useEffect(() => {
+    if (formData.role === 'Expert' || formData.role === 'Head of Expert') {
+      const fetchSkills = async () => {
+        if (authUser && authUser.token) {
+          try {
+            const response = await axios.get("http://localhost:3000/api/skills", {
+              headers: { Authorization: `Bearer ${authUser.token}` },
+            });
+            setSkills(response.data);
+          } catch (error) {
+            setSkills([]);
+          }
+        }
+      };
+      fetchSkills();
+    }
+  }, [formData.role, authUser]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -80,6 +110,7 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
         </div>
       </div>
 
+
       {/* Field khusus Sales */}
       {formData.role === 'Sales' || formData.role === 'Head Sales' ? (
         <div className="space-y-4 animate-fadeIn">
@@ -94,6 +125,37 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
             <textarea name="descSales" value={formData.descSales} onChange={handleChange} className="w-full p-2 border rounded-md" rows="3" />
+          </div>
+        </div>
+      ) : null}
+
+      {/* Field khusus Expert */}
+      {formData.role === 'Expert' || formData.role === 'Head of Expert' ? (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Expert Details</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="Expert">Expert</option>
+              <option value="Head of Expert">Head of Expert</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Primary Skill *</label>
+            <select name="idSkill" value={formData.idSkill} onChange={handleChange} className="w-full p-2 border rounded-md">
+              <option value="">Select Skill</option>
+              {skills.map((skill) => (
+                <option key={skill.idSkill} value={skill.idSkill}>{skill.nmSkill}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Status (Optional)</label>
+            <input type="text" name="statExpert" value={formData.statExpert} onChange={handleChange} className="w-full p-2 border rounded-md" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+            <textarea name="Row" value={formData.Row} onChange={handleChange} className="w-full p-2 border rounded-md" rows="3" />
           </div>
         </div>
       ) : null}
