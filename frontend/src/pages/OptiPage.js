@@ -189,6 +189,32 @@ const OptiPage = () => {
     }
   };
 
+  const handlePaymentSubmit = async (paymentFile) => {
+    if (!editingOpti) return;
+
+    const formData = new FormData();
+    formData.append("buktiPembayaran", paymentFile);
+
+    try {
+      await axios.put(`${API_BASE}/api/opti/${editingOpti.idOpti}/payment`, formData, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert("Bukti pembayaran berhasil diunggah.");
+      closeModal();
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Gagal mengunggah file.";
+      console.error("Error uploading payment proof:", err?.response?.data || err);
+      alert(`Gagal mengunggah: ${msg}`);
+    }
+  };
+
   const handlePageChange = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
@@ -345,6 +371,7 @@ const OptiPage = () => {
         <OptiForm
           initialData={editingOpti}
           onSubmit={handleFormSubmit}
+          onPaymentSubmit={handlePaymentSubmit}
           onClose={closeModal}
         />
       </Modal>

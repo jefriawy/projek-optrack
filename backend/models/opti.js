@@ -124,6 +124,16 @@ const Opti = {
     );
     return result.affectedRows;
   },
+
+  async updatePaymentProof(idOpti, filename, connection = pool) {
+    const query = `
+      UPDATE opti
+      SET buktiPembayaran = ?
+      WHERE idOpti = ?
+    `;
+    const [result] = await connection.query(query, [filename, idOpti]);
+    return result.affectedRows;
+  },
 };
 
 module.exports = Opti;

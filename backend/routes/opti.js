@@ -11,16 +11,21 @@ const {
   getOptiById,
   updateOpti,
   getSalesDashboardData,
+  uploadPaymentProof,
 } = require("../controllers/optiController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Pastikan folder upload proposal ada
+// Pastikan folder upload ada
 const proposalsDir = path.join(__dirname, "..", "uploads", "proposals");
+const invoicesDir = path.join(__dirname, "..", "uploads", "invoice");
 if (!fs.existsSync(proposalsDir)) {
   fs.mkdirSync(proposalsDir, { recursive: true });
 }
+if (!fs.existsSync(invoicesDir)) {
+  fs.mkdirSync(invoicesDir, { recursive: true });
+}
 
-const storage = multer.diskStorage({
+const proposalStorage = multer.diskStorage({
   destination: function (_req, _file, cb) {
     cb(null, proposalsDir);
   },
@@ -28,7 +33,18 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname)); // unik
   },
 });
-const upload = multer({ storage });
+
+const paymentStorage = multer.diskStorage({
+  destination: function (_req, _file, cb) {
+    cb(null, invoicesDir);
+  },
+  filename: function (_req, file, cb) {
+    cb(null, Date.now() + "_payment_" + file.originalname);
+  },
+});
+
+const uploadProposal = multer({ storage: proposalStorage });
+const uploadPayment = multer({ storage: paymentStorage });
 
 /** 
  * Jalankan multer HANYA jika Content-Type multipart/form-data.
@@ -37,7 +53,7 @@ const upload = multer({ storage });
 const maybeUpload = (req, res, next) => {
   const ct = req.headers["content-type"] || "";
   if (ct.includes("multipart/form-data")) {
-    return upload.single("proposalOpti")(req, res, next);
+    return uploadProposal.single("proposalOpti")(req, res, next);
   }
   return next();
 };
@@ -76,6 +92,14 @@ router.put(
   authMiddleware(["Sales", "Head Sales", "Admin"]),
   maybeUpload,
   updateOpti
+);
+
+// Upload Bukti Pembayaran
+router.put(
+  "/:id/payment",
+  authMiddleware(["Sales", "Head Sales", "Admin"]),
+  uploadPayment.single('buktiPembayaran'),
+  uploadPaymentProof
 );
 
 module.exports = router;

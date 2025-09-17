@@ -139,7 +139,7 @@ const updateOpti = async (req, res) => {
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
       valOpti:
-        b.valOpti !== undefined && b.valOpti !== ""
+        b.valOpti !== undefined && b.valOpti !== "" 
           ? Number(b.valOpti)
           : existingOpti.valOpti,
 
@@ -161,6 +161,8 @@ const updateOpti = async (req, res) => {
           : existingOpti.idTypeProject,
 
       proposalOpti: existingOpti.proposalOpti,
+      // Bug 2 Fix: Preserve existing buktiPembayaran if not provided in the body
+      buktiPembayaran: toNull(b.buktiPembayaran) ?? existingOpti.buktiPembayaran,
     };
 
     // Logika yang diubah:
@@ -287,11 +289,11 @@ const getOptiById = async (req, res) => {
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
       buktiPembayaranPath: opti.buktiPembayaran
-        ? `uploads/proposals/${opti.buktiPembayaran}`
+        ? `uploads/invoice/${opti.buktiPembayaran}`
         : null,
     };
     delete transformedOpti.proposalOpti;
-    delete transformedOpti.buktiPembayaran;
+    // delete transformedOpti.buktiPembayaran; // Keep for form state
     delete transformedOpti.startProgram;
     delete transformedOpti.endProgram;
     delete transformedOpti.placeProgram;
@@ -301,6 +303,59 @@ const getOptiById = async (req, res) => {
   } catch (error) {
     console.error("Error fetching opportunity detail:", error);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+const uploadPaymentProof = async (req, res) => {
+  const { id } = req.params;
+  const { user } = req;
+
+  if (!req.file) {
+    return res.status(400).json({ error: "File bukti pembayaran tidak ditemukan." });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const existingOpti = await Opti.findById(id, user);
+    if (!existingOpti) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Opportunity not found" });
+    }
+
+    // Bug 1 Fix: Check for and delete the old payment proof file before saving the new one.
+    if (existingOpti.buktiPembayaran) {
+      const oldFilePath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        "invoice",
+        existingOpti.buktiPembayaran
+      );
+      try {
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      } catch (unlinkErr) {
+        // Log the error but don't block the upload process
+        console.error("Gagal menghapus bukti pembayaran lama:", unlinkErr);
+      }
+    }
+
+    await Opti.updatePaymentProof(id, req.file.filename, connection);
+
+    await connection.commit();
+    res.json({ 
+      message: "Bukti pembayaran berhasil diunggah.",
+      filePath: `uploads/invoice/${req.file.filename}`
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error uploading payment proof:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -443,5 +498,6 @@ module.exports = {
   getFormOptions,
   getOptiById,
   updateOpti,
+  uploadPaymentProof,
   getSalesDashboardData,
 };
