@@ -17,6 +17,7 @@ const outsourceRoutes = require("./routes/outsource");
 const skillRoutes = require("./routes/skill");
 const adminRoutes = require("./routes/admin");
 const expertRoutes = require("./routes/expert");
+const activityRoutes = require("./routes/activity"); // Import rute aktivitas yang baru
 
 // ⬇️ Scheduler untuk auto-update status Training/Project
 const { startStatusScheduler } = require("./jobs/statusUpdater");
@@ -25,6 +26,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/uploads', express.static('uploads'));
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -46,6 +49,7 @@ app.use("/api/skills", skillRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/expert", expertRoutes);
+app.use("/api/activity", activityRoutes); // Tambahkan baris ini untuk menggunakan rute aktivitas
 
 // Static files (uploads)
 app.use("/uploads", express.static("uploads"));

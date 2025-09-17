@@ -1,0 +1,28 @@
+//Pertanyaan
+1. Invoice mau dibikin bagaimana?
+2. Hubungan Sales sama Finance kayak gimana? 
+3. Perlu buat Finance role?
+4. Interaksi Expert ke Sales mengenai pengiriman proposal ke sales dan bagaiamana dengan statusnya?
+
+// Jawaban
+#4.1 Expert bisa kirim Proposal saat project sedang berjalan dan jika masih ada revisi atau ditolak client, masih bisa di update tanggal dan waktunya oleh HOF, serta expert juga bisa edit dokumen untuk merevisi.
+
+#4.2 Customer kasih project dan buat spare Waktu untuk membuat proposal dan lainnya sblm status delivery
+
+//Opti Form
+1. Tambahin sumbernya biar ada lain lain (dll)
+
+//Koor Expert (Sblmnya Head Of Expert)
+1. Feedback hanya ke project (tidak dapat melihat page training dan outsource)
+2. Bikin feedback bisa taro dokumen dan text
+3. Project Manager (masih blm tau)
+4. Bikin penghitungan jam kerja
+
+6. bikin koor expert
+
+//Expert 
+1. expert bisa kirim proposal ke sales
+
+//Dashboard Koor Trainer
+1. 
+

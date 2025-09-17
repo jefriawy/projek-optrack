@@ -24,9 +24,10 @@ async function createTraining(p, connection = pool) {
   return r.insertId;
 }
 
+// Perbaikan: Parse fbAttachments setelah mengambil data
 async function getAllTraining() {
   const [rows] = await pool.query(
-    `SELECT tr.*, tt.nmTypeTraining, o.nmOpti, o.statOpti, s.nmSales, e.nmExpert, c.corpCustomer
+    `SELECT tr.*, tt.nmTypeTraining, o.nmOpti, o.statOpti, s.nmSales, e.nmExpert, c.corpCustomer, tr.fbAttachments
        FROM training tr
        LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
        LEFT JOIN opti o ON o.idOpti = tr.idOpti
@@ -36,19 +37,32 @@ async function getAllTraining() {
      WHERE o.statOpti = 'Received'
      ORDER BY tr.startTraining DESC`
   );
-  return rows;
+
+  // Lakukan parsing JSON untuk setiap baris data yang diambil
+  return rows.map(row => {
+    if (row.fbAttachments) {
+      try {
+        row.fbAttachments = JSON.parse(row.fbAttachments);
+      } catch (e) {
+        console.error("Failed to parse fbAttachments JSON:", e);
+        row.fbAttachments = null;
+      }
+    }
+    return row;
+  });
 }
 
-// DETAIL by idTraining (JOIN ke opti supaya dapat statOpti & proposal)
+// Perbaikan: Parse fbAttachments setelah mengambil data
 async function getTrainingById(idTraining) {
   const [rows] = await pool.query(
-    `SELECT 
+    `SELECT
         tr.*,
         tt.nmTypeTraining,
         o.statOpti,
         o.proposalOpti,
         o.kebutuhan,
-        c.corpCustomer
+        c.corpCustomer,
+        tr.fbAttachments
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o          ON o.idOpti        = tr.idOpti
@@ -56,9 +70,24 @@ async function getTrainingById(idTraining) {
      WHERE tr.idTraining = ?`,
     [idTraining]
   );
-  return rows[0] || null;
-}
+  
+  if (rows.length === 0) {
+    return null;
+  }
 
+  const training = rows[0];
+  // Lakukan parsing JSON untuk satu baris data
+  if (training.fbAttachments) {
+    try {
+      training.fbAttachments = JSON.parse(training.fbAttachments);
+    } catch (e) {
+      console.error("Failed to parse fbAttachments JSON:", e);
+      training.fbAttachments = null;
+    }
+  }
+
+  return training;
+}
 async function updateTraining(idTraining, p) {
   const [r] = await pool.query(
     `UPDATE training SET
@@ -93,7 +122,7 @@ async function deleteTraining(idTraining) {
   return r.affectedRows;
 }
 
-// ambil training berdasarkan idExpert (implementasi sudah dibutuhkan)
+// Perbaikan: Parse fbAttachments setelah mengambil data
 async function getByExpertId(expertId) {
   const [rows] = await pool.query(
     `SELECT 
@@ -101,23 +130,35 @@ async function getByExpertId(expertId) {
         tt.nmTypeTraining,
         o.statOpti,
         o.nmOpti,
-        s.nmSales,  -- Add this line
-        e.nmExpert, -- Add this line
-        c.corpCustomer
+        s.nmSales,
+        e.nmExpert,
+        c.corpCustomer,
+        tr.fbAttachments
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
-     LEFT JOIN sales s          ON s.idSales       = o.idSales  -- Add this line
-     LEFT JOIN expert e         ON e.idExpert      = tr.idExpert -- Add this line
+     LEFT JOIN sales s          ON s.idSales       = o.idSales
+     LEFT JOIN expert e         ON e.idExpert      = tr.idExpert
      LEFT JOIN customer c       ON c.idCustomer    = tr.idCustomer
      WHERE tr.idExpert = ? AND o.statOpti = 'Received'
      ORDER BY tr.startTraining DESC`,
     [expertId]
   );
-  return rows;
+
+  return rows.map(row => {
+    if (row.fbAttachments) {
+      try {
+        row.fbAttachments = JSON.parse(row.fbAttachments);
+      } catch (e) {
+        console.error("Failed to parse fbAttachments JSON:", e);
+        row.fbAttachments = null;
+      }
+    }
+    return row;
+  });
 }
 
-// ambil training berdasarkan idSales (via opti.idSales)
+// Perbaikan: Parse fbAttachments setelah mengambil data
 async function getBySalesId(salesId) {
   const [rows] = await pool.query(
     `SELECT 
@@ -127,7 +168,8 @@ async function getBySalesId(salesId) {
         o.nmOpti,
         s.nmSales,
         e.nmExpert,
-        c.corpCustomer
+        c.corpCustomer,
+        tr.fbAttachments
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o           ON o.idOpti        = tr.idOpti
@@ -138,10 +180,20 @@ async function getBySalesId(salesId) {
      ORDER BY tr.startTraining DESC`,
     [salesId]
   );
-  return rows;
+  
+  return rows.map(row => {
+    if (row.fbAttachments) {
+      try {
+        row.fbAttachments = JSON.parse(row.fbAttachments);
+      } catch (e) {
+        console.error("Failed to parse fbAttachments JSON:", e);
+        row.fbAttachments = null;
+      }
+    }
+    return row;
+  });
 }
 
-// NEW: ambil semua training untuk sebuah opti (dengan nama type)
 async function getByOptiIdWithType(optiId) {
   const [rows] = await pool.query(
     `SELECT
@@ -156,10 +208,10 @@ async function getByOptiIdWithType(optiId) {
   return rows;
 }
 
-async function updateFeedback(idTraining, feedback) {
+async function updateFeedback(idTraining, feedback, attachments) {
   const [result] = await pool.query(
-    `UPDATE training SET fbTraining = ? WHERE idTraining = ?`,
-    [feedback, idTraining]
+    `UPDATE training SET fbTraining = ?, fbAttachments = ? WHERE idTraining = ?`,
+    [feedback, JSON.stringify(attachments), idTraining]
   );
   return result.affectedRows;
 }

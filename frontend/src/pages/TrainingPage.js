@@ -221,10 +221,10 @@ const TrainingPage = () => {
 
   const fetchTrainings = useCallback(
     async (signal) => {
-      // ====================== PERBAIKAN FETCH DATA ======================
+      
       const endpoint =
         user?.role === "Admin" || user?.role === "Akademik" ? "" : "/mine";
-      // ====================== AKHIR PERBAIKAN ======================
+      
       try {
         setLoading(true);
         setErr("");
@@ -296,18 +296,49 @@ const TrainingPage = () => {
     }
   };
 
-  const openFeedbackModal = (t) => {
-    setFeedbackTarget(t);
+    const openFeedbackModal = async (t) => {
+    if (!user?.token) return;
+
     setOpenFeedback(true);
+    setFeedbackTarget(null); // Reset data di modal saat loading
+
+    try {
+      const res = await axios.get(`${API_BASE}/api/training/${t.idTraining}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      const detailedData = res.data;
+
+      // Parsing JSON jika fbAttachments adalah string
+      if (detailedData.fbAttachments && typeof detailedData.fbAttachments === 'string') {
+        try {
+          detailedData.fbAttachments = JSON.parse(detailedData.fbAttachments);
+        } catch (e) {
+          console.error("Failed to parse fbAttachments:", e);
+          detailedData.fbAttachments = []; 
+        }
+      }
+
+      setFeedbackTarget(detailedData); // Set target data dengan data yang lebih detail
+    } catch (error) {
+      console.error("Failed to fetch feedback details:", error);
+      alert("Gagal memuat detail feedback.");
+      setOpenFeedback(false);
+    }
   };
 
-  const handleFeedbackSubmit = async (target, feedbackText) => {
+
+  const handleFeedbackSubmit = async (target, formData) => {
     if (!target) return;
     try {
       await axios.put(
         `${API_BASE}/api/training/${target.idTraining}/feedback`,
-        { feedback: feedbackText },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        formData, // Mengirim FormData
+        { 
+          headers: { 
+            "Content-Type": "multipart/form-data", // Penting untuk mengirim file
+            Authorization: `Bearer ${user.token}` 
+          } 
+        }
       );
       setOpenFeedback(false);
       const controller = new AbortController();
@@ -330,9 +361,9 @@ const TrainingPage = () => {
   }
 
   const now = Date.now();
-  // ====================== PERBAIKAN HAK AKSES FEEDBACK ======================
+
   const canGiveFeedback = user?.role === "Admin" || user?.role === "Akademik";
-  // ====================== AKHIR PERBAIKAN ======================
+ 
 
   return (
     <div className="p-6">
@@ -559,12 +590,12 @@ const TrainingPage = () => {
       </Modal>
 
       <FeedbackModal
-        isOpen={openFeedback}
-        onClose={() => setOpenFeedback(false)}
-        targetData={feedbackTarget}
-        canEdit={canGiveFeedback}
-        onSubmit={handleFeedbackSubmit}
-      />
+      isOpen={openFeedback}
+      onClose={() => setOpenFeedback(false)}
+      targetData={feedbackTarget}
+      canEdit={canGiveFeedback}
+      onSubmit={handleFeedbackSubmit}
+    />
     </div>
   );
 };
