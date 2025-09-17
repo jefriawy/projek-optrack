@@ -19,9 +19,7 @@ const roleToRedirect = (role) => {
       return "/dashboard/head-sales";
     case "Sales":
       return "/dashboard/sales";
-    case "Head of Expert":
-    case "head of expert":
-      return "/dashboard/head-expert";
+    
     case "Expert":
       return "/dashboard/expert";
     default:
@@ -76,7 +74,7 @@ const login = [
         }
       }
 
-      // Expert / Head of Expert
+      // Expert
       if (!user) {
         const expertUser = await Expert.findByEmail(email);
         if (expertUser) {
@@ -85,7 +83,7 @@ const login = [
             user = {
               id: expertUser.idExpert,
               name: expertUser.nmExpert,
-              role: expertUser.role, // "Expert" | "Head of Expert"
+              role: expertUser.role, // "Expert"
             };
           }
         }

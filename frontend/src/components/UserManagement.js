@@ -223,8 +223,6 @@ const UserManagement = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'Expert':
         return 'bg-purple-100 text-purple-800';
-      case 'Head of Expert':
-        return 'bg-pink-100 text-pink-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -252,12 +250,7 @@ const UserManagement = () => {
         >
           + Tambah Expert
         </button>
-        <button
-          onClick={() => handleOpenModal('Judge')}
-          className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition"
-        >
-          + Tambah Akademik/Project Manager
-        </button>
+        
       </div>
 
       {success && <p className="mb-4 p-2 bg-green-100 text-green-700 rounded">{success}</p>}
@@ -281,7 +274,7 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">{u.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleClass(u.role)}`}>
-                      {u.role === 'Head of Expert' || u.role === 'head of expert' ? 'Head of Expert' : (u.role && u.role.charAt(0).toUpperCase() + u.role.slice(1))}
+                      {u.role && u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center flex gap-2 justify-center">

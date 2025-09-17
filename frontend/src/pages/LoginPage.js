@@ -31,9 +31,7 @@ const LoginPage = () => {
         case "Expert":
           navigate("/dashboard/expert", { replace: true });
           break;
-        case "Head of Expert":
-          navigate("/dashboard/head-expert", { replace: true });
-          break;
+        
         default:
           navigate("/login", { replace: true });
       }

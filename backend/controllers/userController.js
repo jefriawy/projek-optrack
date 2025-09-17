@@ -5,22 +5,20 @@ const pool = require("../config/database");
 const getAllUsers = async (req, res) => {
   try {
     // Query all tables in parallel
-    const [adminPromise, salesPromise, expertPromise, judgePromise] = [
+    const [adminPromise, salesPromise, expertPromise] = [
       pool.query("SELECT idAdmin as id, nmAdmin as name, emailAdmin as email, 'Admin' as role FROM admin"),
       pool.query("SELECT idSales as id, nmSales as name, emailSales as email, role FROM sales"),
       pool.query("SELECT idExpert as id, nmExpert as name, emailExpert as email, role FROM expert"),
-      pool.query("SELECT idJudge as id, nmJudge as name, emailJudge as email, roleJudge as role FROM judge"),
     ];
 
-    const [[admins], [sales], [experts], [judges]] = await Promise.all([
+    const [[admins], [sales], [experts]] = await Promise.all([
       adminPromise,
       salesPromise,
       expertPromise,
-      judgePromise,
     ]);
 
     // Combine all users into a single array
-    const allUsers = [...admins, ...sales, ...experts, ...judges];
+    const allUsers = [...admins, ...sales, ...experts];
 
     res.json(allUsers);
   } catch (error) {
@@ -50,8 +48,7 @@ const deleteUserByRole = async (req, res) => {
       idColumn = 'idSales';
       break;
     case 'Expert':
-    case 'Head of Expert':
-    case 'head of expert':
+    
       tableName = 'expert';
       idColumn = 'idExpert';
       break;
@@ -114,6 +111,9 @@ const updateUserByRole = async (req, res) => {
       if (data.email) updateFields.push(`emailExpert = '${data.email}'`);
       if (data.mobile) updateFields.push(`mobileExpert = '${data.mobile}'`);
       break;
+    case 'Akademik':
+    case 'Project Manager':
+      return res.status(400).json({ error: "Role 'Akademik' and 'Project Manager' are no longer supported." });
     default:
       return res.status(400).json({ error: "Invalid user role." });
   }

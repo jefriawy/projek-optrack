@@ -27,7 +27,7 @@ const expertSchema = Yup.object({
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
   mobile: Yup.string().required("Mobile number is required"),
   idSkill: Yup.string().required("Skill is required"),
-  role: Yup.string().oneOf(["Expert", "Head of Expert"]).required("Role is required"),
+  role: Yup.string().oneOf(["Expert"]).required("Role is required"),
   statExpert: Yup.string().optional(),
   Row: Yup.string().optional(),
 });
@@ -162,20 +162,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         </div>
       )}
 
-      {/* --- Conditional Fields for Judge (Akademik/Project Manager) --- */}
-      {userType === 'Judge' && (
-        <div className="space-y-4 animate-fadeIn">
-          <h3 className="font-semibold text-gray-800">Judge Details</h3>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">Role</label>
-            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
-              <option value="Akademik">Akademik</option>
-              <option value="Project Manager">Project Manager</option>
-            </select>
-            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-          </div>
-        </div>
-      )}
+      
 
       {/* --- Conditional Fields for Expert --- */}
       {userType === 'Expert' && (
@@ -185,7 +172,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
             <label className="block text-gray-700 font-semibold mb-1">Role</label>
             <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
               <option value="Expert">Expert</option>
-              <option value="Head of Expert">Head of Expert</option>
+              
             </select>
             {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
           </div>

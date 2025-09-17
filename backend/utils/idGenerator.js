@@ -8,14 +8,12 @@ const roleToCode = {
   "Head Sales": "02",
   Sales: "03",
   Expert: "04",
-  "Head of Expert": "10",
+  
   Customer: "05",
   Opti: "06",
   Training: "07",
   Project: "08",
   Outsource: "09",
-  Akademik: "11",
-  "Project Manager": "12",
 };
 
 // Mapping dari role ke informasi tabel
@@ -24,14 +22,12 @@ const roleToTableInfo = {
   "Head Sales": { tableName: "sales", idColumn: "idSales" },
   Sales: { tableName: "sales", idColumn: "idSales" },
   Expert: { tableName: "expert", idColumn: "idExpert" },
-  "Head of Expert": { tableName: "expert", idColumn: "idExpert" },
+  
   Customer: { tableName: "customer", idColumn: "idCustomer" },
   Opti: { tableName: "opti", idColumn: "idOpti" },
   Training: { tableName: "training", idColumn: "idTraining" },
   Project: { tableName: "project", idColumn: "idProject" },
   Outsource: { tableName: "outsource", idColumn: "idOutsource" },
-  Akademik: { tableName: "judge", idColumn: "idJudge" },
-  "Project Manager": { tableName: "judge", idColumn: "idJudge" },
 };
 
 // Mapping dari jenis file ke kode numerik

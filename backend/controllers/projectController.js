@@ -69,7 +69,7 @@ const getMyProjects = async (req, res) => {
       data = await Project.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Project.getBySalesId(id);
-    } else if (role === "Head Sales" || role === "Head of Expert") {
+    } else if (role === "Head Sales" || role === "Admin") {
       data = await Project.getAllProjects();
     } else {
       return res

@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
 
-const FeedbackModal = ({ isOpen, onClose, targetData, userRole, onSubmit }) => {
-  const isHeadOfExpert = userRole === "Head of Expert";
+const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
   const feedbackText = targetData?.fbTraining || targetData?.fbProject || "";
   const [feedback, setFeedback] = useState("");
 
@@ -29,16 +28,16 @@ const FeedbackModal = ({ isOpen, onClose, targetData, userRole, onSubmit }) => {
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           placeholder={
-            isHeadOfExpert
+            canEdit
               ? "Tulis feedback Anda di sini..."
               : "Belum ada feedback."
           }
           className="w-full p-2 border rounded-md min-h-[120px]"
-          disabled={!isHeadOfExpert}
+          disabled={!canEdit}
         />
         <div className="flex justify-end space-x-2 pt-4">
           {/* Tombol Tutup sudah dihapus dari sini */}
-          {isHeadOfExpert && (
+          {canEdit && (
             <button
               type="submit"
               className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"

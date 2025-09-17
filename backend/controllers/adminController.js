@@ -2,8 +2,6 @@
 const pool = require("../config/database");
 const bcrypt = require("bcrypt");
 const { generateUserId } = require("../utils/idGenerator");
-const Judge = require("../models/judge");
-
 const createAdmin = async (req, res) => {
   const { nmAdmin, emailAdmin, password, mobileAdmin } = req.body;
 
@@ -45,25 +43,4 @@ const createAdmin = async (req, res) => {
 
 module.exports = {
   createAdmin,
-  // Membuat akun Akademik/Project Manager
-  async createJudge(req, res) {
-    const { nmJudge, emailJudge, password, mobileJudge, roleJudge } = req.body;
-    if (!nmJudge || !emailJudge || !password || !roleJudge) {
-      return res.status(400).json({ error: "Name, email, password, and role are required." });
-    }
-    if (!["Akademik", "Project Manager"].includes(roleJudge)) {
-      return res.status(400).json({ error: "Role must be Akademik or Project Manager." });
-    }
-    try {
-      const existing = await Judge.findByEmail(emailJudge);
-      if (existing) {
-        return res.status(400).json({ error: "Email already in use." });
-      }
-      await Judge.create({ nmJudge, emailJudge, password, mobileJudge, roleJudge });
-      res.status(201).json({ message: "Judge user created successfully" });
-    } catch (error) {
-      console.error("Error creating judge user:", error);
-      res.status(500).json({ error: "Server error while creating judge user." });
-    }
-  },
 };

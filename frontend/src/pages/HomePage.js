@@ -15,8 +15,7 @@ const HomePage = () => {
       return <Navigate to="/dashboard/head-of-sales" replace />;
     case "Sales":
       return <Navigate to="/opti/dashboard" replace />;
-    case "Head of Expert":
-      return <Navigate to="/dashboard/head-expert" replace />;
+    
     case "Expert":
       return <Navigate to="/dashboard/expert" replace />;
     default:

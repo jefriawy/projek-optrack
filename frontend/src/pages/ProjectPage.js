@@ -234,7 +234,7 @@ const ProjectPage = () => {
   }, []);
 
   const fetchProjects = useCallback(async (signal) => {
-    const endpoint = user?.role === 'Head of Expert' ? '' : '/mine';
+    const endpoint = user?.role === 'Admin' ? '' : '/mine';
     try {
       setLoading(true);
       setErr("");
@@ -339,7 +339,7 @@ const ProjectPage = () => {
   }
 
   const now = Date.now();
-  const isHeadOfExpert = user?.role === 'Head of Expert';
+  const isAdmin = user?.role === 'Admin';
 
   return (
     <div className="p-6">
@@ -464,7 +464,7 @@ const ProjectPage = () => {
                       onClick={() => openFeedbackModal(p)}
                       disabled={st.key !== 'finished'}
                     >
-                      {isHeadOfExpert ? 'Beri/Edit Feedback' : 'Lihat Feedback'}
+                      {isAdmin ? 'Beri/Edit Feedback' : 'Lihat Feedback'}
                     </button>
                   </div>
                 </div>
@@ -533,7 +533,7 @@ const ProjectPage = () => {
         isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
         targetData={feedbackTarget}
-        userRole={user?.role}
+        canEdit={isAdmin}
         onSubmit={handleFeedbackSubmit}
       />
     </div>

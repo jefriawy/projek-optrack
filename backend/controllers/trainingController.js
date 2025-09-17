@@ -72,7 +72,7 @@ const getMyTrainings = async (req, res) => {
       data = await Training.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Training.getBySalesId(id);
-    } else if (role === "Head Sales" || role === "Head of Expert") {
+    } else if (role === "Head Sales" || role === "Admin") {
       data = await Training.getAllTraining();
     } else {
       return res.status(403).json({ error: "Unauthorized access" });

@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 router.post("/login", login);
 router.get(
   "/verify",
-  authMiddleware(["Sales", "Admin", "Head Sales", "Expert", "Head of Expert"]),
+  authMiddleware(["Sales", "Admin", "Head Sales", "Expert"]),
   verify
 );
 

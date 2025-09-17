@@ -24,18 +24,4 @@ const validateAdminInput = [
 router.post("/", authMiddleware(["Admin"]), validateAdminInput, createAdmin);
 
 module.exports = router;
-// Rute untuk membuat akun Akademik/Project Manager
-// POST /api/admin/judge
-router.post("/judge", authMiddleware(["Admin"]), [
-  body("nmJudge", "Name is required").notEmpty(),
-  body("emailJudge", "Please include a valid email").isEmail(),
-  body("password", "Password must be 6 or more characters").isLength({ min: 6 }),
-  body("roleJudge", "Role must be Akademik or Project Manager").isIn(["Akademik", "Project Manager"]),
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    next();
-  },
-], createJudge);
+

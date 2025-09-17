@@ -9,7 +9,7 @@ const mapRoleToHome = (role) => {
     case "Head Sales": return "/dashboard/head-sales";
     case "Sales": return "/dashboard/sales";
     case "Expert": return "/dashboard/expert";
-    case "Head of Expert": return "/dashboard/head-expert";
+    
     default: return "/login";
   }
 };

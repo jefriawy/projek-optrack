@@ -27,7 +27,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
-import HeadOfExpertDashboard from "./pages/HeadOfExpertDashboard";
+
 
 import Layout from "./components/Layout";
 import "./App.css";
@@ -41,9 +41,7 @@ const pathByRole = (role) => {
       return "/dashboard/head-sales";
     case "Sales":
       return "/dashboard/sales";
-    case "Head of Expert":
-    case "head of expert":
-      return "/dashboard/head-expert";
+    
     case "Expert":
       return "/dashboard/expert";
     default:
@@ -136,14 +134,7 @@ const AppRoutes = () => {
         }
       />
 
-      <Route
-        path="/dashboard/head-expert"
-        element={
-          <Protected allow={["Head of Expert", "Admin"]}>
-            <Layout><HeadOfExpertDashboard /></Layout>
-          </Protected>
-        }
-      />
+      
 
       {/* ===== MODULE PAGES ===== */}
       <Route
@@ -195,7 +186,7 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
             <Layout><TrainingPage /></Layout>
           </Protected>
         }
@@ -204,7 +195,7 @@ const AppRoutes = () => {
       <Route
         path="/project"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
             <Layout><ProjectPage /></Layout>
           </Protected>
         }
@@ -213,7 +204,7 @@ const AppRoutes = () => {
       <Route
         path="/outsource"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
             <Layout><OutsourcePage /></Layout>
           </Protected>
         }

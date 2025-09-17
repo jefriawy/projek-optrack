@@ -36,7 +36,7 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
 
   // Fetch skills jika role Expert
   useEffect(() => {
-    if (formData.role === 'Expert' || formData.role === 'Head of Expert') {
+    if (formData.role === 'Expert') {
       const fetchSkills = async () => {
         if (authUser && authUser.token) {
           try {
@@ -130,14 +130,14 @@ const EditUserForm = ({ user, onSubmit, onClose }) => {
       ) : null}
 
       {/* Field khusus Expert */}
-      {formData.role === 'Expert' || formData.role === 'Head of Expert' ? (
+      {formData.role === 'Expert' ? (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Expert Details</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700">Role</label>
             <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
               <option value="Expert">Expert</option>
-              <option value="Head of Expert">Head of Expert</option>
+              
             </select>
           </div>
           <div>
