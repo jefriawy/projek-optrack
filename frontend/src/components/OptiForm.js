@@ -23,13 +23,11 @@ const parseRupiah = (rupiahString) => {
 };
 
 const TYPE_TRAININGS = [
-  { id: 1, name: "Default Training" },
   { id: 2, name: "Public Training" },
   { id: 3, name: "Inhouse Training" },
   { id: 4, name: "Online Training" },
 ];
 const TYPE_PROJECTS = [
-  { id: 1, name: "Default Project" },
   { id: 2, name: "Public Project" },
   { id: 3, name: "Inhouse Project" },
   { id: 4, name: "Online Project" },
