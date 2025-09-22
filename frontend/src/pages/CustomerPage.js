@@ -234,7 +234,7 @@ const CustomerPage = () => {
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
-              placeholder="Search Perusahaan"
+              placeholder="Cari Nama Perusahaan..."
               className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={companyFilter}
               onChange={(e) => setCompanyFilter(e.target.value)}

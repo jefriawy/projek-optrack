@@ -13,9 +13,10 @@ import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const COLORS = {
-  Success: 'rgba(34,197,94,0.8)',       // hijau
-  'Just Get Info': 'rgba(249,115,22,0.8)', // oranye
-  Failed: 'rgba(239,68,68,0.8)',        // merah
+  "opti on going": 'rgba(34,197,94,0.8)',       // hijau
+  "opti failed": 'rgba(239,68,68,0.8)',        // merah
+  "opti entry": 'rgba(168,85,247,0.8)',       // ungu (default for Entry)
+  "po received": 'rgba(59,130,246,0.8)',      // biru (default for Received)
 };
 
 const SalesPipelineChart = ({ data }) => {

@@ -15,14 +15,13 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   // ====================== PERUBAHAN DI SINI ======================
   const getStatusColor = (status) => {
     switch (status) {
-      case "Entry":
+      case "opti entry":
         return "bg-purple-100 text-purple-800";
-      case "Failed":
-      case "Reject":
+      case "opti failed":
         return "bg-red-100 text-red-800";
-      case "Success":
+      case "opti on going":
         return "bg-green-100 text-green-800";
-      case "Received":
+      case "po received":
         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -30,7 +29,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   };
 
   const getStatusText = (status) => {
-    if (status === "Reject") return "Failed";
+    if (status === "Reject") return "opti failed"; // Assuming 'Reject' maps to 'opti failed'
     return status || "-";
   };
   // ====================== AKHIR PERUBAHAN ======================
@@ -166,7 +165,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                     opti.statOpti
                   )}`}
                 >
-                  {opti.statOpti === "Reject" ? "Failed" : opti.statOpti || "-"}
+                  {getStatusText(opti.statOpti)}
                 </span>
               </div>
               <div className="mt-4">

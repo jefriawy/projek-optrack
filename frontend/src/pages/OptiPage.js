@@ -342,10 +342,10 @@ const OptiPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">Semua Status</option>
-              <option value="Entry">Entry</option>
-              <option value="Failed">Failed</option>
-              <option value="Success">Success</option>
-              <option value="Received">Received</option>
+              <option value="opti entry">Opti Entry</option>
+              <option value="opti on going">On Going</option>
+              <option value="opti failed">Opti Failed</option>
+              <option value="po received">PO Received</option>
             </select>
           </div>
         </div>

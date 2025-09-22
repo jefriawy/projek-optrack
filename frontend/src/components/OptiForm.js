@@ -475,10 +475,10 @@ const OptiForm = ({
                     onChange={handleChange}
                     className={inputClass}
                   >
-                    <option value="Entry">Entry</option>
-                    <option value="Failed">Failed</option>
-                    <option value="Success">Success</option>
-                    <option value="Received">Received</option>
+                    <option value="opti entry">Opti Entry</option>
+                    <option value="opti on going">On Going</option>
+                    <option value="opti failed">Opti Failed</option>
+                    <option value="po received">PO Received</option>
                   </select>
                   {errors.statOpti && (
                     <p className="text-red-600 text-sm">{errors.statOpti}</p>

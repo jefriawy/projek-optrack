@@ -22,20 +22,14 @@ const styles = StyleSheet.create({
 // Mapping status lama ke status baru
 const getDisplayStatus = (status) => {
   switch (status) {
-    case "Prospect":
-    case "Follow Up":
-      return "Follow Up";
-    case "Negotiation":
-    case "On-Progress":
-      return "On-Progress";
-    case "Closed-Won":
-    case "Success":
-      return "Success";
-    case "Closed-Lost":
-    case "Failed":
-      return "Failed";
-    case "Just Get Info":
-      return "Just Get Info";
+    case "entry":
+      return "opti entry";
+    case "succes":
+      return "opti on going";
+    case "failed":
+      return "opti failed";
+    case "received":
+      return "po received";
     default:
       return status || "-";
   }

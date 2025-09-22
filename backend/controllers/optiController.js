@@ -69,8 +69,8 @@ const createOpti = async (req, res) => {
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
       statOpti: (() => {
-        if (user.role === "Sales") return "Entry";
-        return b.statOpti || "Entry";
+        if (user.role === "Sales") return "opti entry";
+        return b.statOpti || "opti entry";
       })(),
 
       datePropOpti: b.datePropOpti,
@@ -192,57 +192,79 @@ const updateOpti = async (req, res) => {
 
     await Opti.update(id, optiData, connection);
 
-    const isStatusChangedToReceived =
-      optiData.statOpti === "Received" && existingOpti.statOpti !== "Received";
+    const isStatusChangedToPoReceived =
+      optiData.statOpti === "po received" &&
+      existingOpti.statOpti !== "po received";
 
-    if (isStatusChangedToReceived) {
+    if (isStatusChangedToPoReceived) {
+      const createRelatedEntity = async (type) => {
+        const idOpti = id;
+        const query =
+          type === "Training"
+            ? "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1"
+            : "SELECT idProject FROM project WHERE idOpti = ? LIMIT 1";
+        const [existing] = await connection.query(query, [idOpti]);
+
+        if (existing.length === 0) {
+          console.log(`Creating new ${type} for Opti ${idOpti}`);
+          const newId = await generateUserId(type);
+          const payload = {
+            idOpti: idOpti,
+            nm: optiData.nmOpti,
+            idType:
+              type === "Training"
+                ? optiData.idTypeTraining
+                : optiData.idTypeProject,
+            start: optiData.startProgram,
+            end: optiData.endProgram,
+            idExpert: optiData.idExpert,
+            place: optiData.placeProgram,
+            idCustomer: optiData.idCustomer,
+          };
+
+          if (type === "Training") {
+            await Training.createTraining(
+              {
+                idTraining: newId,
+                nmTraining: payload.nm,
+                idTypeTraining: payload.idType,
+                startTraining: payload.start,
+                endTraining: payload.end,
+                idExpert: payload.idExpert,
+                placeTraining: payload.place,
+                idCustomer: payload.idCustomer,
+                idOpti: payload.idOpti,
+              },
+              connection
+            );
+          } else {
+            await Project.createProject(
+              {
+                idProject: newId,
+                nmProject: payload.nm,
+                idTypeProject: payload.idType,
+                startProject: payload.start,
+                endProject: payload.end,
+                idExpert: payload.idExpert,
+                placeProject: payload.place,
+                idCustomer: payload.idCustomer,
+                idOpti: payload.idOpti,
+              },
+              connection
+            );
+          }
+        }
+      };
+
       if (optiData.jenisOpti === "Training") {
-        const [existingTrainings] = await connection.query(
-          "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1",
-          [id]
-        );
-        if (existingTrainings.length === 0) {
-          console.log(`Creating new Training for Opti ${id}`);
-          const newTrainingId = await generateUserId("Training");
-          const trainingPayload = {
-            idTraining: newTrainingId,
-            idOpti: id,
-            nmTraining: optiData.nmOpti,
-            idTypeTraining: optiData.idTypeTraining,
-            startTraining: optiData.startProgram,
-            endTraining: optiData.endProgram,
-            idExpert: optiData.idExpert,
-            placeTraining: optiData.placeProgram,
-            idCustomer: optiData.idCustomer,
-          };
-          await Training.createTraining(trainingPayload, connection);
-        }
+        await createRelatedEntity("Training");
       } else if (optiData.jenisOpti === "Project") {
-        const [existingProjects] = await connection.query(
-          "SELECT idProject FROM project WHERE idOpti = ? LIMIT 1",
-          [id]
-        );
-        if (existingProjects.length === 0) {
-          console.log(`Creating new Project for Opti ${id}`);
-          const newProjectId = await generateUserId("Project");
-          const projectPayload = {
-            idProject: newProjectId,
-            idOpti: id,
-            nmProject: optiData.nmOpti,
-            idTypeProject: optiData.idTypeProject,
-            startProject: optiData.startProgram,
-            endProject: optiData.endProgram,
-            idExpert: optiData.idExpert,
-            placeProject: optiData.placeProgram,
-            idCustomer: optiData.idCustomer,
-          };
-          await Project.createProject(projectPayload, connection);
-        }
+        await createRelatedEntity("Project");
       }
     }
     
     // Perbaikan: Sinkronisasi data ke tabel training/project saat di-update
-    if (optiData.jenisOpti === "Training" && (existingOpti.statOpti === "Received" || existingOpti.statOpti === "Success")) {
+    if (optiData.jenisOpti === "Training" && (existingOpti.statOpti === "po received" || existingOpti.statOpti === "opti on going")) {
       const [trainingsToUpdate] = await connection.query(
         "SELECT idTraining FROM training WHERE idOpti = ?",
         [id]
@@ -265,7 +287,7 @@ const updateOpti = async (req, res) => {
           ]
         );
       }
-    } else if (optiData.jenisOpti === "Project" && (existingOpti.statOpti === "Received" || existingOpti.statOpti === "Success")) {
+    } else if (optiData.jenisOpti === "Project" && (existingOpti.statOpti === "po received" || existingOpti.statOpti === "opti on going")) {
       const [projectsToUpdate] = await connection.query(
         "SELECT idProject FROM project WHERE idOpti = ?",
         [id]
@@ -442,10 +464,6 @@ const uploadPaymentProof = async (req, res) => {
     }
 
     await Opti.updatePaymentProof(id, req.file.filename, connection);
-    await connection.query(
-      "UPDATE opti SET statOpti = 'Success' WHERE idOpti = ?",
-      [id]
-    );
 
     await connection.commit();
     res.json({
@@ -557,7 +575,7 @@ const getSalesDashboardData = async (req, res) => {
     const performanceOverTime = performanceResult[0];
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
-    const allPipelineStages = ["Entry", "Failed", "Success", "Received"];
+    const allPipelineStages = ["opti entry", "opti failed", "opti on going", "po received"];
     const finalPipelineStats = allPipelineStages.map((stage) => {
       const found = pipelineStats.find((s) => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };
