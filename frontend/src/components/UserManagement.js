@@ -231,6 +231,8 @@ const UserManagement = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'Expert':
         return 'bg-purple-100 text-purple-800';
+      case 'Trainer':
+        return 'bg-pink-100 text-pink-700';
       case 'Akademik':
         return 'bg-indigo-100 text-indigo-800';
       case 'PM':

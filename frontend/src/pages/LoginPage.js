@@ -31,13 +31,15 @@ const LoginPage = () => {
         case "Expert":
           navigate("/dashboard/expert", { replace: true });
           break;
+        case "Trainer":
+          navigate("/training", { replace: true });
+          break;
         case "Akademik":
           navigate("/dashboard/akademik", { replace: true });
           break;
         case "PM":
           navigate("/dashboard/pm", { replace: true });
           break;
-        
         default:
           navigate("/login", { replace: true });
       }

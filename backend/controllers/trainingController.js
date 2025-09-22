@@ -93,7 +93,7 @@ const getMyTrainings = async (req, res) => {
   try {
     const { role, id } = req.user;
     let data;
-    if (role === "Expert") {
+    if (role === "Expert" || role === "Trainer") {
       data = await Training.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Training.getBySalesId(id);

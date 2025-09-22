@@ -27,7 +27,7 @@ const expertSchema = Yup.object({
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
   mobile: Yup.string().required("Mobile number is required"),
   idSkill: Yup.string().required("Skill is required"),
-  role: Yup.string().oneOf(["Expert"]).required("Role is required"),
+  role: Yup.string().oneOf(["Expert", "Trainer"]).required("Role is required"),
   statExpert: Yup.string().optional(),
   Row: Yup.string().optional(),
 });
@@ -207,6 +207,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
             <label className="block text-gray-700 font-semibold mb-1">Role</label>
             <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border rounded-md">
               <option value="Expert">Expert</option>
+              <option value="Trainer">Trainer</option>
               
             </select>
             {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}

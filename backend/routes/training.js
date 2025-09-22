@@ -25,19 +25,19 @@ const upload = multer({
 // => izinkan juga Sales supaya user Sales dapat melihat daftar training terkait
 router.get(
   "/mine",
-  authMiddleware(["Expert", "Sales", "Head Sales", "Akademik"]),
+  authMiddleware(["Expert", "Sales", "Head Sales", "Akademik", "Trainer"]),
   trainingController.getMyTrainings
 );
 
 // existing endpoints
 router.get(
   "/",
-  authMiddleware(["Admin", "Expert", "Akademik"]),
+  authMiddleware(["Admin", "Expert", "Akademik", "Trainer"]),
   trainingController.getTraining
 );
 router.get(
   "/:id",
-  authMiddleware(["Admin", "Expert", "Sales", "Head Sales", "Akademik"]),
+  authMiddleware(["Admin", "Expert", "Sales", "Head Sales", "Akademik", "Trainer"]),
   trainingController.getTrainingById
 );
 router.post("/", authMiddleware(["Admin"]), trainingController.createTraining);

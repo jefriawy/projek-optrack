@@ -30,6 +30,8 @@ const roleToRedirect = (role) => {
       return "/dashboard/sales";
     case "Expert":
       return "/dashboard/expert";
+    case "Trainer":
+      return "/training";
     case "Akademik":
       return "/dashboard/akademik";
     case "PM":

@@ -21,6 +21,8 @@ import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
 import ExpertPage from "./pages/ExpertPage"; // <- penting utk /expert (Admin)
+import AkademikPage from "./pages/AkademikPage";
+import PmPage from "./pages/PmPage";
 
 // Dashboards
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -187,7 +189,7 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "Trainer"]}>
             <Layout><TrainingPage /></Layout>
           </Protected>
         }
@@ -217,6 +219,24 @@ const AppRoutes = () => {
         element={
           <Protected allow={["Admin"]}>
             <Layout><ExpertPage /></Layout>
+          </Protected>
+        }
+      />
+
+      {/* Admin akses Akademik dan PM */}
+      <Route
+        path="/akademik-list"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><AkademikPage /></Layout>
+          </Protected>
+        }
+      />
+      <Route
+        path="/pm-list"
+        element={
+          <Protected allow={["Admin"]}>
+            <Layout><PmPage /></Layout>
           </Protected>
         }
       />

@@ -53,6 +53,7 @@ const ExpertPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [expertData, setExpertData] = useState([]);
   const [headExpertData, setHeadExpertData] = useState([]);
+  const [trainerData, setTrainerData] = useState([]);
   const [error, setError] = useState('');
 
   const fetchExpertData = async () => {
@@ -61,8 +62,12 @@ const ExpertPage = () => {
         const response = await axios.get('http://localhost:3000/api/expert', {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setExpertData(response.data);
-        setHeadExpertData([]); // Clear head expert data
+        // response.data = { headExperts: [], regularExperts: [] }
+  setHeadExpertData(Array.isArray(response.data.headExperts) ? response.data.headExperts : []);
+  // Pisahkan expert dan trainer
+  const allExperts = Array.isArray(response.data.regularExperts) ? response.data.regularExperts : [];
+  setExpertData(allExperts.filter(e => (e.role || '').toLowerCase() === 'expert'));
+  setTrainerData(allExperts.filter(e => (e.role || '').toLowerCase() === 'trainer'));
       } catch (err) {
         setError(err.response?.data?.error || '❌ Gagal mengambil data expert.');
       }
@@ -113,14 +118,14 @@ const ExpertPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Data Expert</h2>
           <PDFDownloadLink
-            document={<ExpertListPdf experts={[...headExpertData, ...expertData]} />}
+            document={<ExpertListPdf experts={[...(Array.isArray(headExpertData) ? headExpertData : []), ...(Array.isArray(expertData) ? expertData : [])]} />}
             fileName="expert_report.pdf"
             className="px-3 py-1 rounded bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition flex items-center justify-center"
           >
             {({ loading }) => (loading ? "..." : "Export PDF")}
           </PDFDownloadLink>
         </div>
-        <p className="text-gray-500 mb-6">Laporan Data Expert</p>
+        <p className="text-gray-500 mb-6">Laporan Data Expert dan Trainer</p>
 
         
 
@@ -132,6 +137,16 @@ const ExpertPage = () => {
           ) : (
             <p className="p-4 text-gray-500 bg-white rounded-lg shadow-sm">
               Tidak ada data Expert.
+            </p>
+          )}
+        </div>
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold text-black-700 mb-4">Trainers</h3>
+          {trainerData.length > 0 ? (
+            <ExpertTable experts={trainerData} />
+          ) : (
+            <p className="p-4 text-gray-500 bg-white rounded-lg shadow-sm">
+              Tidak ada data Trainer.
             </p>
           )}
         </div>

@@ -70,6 +70,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: projectIcon, name: "Project", link: "/project" },
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
+  } else if (user && user.role === "Trainer") {
+    menuItems = [
+      { icon: trainerIcon, name: "Training", link: "/training" },
+    ];
   } else if (user && user.role === "Akademik") {
     menuItems = [
       { icon: homeIcon, name: "Home", link: homeLinkByRole },

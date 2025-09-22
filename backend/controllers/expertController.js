@@ -40,7 +40,10 @@ const createExpertUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: "Email already in use." });
     }
-  const newExpertId = await generateUserId(role === 'Head of Expert' ? 'Head of Expert' : 'Expert');
+  let idRole = 'Expert';
+  if (role === 'Head of Expert') idRole = 'Head of Expert';
+  else if (role === 'Trainer') idRole = 'Trainer';
+  const newExpertId = await generateUserId(idRole);
     const hashedPassword = await bcrypt.hash(password, 10);
     await Expert.create({
       idExpert: newExpertId,

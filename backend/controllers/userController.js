@@ -8,7 +8,7 @@ const getAllUsers = async (req, res) => {
     const [adminPromise, salesPromise, expertPromise, akademikPromise, pmPromise] = [
       pool.query("SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"),
       pool.query("SELECT idSales, nmSales, emailSales, role, mobileSales FROM sales"),
-      pool.query("SELECT idExpert, nmExpert, emailExpert, 'Expert' as role, mobileExpert FROM expert"),
+      pool.query("SELECT idExpert, nmExpert, emailExpert, role, mobileExpert FROM expert"),
       pool.query("SELECT idAkademik, nmAkademik, emailAkademik, 'Akademik' as role, mobileAkademik FROM akademik"),
       pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
     ];
@@ -58,7 +58,7 @@ const deleteUserByRole = async (req, res) => {
       idColumn = 'idSales';
       break;
     case 'Expert':
-    
+    case 'Trainer':
       tableName = 'expert';
       idColumn = 'idExpert';
       break;

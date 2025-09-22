@@ -8,9 +8,9 @@ const roleToCode = {
   "Head Sales": "02",
   Sales: "03",
   Expert: "04",
+  Trainer: "14",
   Akademik: "11",
   PM: "12",
-  
   Customer: "05",
   Opti: "06",
   Training: "07",
@@ -24,6 +24,7 @@ const roleToTableInfo = {
   "Head Sales": { tableName: "sales", idColumn: "idSales" },
   Sales: { tableName: "sales", idColumn: "idSales" },
   Expert: { tableName: "expert", idColumn: "idExpert" },
+  Trainer: { tableName: "expert", idColumn: "idExpert" },
   Akademik: { tableName: "akademik", idColumn: "idAkademik" },
   PM: { tableName: "pm", idColumn: "idPM" },
   
