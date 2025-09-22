@@ -190,11 +190,24 @@ const OptiForm = ({
     if (initialData?.jenisOpti) {
       setActiveTab(initialData.jenisOpti);
     }
-  }, [initialData]);
-
-  useEffect(() => {
     setFormData((prev) => ({ ...prev, jenisOpti: activeTab }));
-  }, [activeTab]);
+  }, [activeTab, initialData]);
+
+  // Filter experts by role for dropdown: Trainers for Training, Experts for Project
+  const expertOptions = useMemo(() => {
+    if (formData.jenisOpti === "Training") {
+      return experts
+        .filter(ex => ex.role === "Trainer")
+        .map(ex => ({ value: ex.idExpert, label: ex.nmExpert }));
+    } else if (formData.jenisOpti === "Project") {
+      return experts
+        .filter(ex => ex.role === "Expert" || ex.role === "Head of Expert")
+        .map(ex => ({ value: ex.idExpert, label: ex.nmExpert }));
+    } else {
+      // For Outsource or other types, show all
+      return experts.map(ex => ({ value: ex.idExpert, label: ex.nmExpert }));
+    }
+  }, [experts, formData.jenisOpti]);
 
   useEffect(() => {
     const run = async () => {
@@ -218,6 +231,7 @@ const OptiForm = ({
               e.fullName ??
               e.username ??
               null,
+            role: e.role ?? "Expert", // Ensure role is present for filtering
           }))
           .filter((e) => e.idExpert && e.nmExpert);
         setExperts(normalizedExperts);
@@ -228,10 +242,6 @@ const OptiForm = ({
     run();
   }, [user?.token]);
 
-  const expertOptions = useMemo(() =>
-    experts.map(ex => ({ value: ex.idExpert, label: ex.nmExpert })),
-    [experts]
-  );
 
   const customerOptions = useMemo(() =>
     customers.map(c => ({ value: c.idCustomer, label: `${c.corpCustomer} - ${c.nmCustomer}` })),
