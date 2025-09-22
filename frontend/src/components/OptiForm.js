@@ -1,12 +1,14 @@
 // src/components/OptiForm.js
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
+import Select from 'react-select';
 import * as Yup from "yup";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
+// Helper functions (formatRupiah, parseRupiah, etc.) remain the same
 const formatRupiah = (amount) => {
   if (amount === null || amount === undefined || amount === "") return "";
   return new Intl.NumberFormat("id-ID").format(amount);
@@ -33,14 +35,19 @@ const TYPE_PROJECTS = [
   { id: 4, name: "Online Project" },
 ];
 
+const STATUS_OPTIONS_DATA = [
+    { value: "opti entry", label: "Opti Entry" },
+    { value: "opti on going", label: "On Going" },
+    { value: "opti failed", label: "Opti Failed" },
+    { value: "po received", label: "PO Received" },
+];
+
 const normalizeMySQLDateTimeToLocal = (val) => {
   if (!val) return "";
   const date = new Date(val);
-  // Periksa apakah date valid
   if (isNaN(date.getTime())) {
     return "";
   }
-  // Format ke YYYY-MM-DDTHH:mm dengan menyesuaikan zona waktu lokal
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
@@ -135,7 +142,6 @@ const OptiForm = ({
   onSubmit,
   onPaymentSubmit,
   onClose,
-  mode = "create",
 }) => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("Training");
@@ -219,6 +225,33 @@ const OptiForm = ({
     run();
   }, [user?.token]);
 
+  const expertOptions = useMemo(() =>
+    experts.map(ex => ({ value: ex.idExpert, label: ex.nmExpert })),
+    [experts]
+  );
+
+  const customerOptions = useMemo(() =>
+    customers.map(c => ({ value: c.idCustomer, label: `${c.corpCustomer} - ${c.nmCustomer}` })),
+    [customers]
+  );
+
+  const sumberOptions = useMemo(() =>
+    sumber.map(s => ({ value: s.idSumber, label: s.nmSumber })),
+    [sumber]
+  );
+
+  const trainingTypeOptions = useMemo(() => 
+    TYPE_TRAININGS.map(t => ({ value: t.id, label: t.name })), 
+    []
+  );
+
+  const projectTypeOptions = useMemo(() => 
+    TYPE_PROJECTS.map(p => ({ value: p.id, label: p.name })), 
+    []
+  );
+
+  const statusOptions = useMemo(() => STATUS_OPTIONS_DATA, []);
+
   useEffect(() => {
     const safe = normalizeInitialData(initialData);
     setFormData((prev) => ({
@@ -233,6 +266,7 @@ const OptiForm = ({
 
   const inputClass =
     "w-full p-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "valOpti") {
@@ -243,6 +277,14 @@ const OptiForm = ({
       setFormData((s) => ({ ...s, [name]: value }));
     }
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
+  };
+
+  const handleSelectChange = (name) => (selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    setFormData((s) => ({ ...s, [name]: value }));
+    if (errors[name]) {
+      setErrors((err) => ({ ...err, [name]: null }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -317,6 +359,26 @@ const OptiForm = ({
   const isExpertRequired =
     formData.jenisOpti === "Training" || formData.jenisOpti === "Project";
 
+  const selectedExpertValue = expertOptions.find(option => option.value === formData.idExpert);
+  const selectedCustomerValue = customerOptions.find(option => option.value === formData.idCustomer);
+  const selectedSumberValue = sumberOptions.find(option => option.value === formData.idSumber);
+  const selectedStatusValue = statusOptions.find(option => option.value === formData.statOpti);
+  const selectedTrainingTypeValue = trainingTypeOptions.find(option => option.value === Number(formData.idTypeTraining));
+  const selectedProjectTypeValue = projectTypeOptions.find(option => option.value === Number(formData.idTypeTraining));
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: state.isDisabled ? '#f3f4f6' : 'white',
+      borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
+      boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none',
+      '&:hover': {
+        borderColor: state.isFocused ? '#3b82f6' : '#9ca3af',
+      }
+    }),
+    menu: base => ({ ...base, zIndex: 50 })
+  };
+
   const TabButton = ({ tabName, activeTab, onClick, children }) => (
     <button
       type="button"
@@ -338,441 +400,147 @@ const OptiForm = ({
     >
       {!initialData ? (
         <div className="flex border-b mb-4">
-          <TabButton
-            tabName="Training"
-            activeTab={activeTab}
-            onClick={setActiveTab}
-          >
-            Training
-          </TabButton>
-          <TabButton
-            tabName="Project"
-            activeTab={activeTab}
-            onClick={setActiveTab}
-          >
-            Project
-          </TabButton>
-          <TabButton
-            tabName="Outsource"
-            activeTab={activeTab}
-            onClick={setActiveTab}
-          >
-            Outsource
-          </TabButton>
+          <TabButton tabName="Training" activeTab={activeTab} onClick={setActiveTab}>Training</TabButton>
+          <TabButton tabName="Project" activeTab={activeTab} onClick={setActiveTab}>Project</TabButton>
+          <TabButton tabName="Outsource" activeTab={activeTab} onClick={setActiveTab}>Outsource</TabButton>
         </div>
       ) : (
         <div className="flex border-b mb-4">
-          <TabButton
-            tabName="edit_details"
-            activeTab={editTab}
-            onClick={setEditTab}
-          >
-            Edit Opportunity
-          </TabButton>
-          <TabButton
-            tabName="upload_payment"
-            activeTab={editTab}
-            onClick={setEditTab}
-          >
-            Upload Bukti Pembayaran
-          </TabButton>
+          <TabButton tabName="edit_details" activeTab={editTab} onClick={setEditTab}>Edit Opportunity</TabButton>
+          <TabButton tabName="upload_payment" activeTab={editTab} onClick={setEditTab}>Upload Bukti Pembayaran</TabButton>
         </div>
       )}
 
       <div className="min-h-[55vh]">
         {(!initialData || editTab === "edit_details") && (
           <>
-            <input
-              type="hidden"
-              name="buktiPembayaran"
-              value={formData.buktiPembayaran || ""}
-            />
+            <input type="hidden" name="buktiPembayaran" value={formData.buktiPembayaran || ""} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Nama Opti *
-                </label>
-                <input
-                  type="text"
-                  name="nmOpti"
-                  value={formData.nmOpti || ""}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama opportunity"
-                  className={inputClass}
-                />
-                {errors.nmOpti && (
-                  <p className="text-red-600 text-sm">{errors.nmOpti}</p>
-                )}
+                <label className="block text-sm font-medium mb-1">Nama Opti *</label>
+                <input type="text" name="nmOpti" value={formData.nmOpti || ""} onChange={handleChange} placeholder="Masukkan nama opportunity" className={inputClass} />
+                {errors.nmOpti && <p className="text-red-600 text-sm">{errors.nmOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Kontak Opti
-                </label>
-                <input
-                  type="text"
-                  name="contactOpti"
-                  value={formData.contactOpti || ""}
-                  onChange={handleChange}
-                  placeholder="Nama kontak PIC"
-                  className={inputClass}
-                />
+                <label className="block text-sm font-medium mb-1">Kontak Opti</label>
+                <input type="text" name="contactOpti" value={formData.contactOpti || ""} onChange={handleChange} placeholder="Nama kontak PIC" className={inputClass} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  name="emailOpti"
-                  value={formData.emailOpti || ""}
-                  onChange={handleChange}
-                  placeholder="contoh@email.com"
-                  className={inputClass}
-                />
-                {errors.emailOpti && (
-                  <p className="text-red-600 text-sm">{errors.emailOpti}</p>
-                )}
+                <input type="email" name="emailOpti" value={formData.emailOpti || ""} onChange={handleChange} placeholder="contoh@email.com" className={inputClass} />
+                {errors.emailOpti && <p className="text-red-600 text-sm">{errors.emailOpti}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Mobile</label>
-                <input
-                  type="text"
-                  name="mobileOpti"
-                  value={formData.mobileOpti || ""}
-                  onChange={handleChange}
-                  placeholder="08xxxxxxxxxx"
-                  className={inputClass}
-                />
+                <input type="text" name="mobileOpti" value={formData.mobileOpti || ""} onChange={handleChange} placeholder="08xxxxxxxxxx" className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Expert {isExpertRequired ? "*" : ""}
-                </label>
-                <select
-                  name="idExpert"
-                  value={formData.idExpert || ""}
-                  onChange={handleChange}
-                  className={inputClass}
-                  disabled={!isExpertRequired}
-                >
-                  <option value="">Pilih Expert</option>
-                  {experts.map((ex) => (
-                    <option key={ex.idExpert} value={ex.idExpert}>
-                      {ex.nmExpert}
-                    </option>
-                  ))}
-                </select>
-                {errors.idExpert && (
-                  <p className="text-red-600 text-sm">{errors.idExpert}</p>
-                )}
+                <label className="block text-sm font-medium mb-1">Expert {isExpertRequired ? "*" : ""}</label>
+                <Select name="idExpert" options={expertOptions} value={selectedExpertValue} onChange={handleSelectChange('idExpert')} placeholder="Pilih atau cari expert..." isClearable isDisabled={!isExpertRequired} styles={selectStyles} classNamePrefix="react-select" />
+                {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
               </div>
               {user?.role === "Head Sales" && initialData && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Ubah Status Program
-                  </label>
-                  <select
-                    name="statOpti"
-                    value={formData.statOpti}
-                    onChange={handleChange}
-                    className={inputClass}
-                  >
-                    <option value="opti entry">Opti Entry</option>
-                    <option value="opti on going">On Going</option>
-                    <option value="opti failed">Opti Failed</option>
-                    <option value="po received">PO Received</option>
-                  </select>
-                  {errors.statOpti && (
-                    <p className="text-red-600 text-sm">{errors.statOpti}</p>
-                  )}
+                  <label className="block text-sm font-medium mb-1">Ubah Status Program</label>
+                  <Select name="statOpti" options={statusOptions} value={selectedStatusValue} onChange={handleSelectChange('statOpti')} styles={selectStyles} classNamePrefix="react-select" />
+                  {errors.statOpti && <p className="text-red-600 text-sm">{errors.statOpti}</p>}
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Sumber *
-                </label>
-                <select
-                  name="idSumber"
-                  value={formData.idSumber || ""}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  <option value="">Pilih sumber opportunity</option>
-                  {sumber.length === 0 ? (
-                    <option value="" disabled>
-                      (Belum ada data sumber)
-                    </option>
-                  ) : (
-                    sumber.map((s) => (
-                      <option key={s.idSumber} value={s.idSumber}>
-                        {s.nmSumber}
-                      </option>
-                    ))
-                  )}
-                </select>
-                {errors.idSumber && (
-                  <p className="text-red-600 text-sm">{errors.idSumber}</p>
-                )}
+                <label className="block text-sm font-medium mb-1">Sumber *</label>
+                <Select name="idSumber" options={sumberOptions} value={selectedSumberValue} onChange={handleSelectChange('idSumber')} placeholder="Pilih sumber opportunity" isClearable styles={selectStyles} classNamePrefix="react-select" />
+                {errors.idSumber && <p className="text-red-600 text-sm">{errors.idSumber}</p>}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">
-                  Lampiran Dokumen
-                </label>
-                <input
-                  type="file"
-                  name="proposalOpti"
-                  onChange={handleFileChange}
-                  accept=".pdf,.doc,.docx"
-                  className={`${inputClass} file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
-                />
+                <label className="block text-sm font-medium mb-1">Lampiran Dokumen</label>
+                <input type="file" name="proposalOpti" onChange={handleFileChange} accept=".pdf,.doc,.docx" className={`${inputClass} file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tanggal *
-                </label>
-                <input
-                  type="date"
-                  name="datePropOpti"
-                  value={formData.datePropOpti || ""}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-                {errors.datePropOpti && (
-                  <p className="text-red-600 text-sm">{errors.datePropOpti}</p>
-                )}
+                <label className="block text-sm font-medium mb-1">Tanggal *</label>
+                <input type="date" name="datePropOpti" value={formData.datePropOpti || ""} onChange={handleChange} className={inputClass} />
+                {errors.datePropOpti && <p className="text-red-600 text-sm">{errors.datePropOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Perusahaan *
-                </label>
-                <select
-                  name="idCustomer"
-                  value={formData.idCustomer || ""}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  <option value="">Pilih perusahaan customer</option>
-                  {customers.map((c) => (
-                    <option key={c.idCustomer} value={c.idCustomer}>
-                      {c.corpCustomer} - {c.nmCustomer}
-                    </option>
-                  ))}
-                </select>
-                {errors.idCustomer && (
-                  <p className="text-red-600 text-sm">{errors.idCustomer}</p>
-                )}
+                <label className="block text-sm font-medium mb-1">Perusahaan *</label>
+                <Select name="idCustomer" options={customerOptions} value={selectedCustomerValue} onChange={handleSelectChange('idCustomer')} placeholder="Pilih perusahaan customer" isClearable styles={selectStyles} classNamePrefix="react-select" />
+                {errors.idCustomer && <p className="text-red-600 text-sm">{errors.idCustomer}</p>}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">
-                  Deskripsi
-                </label>
-                <textarea
-                  name="kebutuhan"
-                  value={formData.kebutuhan || ""}
-                  onChange={handleChange}
-                  placeholder="(opsional)"
-                  className={inputClass}
-                  rows={3}
-                />
+                <label className="block text-sm font-medium mb-1">Deskripsi</label>
+                <textarea name="kebutuhan" value={formData.kebutuhan || ""} onChange={handleChange} placeholder="(opsional)" className={inputClass} rows={3} />
               </div>
               <div className="md:col-span-2">
                 {activeTab === "Training" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Tipe Training *
-                      </label>
-                      <select
-                        name="idTypeTraining"
-                        value={formData.idTypeTraining || ""}
-                        onChange={handleChange}
-                        className={inputClass}
-                      >
-                        <option value="">Pilih tipe training</option>
-                        {TYPE_TRAININGS.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idTypeTraining && (
-                        <p className="text-red-600 text-sm">
-                          {errors.idTypeTraining}
-                        </p>
-                      )}
+                      <label className="block text-sm font-medium mb-1">Tipe Training *</label>
+                      <Select name="idTypeTraining" options={trainingTypeOptions} value={selectedTrainingTypeValue} onChange={handleSelectChange('idTypeTraining')} placeholder="Pilih tipe training" styles={selectStyles} classNamePrefix="react-select" />
+                      {errors.idTypeTraining && <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Value
-                      </label>
+                      <label className="block text-sm font-medium mb-1">Value</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
-                          Rp.
-                        </span>
-                        <input
-                          type="text"
-                          name="valOpti"
-                          value={displayValOpti}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          placeholder="Value"
-                          className={inputClass + " pl-12"}
-                        />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
+                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />
                       </div>
-                      {errors.valOpti && (
-                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
-                      )}
+                      {errors.valOpti && <p className="text-red-600 text-sm">{errors.valOpti}</p>}
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Mulai
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="startTraining"
-                          value={formData.startTraining || ""}
-                          onChange={handleChange}
-                          className={inputClass}
-                        />
+                        <label className="block text-sm font-medium mb-1">Mulai</label>
+                        <input type="datetime-local" name="startTraining" value={formData.startTraining || ""} onChange={handleChange} className={inputClass} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Selesai
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="endTraining"
-                          value={formData.endTraining || ""}
-                          onChange={handleChange}
-                          className={inputClass}
-                        />
+                        <label className="block text-sm font-medium mb-1">Selesai</label>
+                        <input type="datetime-local" name="endTraining" value={formData.endTraining || ""} onChange={handleChange} className={inputClass} />
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
-                      <label className="block text-sm font-medium mb-1">
-                        Tempat / Platform
-                      </label>
-                      <input
-                        type="text"
-                        name="placeTraining"
-                        value={formData.placeTraining || ""}
-                        onChange={handleChange}
-                        placeholder="Online / alamat / venue"
-                        className={inputClass}
-                      />
+                      <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
+                      <input type="text" name="placeTraining" value={formData.placeTraining || ""} onChange={handleChange} placeholder="Online / alamat / venue" className={inputClass} />
                     </div>
                   </div>
                 )}
                 {activeTab === "Project" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Tipe Proyek *
-                      </label>
-                      <select
-                        name="idTypeTraining"
-                        value={formData.idTypeTraining || ""}
-                        onChange={handleChange}
-                        className={inputClass}
-                      >
-                        <option value="">Pilih tipe proyek</option>
-                        {TYPE_PROJECTS.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idTypeTraining && (
-                        <p className="text-red-600 text-sm">
-                          {errors.idTypeTraining}
-                        </p>
-                      )}
+                      <label className="block text-sm font-medium mb-1">Tipe Proyek *</label>
+                      <Select name="idTypeTraining" options={projectTypeOptions} value={selectedProjectTypeValue} onChange={handleSelectChange('idTypeTraining')} placeholder="Pilih tipe proyek" styles={selectStyles} classNamePrefix="react-select" />
+                      {errors.idTypeTraining && <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Value
-                      </label>
+                      <label className="block text-sm font-medium mb-1">Value</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
-                          Rp.
-                        </span>
-                        <input
-                          type="text"
-                          name="valOpti"
-                          value={displayValOpti}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          placeholder="Value"
-                          className={inputClass + " pl-12"}
-                        />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
+                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />
                       </div>
-                      {errors.valOpti && (
-                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
-                      )}
+                      {errors.valOpti && <p className="text-red-600 text-sm">{errors.valOpti}</p>}
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Mulai
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="startTraining"
-                          value={formData.startTraining || ""}
-                          onChange={handleChange}
-                          className={inputClass}
-                        />
+                        <label className="block text-sm font-medium mb-1">Mulai</label>
+                        <input type="datetime-local" name="startTraining" value={formData.startTraining || ""} onChange={handleChange} className={inputClass} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Selesai
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="endTraining"
-                          value={formData.endTraining || ""}
-                          onChange={handleChange}
-                          className={inputClass}
-                        />
+                        <label className="block text-sm font-medium mb-1">Selesai</label>
+                        <input type="datetime-local" name="endTraining" value={formData.endTraining || ""} onChange={handleChange} className={inputClass} />
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
-                      <label className="block text-sm font-medium mb-1">
-                        Tempat / Platform
-                      </label>
-                      <input
-                        type="text"
-                        name="placeTraining"
-                        value={formData.placeTraining || ""}
-                        onChange={handleChange}
-                        placeholder="Online / alamat / venue"
-                        className={inputClass}
-                      />
+                      <label className="block text-sm font-medium mb-1">Tempat / Platform</label>
+                      <input type="text" name="placeTraining" value={formData.placeTraining || ""} onChange={handleChange} placeholder="Online / alamat / venue" className={inputClass} />
                     </div>
                   </div>
                 )}
                 {activeTab === "Outsource" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Value
-                      </label>
+                      <label className="block text-sm font-medium mb-1">Value</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
-                          Rp.
-                        </span>
-                        <input
-                          type="text"
-                          name="valOpti"
-                          value={displayValOpti}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          placeholder="Value"
-                          className={inputClass + " pl-12"}
-                        />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
+                        <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />
                       </div>
-                      {errors.valOpti && (
-                        <p className="text-red-600 text-sm">{errors.valOpti}</p>
-                      )}
+                      {errors.valOpti && <p className="text-red-600 text-sm">{errors.valOpti}</p>}
                     </div>
                   </div>
                 )}
@@ -848,26 +616,14 @@ const OptiForm = ({
         )}
       </div>
       <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          className="bg-black text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-          disabled={editTab === "upload_payment" && !paymentProofFile}
-        >
+        <button type="submit" className="bg-black text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black" disabled={editTab === "upload_payment" && !paymentProofFile}>
           {editTab === "upload_payment" ? "Upload File" : "Simpan Data"}
         </button>
-        <button
-          type="button"
-          onClick={handleReset}
-          className="bg-white text-gray-700 font-semibold py-2 px-5 rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
+        <button type="button" onClick={handleReset} className="bg-white text-gray-700 font-semibold py-2 px-5 rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           Reset Form
         </button>
         {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="ml-auto text-gray-600 hover:underline"
-          >
+          <button type="button" onClick={onClose} className="ml-auto text-gray-600 hover:underline">
             Tutup
           </button>
         )}
