@@ -169,8 +169,8 @@ const updateOpti = async (req, res) => {
             : existingOpti.idTypeProject
           : existingOpti.idTypeProject,
       proposalOpti: existingOpti.proposalOpti,
-      buktiPembayaran:
-        toNull(b.buktiPembayaran) ?? existingOpti.buktiPembayaran,
+      dokPendaftaran:
+        toNull(b.dokPendaftaran) ?? existingOpti.dokPendaftaran,
     };
 
     if (req.file) {
@@ -414,8 +414,8 @@ const getOptiById = async (req, res) => {
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
-      buktiPembayaranPath: opti.buktiPembayaran
-        ? `uploads/invoice/${opti.buktiPembayaran}`
+      dokPendaftaranPath: opti.dokPendaftaran
+        ? `uploads/dokumen/${opti.dokPendaftaran}`
         : null,
     };
     delete transformedOpti.proposalOpti;
@@ -423,6 +423,8 @@ const getOptiById = async (req, res) => {
     delete transformedOpti.endProgram;
     delete transformedOpti.placeProgram;
     delete transformedOpti.idTypeProject;
+    // remove old field name if existed
+    delete transformedOpti.buktiPembayaran;
 
     res.json(transformedOpti);
   } catch (error) {
@@ -438,7 +440,7 @@ const uploadPaymentProof = async (req, res) => {
   if (!req.file) {
     return res
       .status(400)
-      .json({ error: "File bukti pembayaran tidak ditemukan." });
+      .json({ error: "File dokumen pendaftaran tidak ditemukan." });
   }
 
   const connection = await pool.getConnection();
@@ -451,33 +453,34 @@ const uploadPaymentProof = async (req, res) => {
       return res.status(404).json({ error: "Opportunity not found" });
     }
 
-    if (existingOpti.buktiPembayaran) {
+    if (existingOpti.dokPendaftaran) {
       const oldFilePath = path.join(
         __dirname,
         "..",
         "uploads",
-        "invoice",
-        existingOpti.buktiPembayaran
+        "dokumen",
+        existingOpti.dokPendaftaran
       );
       try {
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
         }
       } catch (unlinkErr) {
-        console.error("Gagal menghapus bukti pembayaran lama:", unlinkErr);
+        console.error("Gagal menghapus dokumen pendaftaran lama:", unlinkErr);
       }
     }
 
     await Opti.updatePaymentProof(id, req.file.filename, connection);
 
     await connection.commit();
+    console.log(`Dokumen pendaftaran berhasil diunggah untuk Opti ${id}`);
     res.json({
-      message: "Bukti pembayaran berhasil diunggah.",
-      filePath: `uploads/invoice/${req.file.filename}`,
+      message: "Dokumen pendaftaran berhasil diunggah.",
+      filePath: `uploads/dokumen/${req.file.filename}`,
     });
   } catch (error) {
     await connection.rollback();
-    console.error("Error uploading payment proof:", error);
+    console.error("Error uploading dokumen pendaftaran:", error);
     res.status(500).json({ error: "Server error", details: error.message });
   } finally {
     connection.release();

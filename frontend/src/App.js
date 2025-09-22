@@ -21,16 +21,12 @@ import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
 import ExpertPage from "./pages/ExpertPage"; // <- penting utk /expert (Admin)
-import AkademikPage from "./pages/AkademikPage"; // <- Halaman list Akademik untuk Admin
-import PmPage from "./pages/PmPage"; // <- Halaman list PM untuk Admin
 
 // Dashboards
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
-import AkademikDashboard from "./pages/AkademikDashboard";
-import PMDashboard from "./pages/PMDashboard";
 
 
 import Layout from "./components/Layout";
@@ -45,12 +41,11 @@ const pathByRole = (role) => {
       return "/dashboard/head-sales";
     case "Sales":
       return "/dashboard/sales";
+    case "Head of Expert":
+    case "head of expert":
+      return "/dashboard/head-expert";
     case "Expert":
       return "/dashboard/expert";
-    case "Akademik":
-      return "/dashboard/akademik";
-    case "PM":
-      return "/dashboard/pm";
     default:
       return "/login";
   }
@@ -141,25 +136,6 @@ const AppRoutes = () => {
         }
       />
 
-      <Route
-        path="/dashboard/akademik"
-        element={
-          <Protected allow={["Akademik"]}>
-            <Layout><AkademikDashboard /></Layout>
-          </Protected>
-        }
-      />
-
-      <Route
-        path="/dashboard/pm"
-        element={
-          <Protected allow={["PM"]}>
-            <Layout><PMDashboard /></Layout>
-          </Protected>
-        }
-      />
-
-      
 
       {/* ===== MODULE PAGES ===== */}
       <Route
@@ -211,7 +187,7 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Admin", "Akademik"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
             <Layout><TrainingPage /></Layout>
           </Protected>
         }
@@ -220,7 +196,7 @@ const AppRoutes = () => {
       <Route
         path="/project"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Admin", "PM"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
             <Layout><ProjectPage /></Layout>
           </Protected>
         }
@@ -229,7 +205,7 @@ const AppRoutes = () => {
       <Route
         path="/outsource"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Admin"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
             <Layout><OutsourcePage /></Layout>
           </Protected>
         }
@@ -250,25 +226,6 @@ const AppRoutes = () => {
         element={
           <Protected allow={["Admin"]}>
             <Layout><UserManagementPage /></Layout>
-          </Protected>
-        }
-      />
-
-      {/* >>> HALAMAN LIST UNTUK ADMIN <<< */}
-      <Route
-        path="/akademik-list"
-        element={
-          <Protected allow={["Admin"]}>
-            <Layout><AkademikPage /></Layout>
-          </Protected>
-        }
-      />
-
-      <Route
-        path="/pm-list"
-        element={
-          <Protected allow={["Admin"]}>
-            <Layout><PmPage /></Layout>
           </Protected>
         }
       />

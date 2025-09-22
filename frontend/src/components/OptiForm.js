@@ -147,6 +147,9 @@ const OptiForm = ({
   const [activeTab, setActiveTab] = useState("Training");
   const [editTab, setEditTab] = useState("edit_details");
   const [paymentProofFile, setPaymentProofFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const baseState = {
     nmOpti: "",
     idCustomer: "",
@@ -300,10 +303,25 @@ const OptiForm = ({
     setPaymentProofFile(file);
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    if (paymentProofFile) {
-      onPaymentSubmit(paymentProofFile);
+    if (!paymentProofFile) return;
+    setUploading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      // onPaymentSubmit harus mengembalikan Promise (lihat OptiPage.handlePaymentSubmit)
+      await onPaymentSubmit(paymentProofFile);
+      setSuccessMsg("Dokumen pendaftaran berhasil diunggah.");
+      // tutup form/modal setelah sebentar agar user lihat notifikasi
+      setTimeout(() => {
+        if (onClose) onClose();
+      }, 700);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setErrorMsg("Gagal mengunggah dokumen pendaftaran.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -407,14 +425,14 @@ const OptiForm = ({
       ) : (
         <div className="flex border-b mb-4">
           <TabButton tabName="edit_details" activeTab={editTab} onClick={setEditTab}>Edit Opportunity</TabButton>
-          <TabButton tabName="upload_payment" activeTab={editTab} onClick={setEditTab}>Upload Bukti Pembayaran</TabButton>
+          <TabButton tabName="upload_payment" activeTab={editTab} onClick={setEditTab}>Upload Dokumen Pendaftaran</TabButton>
         </div>
       )}
 
       <div className="min-h-[55vh]">
         {(!initialData || editTab === "edit_details") && (
           <>
-            <input type="hidden" name="buktiPembayaran" value={formData.buktiPembayaran || ""} />
+            <input type="hidden" name="dokPendaftaran" value={formData.dokPendaftaran || ""} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               <div>
                 <label className="block text-sm font-medium mb-1">Nama Opti *</label>
@@ -435,8 +453,20 @@ const OptiForm = ({
                 <input type="text" name="mobileOpti" value={formData.mobileOpti || ""} onChange={handleChange} placeholder="08xxxxxxxxxx" className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Expert {isExpertRequired ? "*" : ""}</label>
-                <Select name="idExpert" options={expertOptions} value={selectedExpertValue} onChange={handleSelectChange('idExpert')} placeholder="Pilih atau cari expert..." isClearable isDisabled={!isExpertRequired} styles={selectStyles} classNamePrefix="react-select" />
+                <label className="block text-sm font-medium mb-1">
+                  {formData.jenisOpti === "Training" ? "Trainer" : "Expert"} {isExpertRequired ? "*" : ""}
+                </label>
+                <Select
+                  name="idExpert"
+                  options={expertOptions}
+                  value={selectedExpertValue}
+                  onChange={handleSelectChange('idExpert')}
+                  placeholder={formData.jenisOpti === "Training" ? "Pilih atau cari Trainer..." : "Pilih atau cari Expert..."}
+                  isClearable
+                  isDisabled={!isExpertRequired}
+                  styles={selectStyles}
+                  classNamePrefix="react-select"
+                />
                 {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
               </div>
               {user?.role === "Head Sales" && initialData && (
@@ -549,10 +579,20 @@ const OptiForm = ({
           </>
         )}
         {initialData && editTab === "upload_payment" && (
-          <div className="p-4">
+           <div className="p-4">
             <h3 className="text-lg font-semibold mb-4">
-              Upload Bukti Pembayaran
+              Upload Dokumen Pendaftaran
             </h3>
+            {successMsg && (
+              <div className="mb-3 p-3 bg-green-50 text-green-800 rounded">
+                {successMsg}
+              </div>
+            )}
+            {errorMsg && (
+              <div className="mb-3 p-3 bg-red-50 text-red-800 rounded">
+                {errorMsg}
+              </div>
+            )}
             <div
               className="border-2 border-dashed border-gray-300 rounded-lg p-40 text-center cursor-pointer hover:border-blue-500 transition-colors"
               onDrop={(e) => {
@@ -581,13 +621,13 @@ const OptiForm = ({
                 )}
               </label>
             </div>
-            {initialData.buktiPembayaranPath && (
-              <div className="mt-4">
+            {initialData.dokPendaftaranPath && (
+               <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-2">
-                  Bukti pembayaran yang sudah ada:
+                  Dokumen pendaftaran yang sudah ada:
                 </p>
                 <a
-                  href={`${API_BASE}/${initialData.buktiPembayaranPath}`}
+                  href={`${API_BASE}/${initialData.dokPendaftaranPath}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center p-3 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 transition-colors"
@@ -607,17 +647,21 @@ const OptiForm = ({
                     ></path>
                   </svg>
                   <span className="text-sm font-medium text-gray-800 truncate">
-                    {initialData.buktiPembayaranPath.split("_").pop()}
+                    {initialData.dokPendaftaranPath.split("_").pop()}
                   </span>
                 </a>
-              </div>
-            )}
+               </div>
+             )}
           </div>
         )}
       </div>
       <div className="flex items-center gap-3 pt-2">
-        <button type="submit" className="bg-black text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black" disabled={editTab === "upload_payment" && !paymentProofFile}>
-          {editTab === "upload_payment" ? "Upload File" : "Simpan Data"}
+        <button
+          type="submit"
+          className="bg-black text-white font-semibold py-2 px-5 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+          disabled={(editTab === "upload_payment" && !paymentProofFile) || uploading}
+        >
+          {uploading ? "Uploading..." : editTab === "upload_payment" ? "Upload File" : "Simpan Data"}
         </button>
         <button type="button" onClick={handleReset} className="bg-white text-gray-700 font-semibold py-2 px-5 rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           Reset Form

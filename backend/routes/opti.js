@@ -17,12 +17,12 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 // Pastikan folder upload ada
 const proposalsDir = path.join(__dirname, "..", "uploads", "proposals");
-const invoicesDir = path.join(__dirname, "..", "uploads", "invoice");
+const dokumenDir = path.join(__dirname, "..", "uploads", "dokumen");
 if (!fs.existsSync(proposalsDir)) {
   fs.mkdirSync(proposalsDir, { recursive: true });
 }
-if (!fs.existsSync(invoicesDir)) {
-  fs.mkdirSync(invoicesDir, { recursive: true });
+if (!fs.existsSync(dokumenDir)) {
+  fs.mkdirSync(dokumenDir, { recursive: true });
 }
 
 const proposalStorage = multer.diskStorage({
@@ -36,10 +36,10 @@ const proposalStorage = multer.diskStorage({
 
 const paymentStorage = multer.diskStorage({
   destination: function (_req, _file, cb) {
-    cb(null, invoicesDir);
+    cb(null, dokumenDir);
   },
   filename: function (_req, file, cb) {
-    cb(null, Date.now() + "_payment_" + file.originalname);
+    cb(null, Date.now() + "_dokumen_pendaftaran_" + file.originalname);
   },
 });
 
@@ -98,7 +98,7 @@ router.put(
 router.put(
   "/:id/payment",
   authMiddleware(["Sales", "Head Sales", "Admin"]),
-  uploadPayment.single('buktiPembayaran'),
+  uploadPayment.single('dokPendaftaran'),
   uploadPaymentProof
 );
 

@@ -6,19 +6,19 @@ const Opti = {
     const {
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, buktiPembayaran
+      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
          idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
-         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, buktiPembayaran)
+         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, buktiPembayaran
+      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     ];
     await connection.query(query, params);
     return { idOpti };
@@ -104,7 +104,7 @@ const Opti = {
     const {
       nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, buktiPembayaran
+      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
 
     const [result] = await connection.query(
@@ -113,12 +113,12 @@ const Opti = {
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
          jenisOpti = ?, idExpert = ?, proposalOpti = ?, valOpti = ?,
          startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
-         idTypeProject = ?, buktiPembayaran = ?
+         idTypeProject = ?, dokPendaftaran = ?
        WHERE idOpti = ?`,
       [
         nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
         idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-        startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, buktiPembayaran,
+        startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran,
         idOpti,
       ]
     );
@@ -128,7 +128,7 @@ const Opti = {
   async updatePaymentProof(idOpti, filename, connection = pool) {
     const query = `
       UPDATE opti
-      SET buktiPembayaran = ?
+      SET dokPendaftaran = ?
       WHERE idOpti = ?
     `;
     const [result] = await connection.query(query, [filename, idOpti]);

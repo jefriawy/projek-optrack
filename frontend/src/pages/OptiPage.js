@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import Modal from "../components/Modal";
 import OptiForm from "../components/OptiForm";
 import OptiTable from "../components/OptiTable";
@@ -73,6 +73,7 @@ const OptiPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [debounceTimeout, setDebounceTimeout] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const { id: currentOptiId } = useParams();
 
   const fetchOptis = useCallback(
     async (companyName = "", page = 1, program = "Semua Program") => {
@@ -218,35 +219,38 @@ const OptiPage = () => {
     }
   };
 
-  const handlePaymentSubmit = async (paymentFile) => {
-    if (!editingOpti) return;
-    const formData = new FormData();
-    formData.append("buktiPembayaran", paymentFile);
-    try {
-      await axios.put(
-        `${API_BASE}/api/opti/${editingOpti.idOpti}/payment`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      alert("Bukti pembayaran berhasil diunggah.");
-      closeModal();
-    } catch (err) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Gagal mengunggah file.";
-      console.error(
-        "Error uploading payment proof:",
-        err?.response?.data || err
-      );
-      alert(`Gagal mengunggah: ${msg}`);
+  const handlePaymentSubmit = (fileOrFormData) => {
+    // pick id from currently editing item (fallback ke route param)
+    const id = editingOpti?.idOpti || currentOptiId;
+    if (!id) {
+      return Promise.reject(new Error("ID opportunity tidak tersedia"));
     }
+
+    // ensure we send FormData with key 'dokPendaftaran' as backend expects
+    const fd =
+      fileOrFormData instanceof FormData
+        ? fileOrFormData
+        : (() => {
+            const f = new FormData();
+            f.append("dokPendaftaran", fileOrFormData);
+            return f;
+          })();
+
+    // return the promise so caller (OptiForm) dapat menunggu hasil
+    return axios
+      .put(`${API_BASE}/api/opti/${id}/payment`, fd, {
+        headers: { Authorization: `Bearer ${user.token}` }, // omit explicit Content-Type so browser sets boundary
+      })
+      .then((res) => {
+        console.log(`${API_BASE} said : Dokumen pendaftaran berhasil diunggah`);
+        fetchOptis(searchTerm, currentPage, activeProgram);
+        return res;
+      })
+      .catch((err) => {
+        console.error("Error uploading registration document:", err.response ? err.response.data : err);
+        // rethrow agar caller bisa tangani
+        throw err;
+      });
   };
 
   const handlePageChange = (pageNumber) => {
