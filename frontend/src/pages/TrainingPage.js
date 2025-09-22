@@ -444,7 +444,7 @@ const TrainingPage = () => {
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Expert:{" "}
+                        Trainer:{" "}
                         <span className="text-purple-600 font-bold">
                           {t.nmExpert || "-"}
                         </span>

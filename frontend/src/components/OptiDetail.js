@@ -156,7 +156,7 @@ const OptiDetail = ({ opti }) => {
               <strong>Sales:</strong> {opti.nmSales || "-"}
             </p>
             <p>
-              <strong>Expert:</strong> {opti.nmExpert || "-"}
+              <strong>Trainer:</strong> {opti.nmExpert || "-"}
             </p>
           </div>
         </div>
@@ -214,27 +214,27 @@ const OptiDetail = ({ opti }) => {
       </div>
 
       <div className="mb-8">
-        {/* ====================== PERUBAHAN DI SINI ====================== */}
         <h2 className="flex items-center text-lg font-semibold mb-2">
-          <FaFileDownload className="mr-2" /> Bukti Pembayaran
+          <FaFileDownload className="mr-2" /> Dokumen Pendaftaran
         </h2>
-        {/* ====================== AKHIR PERUBAHAN ====================== */}
-        {opti.buktiPembayaranPath ? (
+      
+        {opti.dokPendaftaranPath ? (
           <a
-            href={`http://localhost:3000/${opti.buktiPembayaranPath}`}
+            href={`http://localhost:3000/${opti.dokPendaftaranPath}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="File Icon" className="mr-2 w-5 h-5" />
-            Lihat Bukti Pembayaran
+            Lihat Dokumen Pendaftaran
           </a>
         ) : (
           <p className="text-gray-500 text-sm">
-            Belum ada bukti pembayaran yang diunggah.
+            Belum ada dokumen pendaftaran yang diunggah.
           </p>
         )}
       </div>
+
 
       <PDFDownloadLink
         document={<OptiDetailPdf opti={opti} />}
