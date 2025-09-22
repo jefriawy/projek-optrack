@@ -141,7 +141,7 @@ const OptiPage = () => {
       const response = await axios.get(`${API_BASE}/api/opti/${opti.idOpti}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setEditingOpti(response.data.data);
+      setEditingOpti(response.data);
       setFormModalOpen(true);
     } catch (err) {
       console.error("Error fetching opti detail for edit:", err);
@@ -170,13 +170,16 @@ const OptiPage = () => {
         console.log("Setting editingOpti with response.data");
         setEditingOpti(response.data);
       }
-
     } catch (err) {
       console.error("Error fetching opti detail:", err);
       if (err.response) {
         console.error("Error response data:", err.response.data);
         console.error("Error response status:", err.response.status);
-        alert(`Gagal mengambil data: ${err.response.data.message || err.response.statusText}`);
+        alert(
+          `Gagal mengambil data: ${
+            err.response.data.message || err.response.statusText
+          }`
+        );
       } else {
         alert(`Gagal mengambil data: ${err.message}`);
       }

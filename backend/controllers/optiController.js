@@ -23,11 +23,11 @@ const formatDateForDB = (dateString) => {
   // Mengubah format string datetime menjadi format yang dikenali MySQL
   // tanpa terpengaruh zona waktu server.
   const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getDate()).padStart(2, '0');
-  const h = String(dateObj.getHours()).padStart(2, '0');
-  const mi = String(dateObj.getMinutes()).padStart(2, '0');
-  const s = String(dateObj.getSeconds()).padStart(2, '0');
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  const h = String(dateObj.getHours()).padStart(2, "0");
+  const mi = String(dateObj.getMinutes()).padStart(2, "0");
+  const s = String(dateObj.getSeconds()).padStart(2, "0");
   return `${y}-${m}-${d} ${h}:${mi}:${s}`;
 };
 
@@ -68,11 +68,7 @@ const createOpti = async (req, res) => {
       contactOpti: toNull(b.contactOpti),
       emailOpti: toNull(b.emailOpti),
       mobileOpti: toNull(b.mobileOpti),
-      statOpti: (() => {
-        if (user.role === "Sales") return "opti entry";
-        return b.statOpti || "opti entry";
-      })(),
-
+      statOpti: "opti entry",
       datePropOpti: b.datePropOpti,
       idSumber: Number(b.idSumber),
       kebutuhan: toNull(b.kebutuhan),
@@ -156,7 +152,8 @@ const updateOpti = async (req, res) => {
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
           : existingOpti.valOpti,
-      startProgram: formatDateForDB(b.startTraining) ?? existingOpti.startProgram,
+      startProgram:
+        formatDateForDB(b.startTraining) ?? existingOpti.startProgram,
       endProgram: formatDateForDB(b.endTraining) ?? existingOpti.endProgram,
       placeProgram: toNull(b.placeTraining) ?? existingOpti.placeProgram,
       idTypeTraining:
@@ -262,9 +259,13 @@ const updateOpti = async (req, res) => {
         await createRelatedEntity("Project");
       }
     }
-    
+
     // Perbaikan: Sinkronisasi data ke tabel training/project saat di-update
-    if (optiData.jenisOpti === "Training" && (existingOpti.statOpti === "po received" || existingOpti.statOpti === "opti on going")) {
+    if (
+      optiData.jenisOpti === "Training" &&
+      (existingOpti.statOpti === "po received" ||
+        existingOpti.statOpti === "opti on going")
+    ) {
       const [trainingsToUpdate] = await connection.query(
         "SELECT idTraining FROM training WHERE idOpti = ?",
         [id]
@@ -287,7 +288,11 @@ const updateOpti = async (req, res) => {
           ]
         );
       }
-    } else if (optiData.jenisOpti === "Project" && (existingOpti.statOpti === "po received" || existingOpti.statOpti === "opti on going")) {
+    } else if (
+      optiData.jenisOpti === "Project" &&
+      (existingOpti.statOpti === "po received" ||
+        existingOpti.statOpti === "opti on going")
+    ) {
       const [projectsToUpdate] = await connection.query(
         "SELECT idProject FROM project WHERE idOpti = ?",
         [id]
@@ -311,7 +316,7 @@ const updateOpti = async (req, res) => {
         );
       }
     }
-    
+
     await connection.commit();
     res.json({ message: "Opportunity updated successfully" });
   } catch (error) {
@@ -575,7 +580,12 @@ const getSalesDashboardData = async (req, res) => {
     const performanceOverTime = performanceResult[0];
     const opportunityTypes = typesResult[0];
     const topWonDeals = topWonDealsResult[0];
-    const allPipelineStages = ["opti entry", "opti failed", "opti on going", "po received"];
+    const allPipelineStages = [
+      "opti entry",
+      "opti failed",
+      "opti on going",
+      "po received",
+    ];
     const finalPipelineStats = allPipelineStages.map((stage) => {
       const found = pipelineStats.find((s) => s.statOpti === stage);
       return { statOpti: stage, count: found ? found.count : 0 };

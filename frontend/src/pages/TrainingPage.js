@@ -61,7 +61,7 @@ const computeStatus = (start, end, now = Date.now()) => {
   if (s && now < s) {
     return {
       key: "received",
-      label: "Received",
+      label: "Po Received", // Ganti label
       className: "bg-amber-500 text-white",
     };
   }
@@ -69,7 +69,9 @@ const computeStatus = (start, end, now = Date.now()) => {
     const remaining = e ? e - now : 0;
     return {
       key: "onprogress",
-      label: e ? `On Progress · ${formatRemaining(remaining)}` : "On Progress",
+      label: e
+        ? `Training On Progress · ${formatRemaining(remaining)}`
+        : "Training On Progress", // Ganti label
       className: "bg-blue-600 text-white",
       remaining,
     };
@@ -77,13 +79,13 @@ const computeStatus = (start, end, now = Date.now()) => {
   if (e && now > e) {
     return {
       key: "delivered",
-      label: "Delivered",
+      label: "Training Delivered", // Ganti label
       className: "bg-green-500 text-white",
     };
   }
   return {
     key: "received",
-    label: "Received",
+    label: "Po Received", // Ganti label default
     className: "bg-amber-500 text-white",
   };
 };
@@ -221,10 +223,9 @@ const TrainingPage = () => {
 
   const fetchTrainings = useCallback(
     async (signal) => {
-      
       const endpoint =
         user?.role === "Admin" || user?.role === "Akademik" ? "" : "/mine";
-      
+
       try {
         setLoading(true);
         setErr("");
@@ -296,7 +297,7 @@ const TrainingPage = () => {
     }
   };
 
-    const openFeedbackModal = async (t) => {
+  const openFeedbackModal = async (t) => {
     if (!user?.token) return;
 
     setOpenFeedback(true);
@@ -309,12 +310,15 @@ const TrainingPage = () => {
       const detailedData = res.data;
 
       // Parsing JSON jika fbAttachments adalah string
-      if (detailedData.fbAttachments && typeof detailedData.fbAttachments === 'string') {
+      if (
+        detailedData.fbAttachments &&
+        typeof detailedData.fbAttachments === "string"
+      ) {
         try {
           detailedData.fbAttachments = JSON.parse(detailedData.fbAttachments);
         } catch (e) {
           console.error("Failed to parse fbAttachments:", e);
-          detailedData.fbAttachments = []; 
+          detailedData.fbAttachments = [];
         }
       }
 
@@ -326,18 +330,17 @@ const TrainingPage = () => {
     }
   };
 
-
   const handleFeedbackSubmit = async (target, formData) => {
     if (!target) return;
     try {
       await axios.put(
         `${API_BASE}/api/training/${target.idTraining}/feedback`,
         formData, // Mengirim FormData
-        { 
-          headers: { 
+        {
+          headers: {
             "Content-Type": "multipart/form-data", // Penting untuk mengirim file
-            Authorization: `Bearer ${user.token}` 
-          } 
+            Authorization: `Bearer ${user.token}`,
+          },
         }
       );
       setOpenFeedback(false);
@@ -363,7 +366,6 @@ const TrainingPage = () => {
   const now = Date.now();
 
   const canGiveFeedback = user?.role === "Admin" || user?.role === "Akademik";
- 
 
   return (
     <div className="p-6">
@@ -590,12 +592,12 @@ const TrainingPage = () => {
       </Modal>
 
       <FeedbackModal
-      isOpen={openFeedback}
-      onClose={() => setOpenFeedback(false)}
-      targetData={feedbackTarget}
-      canEdit={canGiveFeedback}
-      onSubmit={handleFeedbackSubmit}
-    />
+        isOpen={openFeedback}
+        onClose={() => setOpenFeedback(false)}
+        targetData={feedbackTarget}
+        canEdit={canGiveFeedback}
+        onSubmit={handleFeedbackSubmit}
+      />
     </div>
   );
 };

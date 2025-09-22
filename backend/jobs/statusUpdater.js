@@ -1,39 +1,41 @@
 // backend/jobs/statusUpdater.js
 const pool = require("../config/database");
 
-const APP_TZ = process.env.APP_TZ || "+07:00"; // set default WIB
+const APP_TZ = process.env.APP_TZ || "+07:00";
+// set default WIB
 
 async function updateTrainingStatuses(conn) {
   await conn.query("SET time_zone = ?", [APP_TZ]); // ⬅️ penting!
 
   await conn.query(
     `UPDATE training
-       SET statusTraining = 'Delivered'
+       SET statusTraining = 'Training Delivered'
      WHERE endTraining IS NOT NULL
        AND NOW() > endTraining
-       AND statusTraining <> 'Delivered'`
+       AND statusTraining <> 'Training Delivered'`
   );
 
+  // Mengganti 'On Progress' menjadi 'Training On Progress'
   await conn.query(
     `UPDATE training
-       SET statusTraining = 'On Progress'
+       SET statusTraining = 'Training On Progress'
      WHERE startTraining IS NOT NULL
        AND NOW() >= startTraining
        AND (endTraining IS NULL OR NOW() <= endTraining)
-       AND statusTraining <> 'On Progress'`
+       AND statusTraining <> 'Training On Progress'`
   );
 
+  // Mengganti 'Received' menjadi 'Po Received'
   await conn.query(
     `UPDATE training
-       SET statusTraining = 'Received'
+       SET statusTraining = 'Po Received'
      WHERE (startTraining IS NULL OR NOW() < startTraining)
-       AND statusTraining <> 'Received'`
+       AND statusTraining <> 'Po Received'`
   );
 }
 
 async function updateProjectStatuses(conn) {
   await conn.query("SET time_zone = ?", [APP_TZ]); // ⬅️ penting!
-
   await conn.query(
     `UPDATE project
        SET statusProject = 'Finished'
@@ -41,7 +43,6 @@ async function updateProjectStatuses(conn) {
        AND NOW() > endProject
        AND statusProject <> 'Finished'`
   );
-
   await conn.query(
     `UPDATE project
        SET statusProject = 'On Progress'
@@ -50,7 +51,6 @@ async function updateProjectStatuses(conn) {
        AND (endProject IS NULL OR NOW() <= endProject)
        AND statusProject <> 'On Progress'`
   );
-
   await conn.query(
     `UPDATE project
        SET statusProject = 'Pending'
