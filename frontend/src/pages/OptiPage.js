@@ -141,7 +141,7 @@ const OptiPage = () => {
       const response = await axios.get(`${API_BASE}/api/opti/${opti.idOpti}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setEditingOpti(response.data);
+      setEditingOpti(response.data.data);
       setFormModalOpen(true);
     } catch (err) {
       console.error("Error fetching opti detail for edit:", err);
@@ -152,13 +152,34 @@ const OptiPage = () => {
   const handleViewOpti = async (opti) => {
     setViewModalOpen(true);
     setIsDetailLoading(true);
+    console.log(`Fetching details for opti ID: ${opti.idOpti}`);
     try {
       const response = await axios.get(`${API_BASE}/api/opti/${opti.idOpti}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setEditingOpti(response.data);
+
+      console.log("API Response:", response);
+      console.log("API Response Data:", response.data);
+
+      // Let's try setting state with both possibilities and see what works
+      // The user reported the previous fix didn't work, so let's be thorough.
+      if (response.data && response.data.data) {
+        console.log("Setting editingOpti with response.data.data");
+        setEditingOpti(response.data.data);
+      } else {
+        console.log("Setting editingOpti with response.data");
+        setEditingOpti(response.data);
+      }
+
     } catch (err) {
       console.error("Error fetching opti detail:", err);
+      if (err.response) {
+        console.error("Error response data:", err.response.data);
+        console.error("Error response status:", err.response.status);
+        alert(`Gagal mengambil data: ${err.response.data.message || err.response.statusText}`);
+      } else {
+        alert(`Gagal mengambil data: ${err.message}`);
+      }
     } finally {
       setIsDetailLoading(false);
     }
