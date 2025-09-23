@@ -97,7 +97,6 @@ const createOpti = async (req, res) => {
     };
     if (req.file) {
   optiData.proposalOpti = path.basename(req.file.filename);
-  optiData.proposalOptiOriginal = req.file.originalname; // <-- simpan nama asli
 }
 
     await Opti.create(optiData, idSalesForOpti, connection);
@@ -176,7 +175,6 @@ const updateOpti = async (req, res) => {
 
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
-      optiData.proposalOptiOriginal = req.file.originalname;
       if (existingOpti.proposalOpti) {
         const oldFilePath = path.join(
           __dirname,
@@ -352,7 +350,7 @@ const getOptis = async (req, res) => {
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
-      proposalFileName: opti.proposalOptiOriginal || opti.proposalOpti || null,
+      proposalFileName: opti.proposalOpti || null,
     }));
     res.json({
       data: transformedOptis,
@@ -415,7 +413,7 @@ const getOptiById = async (req, res) => {
   proposalPath: opti.proposalOpti
     ? `uploads/proposals/${opti.proposalOpti}`
     : null,
-  proposalFileName: opti.proposalOptiOriginal || opti.proposalOpti || null, // <-- tambahkan ini
+  proposalFileName: opti.proposalOpti || null, // <-- tambahkan ini
   dokPendaftaranPath: opti.dokPendaftaran
     ? `uploads/dokumen/${opti.dokPendaftaran}`
     : null,

@@ -30,7 +30,7 @@ const proposalStorage = multer.diskStorage({
     cb(null, proposalsDir);
   },
   filename: function (_req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // hanya angka + ekstensi
+    cb(null, Date.now() + "_dokumen_lampiran_" + file.originalname); // hanya angka + ekstensi
   },
 });
 

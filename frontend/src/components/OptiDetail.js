@@ -207,7 +207,7 @@ const OptiDetail = ({ opti }) => {
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
             {/* Tampilkan nama file asli */}
-            {opti.proposalFileName || opti.proposalPath.split("/").pop()}
+            {opti.proposalPath.split("_dokumen_lampiran_").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">Tidak ada dokumen Lampiran.</p>
