@@ -206,7 +206,8 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
-            Lihat Dokumen
+            {/* Hanya tampilkan nama file tanpa path */}
+            {opti.proposalPath.split("/").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">Tidak ada dokumen Lampiran.</p>
@@ -217,7 +218,6 @@ const OptiDetail = ({ opti }) => {
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileDownload className="mr-2" /> Dokumen Pendaftaran
         </h2>
-      
         {opti.dokPendaftaranPath ? (
           <a
             href={`http://localhost:3000/${opti.dokPendaftaranPath}`}
@@ -226,7 +226,8 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="File Icon" className="mr-2 w-5 h-5" />
-            Lihat Dokumen Pendaftaran
+            {/* Tampilkan nama file dokumen pendaftaran */}
+            {opti.dokPendaftaranPath.split("_dokumen_pendaftaran_").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">

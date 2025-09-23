@@ -29,6 +29,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
+import AkademikDashboard from "./pages/AkademikDashboard";
 
 
 import Layout from "./components/Layout";
@@ -101,6 +102,14 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+  path="/dashboard/akademik"
+  element={
+    <Protected allow={["Akademik"]}>
+      <Layout><AkademikDashboard /></Layout>
+    </Protected>
+  }
+/>
       {/* ===== DASHBOARDS ===== */}
       <Route
         path="/dashboard-admin"
@@ -189,7 +198,7 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "Trainer"]}>
+          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "Trainer", "Akademik"]}>
             <Layout><TrainingPage /></Layout>
           </Protected>
         }

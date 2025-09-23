@@ -113,43 +113,35 @@ const getMyTrainings = async (req, res) => {
   }
 };
 
+// ...existing code...
 const submitTrainingFeedback = async (req, res) => {
   try {
     const { id } = req.params;
     const { feedback } = req.body;
-    
+
     const existingTraining = await Training.getTrainingById(id);
     if (!existingTraining) {
       return res.status(404).json({ error: "Training not found" });
     }
 
-    // Logika untuk menangani file
-    const filePaths = req.files ? req.files.map(file => file.path) : [];
-    
+    // Simpan array objek: { stored: file.filename, original: file.originalname }
+    const attachments = req.files
+      ? req.files.map(file => ({
+          stored: file.filename,
+          original: file.originalname,
+        }))
+      : [];
+
     if (feedback === undefined) {
       return res.status(400).json({ error: "Feedback content is required." });
     }
-    
-    const affectedRows = await Training.updateFeedback(id, feedback);
+
+    const affectedRows = await Training.updateFeedback(id, feedback, attachments);
     if (affectedRows === 0) {
       return res.status(404).json({ error: "Training not found" });
     }
 
-    // Mencatat aktivitas feedback baru
-    await activityModel.createActivity(
-        "feedback",
-        `Feedback baru dari training: "${existingTraining.nmTraining}"`,
-        id
-    );
-
-    console.log(`Feedback submitted for training ID: ${id}`);
-    console.log(`Feedback text: "${feedback}"`);
-    if (filePaths.length > 0) {
-      console.log(`Files uploaded and saved at:`);
-      filePaths.forEach(p => console.log(`- ${p}`));
-    } else {
-      console.log(`No files uploaded.`);
-    }
+    // ...log aktivitas...
 
     res.json({ message: "Feedback submitted successfully" });
   } catch (err) {
@@ -157,6 +149,7 @@ const submitTrainingFeedback = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+// ...existing code...
 
 module.exports = {
   getTraining,

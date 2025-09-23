@@ -65,20 +65,25 @@ const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
         />
         {/* Tambahkan bagian ini untuk menampilkan lampiran yang sudah ada */}
         {attachments.length > 0 && (
-          <div className="mt-4">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">Lampiran</h4>
-            <ul className="space-y-2">
-              {attachments.map((fileName, index) => (
-                <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                  {getFileIcon(fileName)}
-                  <a href={`${API_BASE}/uploads/feedback/${fileName}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {fileName}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+  <div className="mt-4">
+    <h4 className="text-sm font-semibold text-gray-700 mb-2">Lampiran</h4>
+    <ul className="space-y-2">
+      {attachments.map((file, index) => (
+        <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
+          {getFileIcon(file.original || file.stored || file)}
+          <a
+            href={`${API_BASE}/uploads/feedback/${file.stored || file}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            {file.original || file.stored || file}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
         {canEdit && (
           <div className="mt-4">
