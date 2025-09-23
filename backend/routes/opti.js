@@ -30,7 +30,7 @@ const proposalStorage = multer.diskStorage({
     cb(null, proposalsDir);
   },
   filename: function (_req, file, cb) {
-    cb(null, Date.now() + "_dokumen_lampiran_" + file.originalname); // hanya angka + ekstensi
+    cb(null, file.originalname); // hanya angka + ekstensi
   },
 });
 
@@ -39,7 +39,7 @@ const paymentStorage = multer.diskStorage({
     cb(null, dokumenDir);
   },
   filename: function (_req, file, cb) {
-    cb(null, Date.now() + "_dokumen_pendaftaran_" + file.originalname);
+    cb(null, file.originalname);
   },
 });
 

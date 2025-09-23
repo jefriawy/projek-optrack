@@ -207,7 +207,7 @@ const OptiDetail = ({ opti }) => {
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
             {/* Tampilkan nama file asli */}
-            {opti.proposalPath.split("_dokumen_lampiran_").pop()}
+            {opti.proposalPath.split("/").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">Tidak ada dokumen Lampiran.</p>
@@ -227,7 +227,7 @@ const OptiDetail = ({ opti }) => {
           >
             <img src={pdfIcon} alt="File Icon" className="mr-2 w-5 h-5" />
             {/* Tampilkan nama file dokumen pendaftaran */}
-            {opti.dokPendaftaranPath.split("_dokumen_pendaftaran_").pop()}
+            {opti.dokPendaftaranPath.split("/").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">
