@@ -6,19 +6,19 @@ const Opti = {
     const {
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      startProgram, proposalOptiOriginal, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
          idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
-         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         startProgram, proposalOptiOriginal, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      startProgram, proposalOptiOriginal,  endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     ];
     await connection.query(query, params);
     return { idOpti };
@@ -104,7 +104,7 @@ const Opti = {
     const {
       nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
       idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      startProgram, proposalOptiOriginal, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
 
     const [result] = await connection.query(
@@ -112,13 +112,13 @@ const Opti = {
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
          jenisOpti = ?, idExpert = ?, proposalOpti = ?, valOpti = ?,
-         startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
+         startProgram = ?, proposalOptiOriginal = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
          idTypeProject = ?, dokPendaftaran = ?
        WHERE idOpti = ?`,
       [
         nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
         idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
-        startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran,
+        startProgram, proposalOptiOriginal, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran,
         idOpti,
       ]
     );

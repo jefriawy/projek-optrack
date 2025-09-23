@@ -96,8 +96,9 @@ const createOpti = async (req, res) => {
       proposalOpti: null,
     };
     if (req.file) {
-      optiData.proposalOpti = path.basename(req.file.filename);
-    }
+  optiData.proposalOpti = path.basename(req.file.filename);
+  optiData.proposalOptiOriginal = req.file.originalname; // <-- simpan nama asli
+}
 
     await Opti.create(optiData, idSalesForOpti, connection);
     await connection.commit();
@@ -175,6 +176,7 @@ const updateOpti = async (req, res) => {
 
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
+      optiData.proposalOptiOriginal = req.file.originalname;
       if (existingOpti.proposalOpti) {
         const oldFilePath = path.join(
           __dirname,
@@ -350,7 +352,7 @@ const getOptis = async (req, res) => {
       proposalPath: opti.proposalOpti
         ? `uploads/proposals/${opti.proposalOpti}`
         : null,
-      proposalOpti: undefined,
+      proposalFileName: opti.proposalOptiOriginal || opti.proposalOpti || null,
     }));
     res.json({
       data: transformedOptis,
@@ -405,19 +407,19 @@ const getOptiById = async (req, res) => {
         .json({ error: "Opportunity not found or not accessible" });
     }
     const transformedOpti = {
-      ...opti,
-      startTraining: opti.startProgram ?? null,
-      endTraining: opti.endProgram ?? null,
-      placeTraining: opti.placeProgram ?? null,
-      idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
-
-      proposalPath: opti.proposalOpti
-        ? `uploads/proposals/${opti.proposalOpti}`
-        : null,
-      dokPendaftaranPath: opti.dokPendaftaran
-        ? `uploads/dokumen/${opti.dokPendaftaran}`
-        : null,
-    };
+  ...opti,
+  startTraining: opti.startProgram ?? null,
+  endTraining: opti.endProgram ?? null,
+  placeTraining: opti.placeProgram ?? null,
+  idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
+  proposalPath: opti.proposalOpti
+    ? `uploads/proposals/${opti.proposalOpti}`
+    : null,
+  proposalFileName: opti.proposalOptiOriginal || opti.proposalOpti || null, // <-- tambahkan ini
+  dokPendaftaranPath: opti.dokPendaftaran
+    ? `uploads/dokumen/${opti.dokPendaftaran}`
+    : null,
+};
     delete transformedOpti.proposalOpti;
     delete transformedOpti.startProgram;
     delete transformedOpti.endProgram;

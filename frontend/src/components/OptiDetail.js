@@ -194,7 +194,7 @@ const OptiDetail = ({ opti }) => {
           {opti.kebutuhan || "Tidak ada deskripsi kebutuhan."}
         </p>
       </div>
-      <div className="mb-8">
+     <div className="mb-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileDownload className="mr-2" /> Dokumen Lampiran
         </h2>
@@ -206,8 +206,8 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
-            {/* Hanya tampilkan nama file tanpa path */}
-            {opti.proposalPath.split("/").pop()}
+            {/* Tampilkan nama file asli */}
+            {opti.proposalFileName || opti.proposalPath.split("/").pop()}
           </a>
         ) : (
           <p className="text-gray-500 text-sm">Tidak ada dokumen Lampiran.</p>
