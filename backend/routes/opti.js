@@ -12,6 +12,7 @@ const {
   updateOpti,
   getSalesDashboardData,
   uploadPaymentProof,
+  exportOptis,
 } = require("../controllers/optiController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -67,6 +68,13 @@ router.get(
 
 // List Opti
 router.get("/", authMiddleware(["Sales", "Admin", "Head Sales"]), getOptis);
+
+// Export Opti
+router.get(
+  "/export",
+  authMiddleware(["Sales", "Admin", "Head Sales"]),
+  exportOptis
+);
 
 // Create Opti
 router.post(

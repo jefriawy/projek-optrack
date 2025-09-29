@@ -8,6 +8,7 @@ const {
   getCustomerById,
   updateCustomer,
   updateCustomerStatus, // <-- Impor fungsi baru
+  exportCustomers,
 } = require("../controllers/customerController");
 const authMiddleware = require("../middleware/authMiddleware");
 const {
@@ -24,6 +25,13 @@ router.get(
 
 // Rute untuk mendapatkan semua customer (GET /api/customer)
 router.get("/", authMiddleware(["Sales", "Admin", "Head Sales"]), getCustomers);
+
+// Rute untuk export customer (GET /api/customer/export)
+router.get(
+  "/export",
+  authMiddleware(["Sales", "Admin", "Head Sales"]),
+  exportCustomers
+);
 
 // Rute untuk membuat customer (POST /api/customer)
 router.post(

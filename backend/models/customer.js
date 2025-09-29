@@ -141,6 +141,52 @@ const Customer = {
     return rows[0].total;
   },
 
+  async findAllForExport(statusFilter, searchParams, user) {
+    let query = `
+      SELECT 
+        c.nmCustomer,
+        c.mobileCustomer,
+        c.emailCustomer,
+        c.addrCustomer,
+        c.corpCustomer,
+        sc.nmStatCustomer,
+        s.nmSales,
+        DATE_FORMAT(c.tglInput, '%Y-%m-%d %H:%i:%s') AS tglInput,
+        c.customerCat,
+        c.NPWP
+      FROM customer c 
+      JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer 
+      JOIN sales s ON c.idSales = s.idSales
+    `;
+    const params = [];
+    const conditions = [];
+
+    if (statusFilter) {
+      conditions.push("c.idStatCustomer = ?");
+      params.push(statusFilter);
+    }
+
+    if (searchParams && searchParams.searchTerm && searchParams.searchBy) {
+      const validSearchFields = { corpCustomer: "c.corpCustomer", nmSales: "s.nmSales" };
+      if (validSearchFields[searchParams.searchBy]) {
+        conditions.push(`${validSearchFields[searchParams.searchBy]} LIKE ?`);
+        params.push(`%${searchParams.searchTerm}%`);
+      }
+    }
+
+    if (user && user.role === "Sales") {
+      conditions.push(`c.idSales = ?`);
+      params.push(user.id);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(" AND ")}`;
+    }
+    query += ` ORDER BY c.tglInput DESC`;
+    const [rows] = await pool.query(query, params);
+    return rows;
+  },
+
   async findStatusOptions() {
     const [rows] = await pool.query(
       "SELECT idStatCustomer, nmStatCustomer FROM statcustomer"

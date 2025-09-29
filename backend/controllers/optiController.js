@@ -9,6 +9,7 @@ const fs = require("fs");
 const Training = require("../models/trainingModel");
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
+const { exportToXlsx } = require("../utils/OptiXlsx.js");
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
@@ -613,6 +614,48 @@ const getSalesDashboardData = async (req, res) => {
   }
 };
 
+const exportOptis = async (req, res) => {
+  try {
+    const { corpCustomer, nmOpti, nmSales, program, status } = req.query;
+    const { user } = req;
+    const searchCriteria = { corpCustomer, nmOpti, nmSales };
+
+    const optis = await Opti.findAllForExport(searchCriteria, user, program, status);
+
+    const columns = [
+      'nmOpti',
+      'mobileOpti',
+      'emailOpti',
+      'statOpti',
+      'datePropOpti',
+      'corpCustomer',
+      'nmSumber',
+      'nmSales',
+      'jenisOpti',
+      'nmExpert',
+      'valOpti',
+      'startProgram',
+      'endProgram',
+      'placeProgram',
+    ];
+
+    const xlsxBuffer = exportToXlsx(optis, columns, 'Opportunities');
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=" + "opportunities.xlsx"
+    );
+    res.send(xlsxBuffer);
+  } catch (error) {
+    console.error("Error exporting opportunities to XLSX:", error);
+    res.status(500).json({ error: "Server error during export" });
+  }
+};
+
 module.exports = {
   createOpti,
   getOptis,
@@ -621,4 +664,5 @@ module.exports = {
   updateOpti,
   uploadPaymentProof,
   getSalesDashboardData,
+  exportOptis,
 };
