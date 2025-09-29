@@ -2,6 +2,7 @@
 import pdfIcon from "../iconres/pdf.png";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -12,7 +13,17 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
     });
   };
 
-  // ====================== PERUBAHAN DI SINI ======================
+  // --- TAMBAHAN: Fungsi untuk format Rupiah ---
+  const formatRupiah = (value) => {
+    if (value === null || value === undefined) return "N/A";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "opti entry":
@@ -29,10 +40,9 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
   };
 
   const getStatusText = (status) => {
-    if (status === "Reject") return "opti failed"; // Assuming 'Reject' maps to 'opti failed'
+    if (status === "Reject") return "opti failed";
     return status || "-";
   };
-  // ====================== AKHIR PERUBAHAN ======================
 
   return (
     <div>
@@ -47,21 +57,29 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA PERUSAHAAN
               </th>
+              {/* --- HAPUS: Kolom Nama Customer ---
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA CUSTOMER
               </th>
+              */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA SALES
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 NAMA EXPERT
               </th>
+              {/* --- TAMBAHAN: Kolom Value --- */}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                VALUE
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 STATUS OPTI
               </th>
+              {/* --- HAPUS: Kolom Dokumen ---
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 DOKUMEN
               </th>
+              */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 AKSI
               </th>
@@ -77,14 +95,20 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.corpCustomer || "-"}
                   </td>
+                  {/* --- HAPUS: Data Nama Customer ---
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmCustomer || "-"}
                   </td>
+                  */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmSales || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.nmExpert || "-"}
+                  </td>
+                  {/* --- TAMBAHAN: Data Value --- */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-semibold">
+                    {formatRupiah(opti.valOpti)}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -92,13 +116,12 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                         opti.statOpti
                       )}`}
                     >
-                      {/* ====================== PERUBAHAN DI SINI ====================== */}
                       {opti.statOpti === "Reject"
                         ? "Failed"
                         : opti.statOpti || "-"}
-                      {/* ====================== AKHIR PERUBAHAN ====================== */}
                     </span>
                   </td>
+                  {/* --- HAPUS: Data Dokumen ---
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {opti.proposalPath ? (
                       <a
@@ -113,6 +136,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                       "-"
                     )}
                   </td>
+                  */}
                   <td className="px-6 py-4 flex gap-2">
                     <button
                       onClick={() => onViewOpti(opti)}
@@ -131,8 +155,9 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
               ))
             ) : (
               <tr>
+                {/* --- UPDATE: Colspan disesuaikan menjadi 7 --- */}
                 <td
-                  colSpan="9"
+                  colSpan="7"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   No opportunities match the current filters.
@@ -169,18 +194,25 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                 </span>
               </div>
               <div className="mt-4">
+                {/* --- HAPUS: Nama Customer ---
                 <p className="text-sm text-gray-500">
                   <strong>Customer:</strong> {opti.nmCustomer || "-"}
                 </p>
+                */}
                 <p className="text-sm text-gray-500">
                   <strong>Sales:</strong> {opti.nmSales || "-"}
                 </p>
                 <p className="text-sm text-gray-500">
                   <strong>Expert:</strong> {opti.nmExpert || "-"}
                 </p>
+                {/* --- TAMBAHAN: Value --- */}
+                <p className="text-sm text-gray-500 font-semibold">
+                  <strong>Value:</strong> {formatRupiah(opti.valOpti)}
+                </p>
                 <p className="text-sm text-gray-500">
                   <strong>Tanggal:</strong> {formatDate(opti.datePropOpti)}
                 </p>
+                {/* --- HAPUS: Dokumen ---
                 <p className="text-sm text-gray-500">
                   <strong>Dokumen:</strong>
                   {opti.proposalPath ? (
@@ -196,6 +228,7 @@ const OptiTable = ({ optis, onViewOpti, onEditOpti }) => {
                     "-"
                   )}
                 </p>
+                */}
               </div>
               <div className="mt-4 flex justify-end">
                 <button

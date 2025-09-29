@@ -24,7 +24,6 @@ const TYPE_PROJECTS = [
   { id: 3, name: "Inhouse Project" },
   { id: 4, name: "Online Project" },
 ];
-
 const isBadDate = (v) =>
   !v || v === "0000-00-00 00:00:00" || v === "0000-00-00T00:00";
 
@@ -56,6 +55,18 @@ const OptiDetail = ({ opti }) => {
     });
   };
 
+  // --- TAMBAHAN: Fungsi untuk format Rupiah ---
+  const formatRupiah = (value) => {
+    if (value === null || value === undefined) return "N/A";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+  // --- AKHIR TAMBAHAN ---
+
   const getStatusInfo = (status) => {
     switch (status) {
       case "opti entry":
@@ -77,7 +88,6 @@ const OptiDetail = ({ opti }) => {
     const mulai = formatDateTime(opti.startTraining);
     const selesai = formatDateTime(opti.endTraining);
     const lokasi = opti.placeTraining || "-";
-
     if (opti.jenisOpti === "Training") {
       const typeName =
         TYPE_TRAININGS.find((t) => Number(t.id) === Number(opti.idTypeTraining))
@@ -152,6 +162,14 @@ const OptiDetail = ({ opti }) => {
             <p>
               <strong>Kontak PIC:</strong> {opti.contactOpti || "-"}
             </p>
+            {/* --- TAMBAHAN: Email dan Mobile Phone --- */}
+            <p>
+              <strong>Email:</strong> {opti.emailOpti || "-"}
+            </p>
+            <p>
+              <strong>Mobile Phone:</strong> {opti.mobileOpti || "-"}
+            </p>
+            {/* --- AKHIR TAMBAHAN --- */}
             <p>
               <strong>Sales:</strong> {opti.nmSales || "-"}
             </p>
@@ -168,6 +186,11 @@ const OptiDetail = ({ opti }) => {
             <p>
               <strong>Perusahaan:</strong> {opti.corpCustomer || "-"}
             </p>
+            {/* --- TAMBAHAN: Value Opportunity --- */}
+            <p>
+              <strong>Value:</strong> {formatRupiah(opti.valOpti)}
+            </p>
+            {/* --- AKHIR TAMBAHAN --- */}
             <p className="flex items-center">
               <strong>Status:</strong>
               <span
@@ -194,7 +217,7 @@ const OptiDetail = ({ opti }) => {
           {opti.kebutuhan || "Tidak ada deskripsi kebutuhan."}
         </p>
       </div>
-     <div className="mb-8">
+      <div className="mb-8">
         <h2 className="flex items-center text-lg font-semibold mb-2">
           <FaFileDownload className="mr-2" /> Dokumen Lampiran
         </h2>
@@ -206,7 +229,6 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="PDF Icon" className="mr-2 w-5 h-5" />
-            {/* Tampilkan nama file asli */}
             {opti.proposalPath.split("/").pop()}
           </a>
         ) : (
@@ -226,7 +248,6 @@ const OptiDetail = ({ opti }) => {
             className="text-blue-600 hover:underline flex items-center text-sm"
           >
             <img src={pdfIcon} alt="File Icon" className="mr-2 w-5 h-5" />
-            {/* Tampilkan nama file dokumen pendaftaran */}
             {opti.dokPendaftaranPath.split("/").pop()}
           </a>
         ) : (
@@ -235,7 +256,6 @@ const OptiDetail = ({ opti }) => {
           </p>
         )}
       </div>
-
 
       <PDFDownloadLink
         document={<OptiDetailPdf opti={opti} />}
