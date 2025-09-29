@@ -370,30 +370,29 @@ const getOptis = async (req, res) => {
 
 const getFormOptions = async (req, res) => {
   try {
-    const experts = await Expert.findAll();
-    const [sumberRows] = await pool.query(
-      "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber ASC"
+    // ambil customer, sumber, expert langsung via pool untuk menghindari ketergantungan pada model yang mungkin belum terupdate
+    const [customers] = await pool.query(
+      "SELECT idCustomer, corpCustomer, nmCustomer FROM customer ORDER BY corpCustomer"
     );
-    let customers = [];
-    if (req.user.role === "Sales") {
-      const idSales = req.user.id;
-      const [salesRow] = await pool.query(
-        "SELECT idSales FROM sales WHERE idSales = ?",
-        [idSales]
-      );
-      customers = salesRow.length ? await Customer.findBySalesId(idSales) : [];
-    } else {
-      customers = await Customer.findAll();
-    }
+    const [sumber] = await pool.query(
+      "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber"
+    );
+    const [experts] = await pool.query(
+      "SELECT idExpert, nmExpert, role FROM expert ORDER BY nmExpert"
+    );
 
     res.json({
-      customers,
-      sumber: sumberRows ?? [],
-      experts,
+      customers: Array.isArray(customers) ? customers : [],
+      sumber: Array.isArray(sumber) ? sumber : [],
+      experts: Array.isArray(experts) ? experts : [],
     });
   } catch (error) {
-    console.error("Error fetching form options:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error("Error in getFormOptions:", error);
+    // kembalikan informasi minimal ke client, detail ada di server log
+    res.status(500).json({
+      error: "Server error while fetching form options",
+      details: error.message,
+    });
   }
 };
 

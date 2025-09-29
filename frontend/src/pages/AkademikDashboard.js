@@ -14,6 +14,68 @@ import TrainingTable from "../components/TrainingTable";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
+// user chip helpers (nama & avatar) - implemented like HeadOfSalesDashboard
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
+    null;
+  if (!candidate) return null;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
+    </div>
+  );
+};
+
+// User chip component to display avatar + name (used in header)
+const UserChip = ({ user }) => {
+  const name = getDisplayName(user);
+  const avatar = getAvatarUrl(user);
+  return (
+    <div className="flex items-center gap-3">
+      {avatar ? (
+        <img
+          src={avatar}
+          alt={name}
+          className="w-9 h-9 rounded-full object-cover border"
+        />
+      ) : (
+        <Initials name={name} />
+      )}
+      <div className="text-sm">
+        <div className="font-medium text-gray-800">{name}</div>
+        <div className="text-xs text-gray-500">{user?.role || ""}</div>
+      </div>
+    </div>
+  );
+};
+
 const AkademikDashboard = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [trainingData, setTrainingData] = useState([]);
@@ -96,9 +158,10 @@ const AkademikDashboard = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Akademik Dashboard
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Akademik Dashboard</h1>
+        <UserChip user={user} />
+      </div>
 
       {/* Ringkasan Data Training */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
