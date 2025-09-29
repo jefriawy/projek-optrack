@@ -13,6 +13,7 @@ import OptiListPdf from "../components/OptiListPdf";
 import { FaSearch } from "react-icons/fa";
 import { Menu } from "@headlessui/react";
 import Pagination from '../components/Pagination';
+import NotificationBell from "../components/NotificationBell"; 
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -291,6 +292,11 @@ const OptiPage = () => {
               <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
             </div>
           </div>
+          <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+                        
+                        {/* Lonceng Notifikasi */}
+                        {user && <NotificationBell />} 
+              </div>
         </div>
       </header>
 

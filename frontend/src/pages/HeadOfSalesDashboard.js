@@ -6,6 +6,7 @@ import OpportunityTypePie from "../components/OpportunityTypePie";
 import MonthlyPerformanceChart from "../components/MonthlyPerformanceChart";
 import TopDealsTable from "../components/TopDealsTable";
 import { AuthContext } from "../context/AuthContext";
+import NotificationBell from "../components/NotificationBell"; // <-- BARU
 
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
@@ -136,9 +137,6 @@ const HeadOfSalesDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  console.log("API_BASE:", API_BASE);
-  console.log("User object:", user ? { id: user.id, role: user.role } : "No user");
-
   // Tabs minimal
   const [tab, setTab] = useState("status"); // customers | status | performance
   // Switch di tab Status: bar (pipeline) vs pie (opportunity type)
@@ -165,7 +163,6 @@ const HeadOfSalesDashboard = () => {
           );
         }
         const data = await res.json();
-        console.log("API Response Data:", data);
         setDashboardData(data);
       } catch (e) {
         if (e.name !== "AbortError") setErr(e.message || "Network error");
@@ -201,24 +198,31 @@ const HeadOfSalesDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-gray-100 min-h-full">
-      {/* ===== Header (judul + user chip) — tanpa Refresh & tanpa timestamp ===== */}
+      {/* ===== Header (judul + notifikasi + user chip) ===== */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Head of Sales Dashboard</h1>
 
-        <div className="flex items-center gap-3 mt-4 md:mt-0">
-          {getAvatarUrl(user) ? (
-            <img
-              src={getAvatarUrl(user)}
-              alt="avatar"
-              className="w-9 h-9 rounded-full object-cover"
-            />
-          ) : (
-            <Initials name={getDisplayName(user)} />
-          )}
-          <div className="leading-5">
-            <div className="text-sm font-bold">{getDisplayName(user)}</div>
-            <div className="text-xs text-gray-500">
-              Logged in • {user?.role || "User"}
+        <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+          
+          {/* Lonceng Notifikasi */}
+          {user && <NotificationBell />}
+
+          {/* User chip */}
+          <div className="flex items-center gap-3 pl-4 border-l">
+            {getAvatarUrl(user) ? (
+              <img
+                src={getAvatarUrl(user)}
+                alt="avatar"
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <Initials name={getDisplayName(user)} />
+            )}
+            <div className="leading-5">
+              <div className="text-sm font-bold">{getDisplayName(user)}</div>
+              <div className="text-xs text-gray-500">
+                Logged in • {user?.role || "User"}
+              </div>
             </div>
           </div>
         </div>

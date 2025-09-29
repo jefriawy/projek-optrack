@@ -7,7 +7,7 @@ import MonthlyPerformanceChart from "../components/MonthlyPerformanceChart";
 import OpportunityTypePie from "../components/OpportunityTypePie";
 import TopDealsTable from "../components/TopDealsTable";
 import { FaExpand, FaCompressAlt } from "react-icons/fa";
-
+import NotificationBell from "../components/NotificationBell";
 // Base URL dari .env agar fleksibel (fallback ke 3000)
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
@@ -101,15 +101,17 @@ const SalesDashboard = () => {
   if (!dashboardData) return <div className="p-8">Loading dashboard...</div>;
 
   return (
-        <div className="p-4 sm:p-6 md:p-8 bg-gray-100 min-h-full">
-      {/* Header Konten Utama */}
-      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
-        <div className="w-full md:w-auto mb-4 md:mb-0">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Sales Dashboard</h1>
-        </div>
+       <div className="p-4 sm:p-6 md:p-8 bg-gray-100 min-h-full">
+      {/* ===== Header (judul + notifikasi + user chip) ===== */}
+      <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Sales Dashboard</h1>
 
-        <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          {/* User chip (senada) */}
+        <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+          
+          {/* Lonceng Notifikasi */}
+          {user && <NotificationBell />}
+
+          {/* User chip */}
           <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
@@ -122,7 +124,9 @@ const SalesDashboard = () => {
             )}
             <div className="leading-5">
               <div className="text-sm font-bold">{getDisplayName(user)}</div>
-              <div className="text-xs text-gray-500">Logged in • {user?.role || "User"}</div>
+              <div className="text-xs text-gray-500">
+                Logged in • {user?.role || "User"}
+              </div>
             </div>
           </div>
         </div>

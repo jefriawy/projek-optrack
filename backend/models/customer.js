@@ -153,17 +153,16 @@ const Customer = {
     return rows;
   },
 
-  async findById(id) {
-    // KESALAHAN ADA DI SINI. Query dimulai dengan baris baru.
-    // PERBAIKAN: Gunakan .trim() untuk menghapus spasi/baris baru di awal dan akhir.
-    const query = `
-      SELECT c.*, sc.nmStatCustomer, s.nmSales
+   async findById(id) {
+    const [rows] = await pool.query(`
+      SELECT 
+        c.*, s.nmSales, stat.nmStatCustomer
       FROM customer c
-      JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer
-      JOIN sales s ON c.idSales = s.idSales
-      WHERE c.idCustomer = ?
-    `;
-    const [rows] = await pool.query(query.trim(), [id]); // Tambahkan .trim() di sini
+      LEFT JOIN sales s ON c.idSales = s.idSales
+      LEFT JOIN statcustomer stat ON c.idStatCustomer = stat.idStatCustomer
+      WHERE c.idCustomer = ?`, 
+      [id]
+    );
     return rows[0];
   },
 };

@@ -23,6 +23,11 @@ const Sales = {
     return rows;
   },
 
+ async findById(id) {
+    const [rows] = await pool.query("SELECT * FROM sales WHERE idSales = ?", [id]);
+    return rows[0]; 
+  },
+  
   async findByEmail(email) {
     const [rows] = await pool.query("SELECT * FROM sales WHERE emailSales = ?", [
       email,
