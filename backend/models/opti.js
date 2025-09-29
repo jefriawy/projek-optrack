@@ -24,7 +24,7 @@ const Opti = {
     return { idOpti };
   },
 
-  async findAllPaginated(searchTerm, limit, offset, user, program) {
+  async findAllPaginated(searchCriteria, limit, offset, user, program) {
     let baseQuery = `
       FROM opti o
       LEFT JOIN customer c ON o.idCustomer = c.idCustomer
@@ -35,9 +35,21 @@ const Opti = {
     const params = [];
     const whereClauses = [];
 
-    if (searchTerm) {
-      whereClauses.push(`(o.nmOpti LIKE ? OR c.corpCustomer LIKE ?)`);
-      params.push(`%${searchTerm}%`, `%${searchTerm}%`);
+    // Dynamically build the WHERE clause based on the search criteria
+    if (searchCriteria) {
+      const { corpCustomer, nmOpti, nmSales } = searchCriteria;
+      if (corpCustomer) {
+        whereClauses.push(`c.corpCustomer LIKE ?`);
+        params.push(`%${corpCustomer}%`);
+      }
+      if (nmOpti) {
+        whereClauses.push(`o.nmOpti LIKE ?`);
+        params.push(`%${nmOpti}%`);
+      }
+      if (nmSales) {
+        whereClauses.push(`sl.nmSales LIKE ?`);
+        params.push(`%${nmSales}%`);
+      }
     }
 
     if (user && user.role === "Sales") {

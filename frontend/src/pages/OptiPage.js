@@ -17,6 +17,7 @@ import OptiDetail from "../components/OptiDetail";
 import { pdf } from "@react-pdf/renderer";
 import OptiListPdf from "../components/OptiListPdf";
 import { FaSearch } from "react-icons/fa";
+import { Menu } from "@headlessui/react";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -64,6 +65,7 @@ const OptiPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [optis, setOptis] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchBy, setSearchBy] = useState("corpCustomer"); // default search by company name
   const [activeProgram, setActiveProgram] = useState("Semua Program");
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
@@ -76,11 +78,17 @@ const OptiPage = () => {
   const { id: currentOptiId } = useParams();
 
   const fetchOptis = useCallback(
-    async (companyName = "", page = 1, program = "Semua Program") => {
+    async (page = 1, program = "Semua Program") => {
       if (!user?.token) return;
       try {
+        // Dynamic search parameters based on user selection
+        const params = { page, limit: 10, program };
+        if (searchTerm) {
+          params[searchBy] = searchTerm;
+        }
+
         const response = await axios.get(`${API_BASE}/api/opti`, {
-          params: { companyName, page, limit: 10, program },
+          params,
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setOptis(response.data.data);
@@ -93,7 +101,7 @@ const OptiPage = () => {
         );
       }
     },
-    [user]
+    [user, searchTerm, searchBy]
   );
 
   useEffect(() => {
@@ -102,35 +110,28 @@ const OptiPage = () => {
     }
     const newTimeout = setTimeout(() => {
       setCurrentPage(1);
-      fetchOptis(searchTerm, 1, activeProgram);
+      fetchOptis(1, activeProgram);
     }, 500);
     setDebounceTimeout(newTimeout);
 
     return () => clearTimeout(newTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, activeProgram]);
+  }, [searchTerm, activeProgram, searchBy]);
 
   useEffect(() => {
     if (user) {
-      fetchOptis(searchTerm, currentPage, activeProgram);
+      fetchOptis(currentPage, activeProgram);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, currentPage, activeProgram]);
+  }, [user, currentPage, activeProgram, fetchOptis]);
 
   const filteredOptis = useMemo(() => {
     let data = [...optis];
-    if (searchTerm.trim() !== "") {
-      data = data.filter((opti) =>
-        (opti.corpCustomer || "")
-          .toLowerCase()
-          .includes(searchTerm.trim().toLowerCase())
-      );
-    }
     if (statusFilter) {
       data = data.filter((opti) => opti.statOpti === statusFilter);
     }
     return data;
-  }, [optis, statusFilter, searchTerm]);
+  }, [optis, statusFilter]);
 
   const handleAddOpti = () => {
     setEditingOpti(null);
@@ -177,7 +178,7 @@ const OptiPage = () => {
         console.error("Error response data:", err.response.data);
         console.error("Error response status:", err.response.status);
         alert(
-          `Gagal mengambil data: ${
+          `Gagal mengambil data: ${ 
             err.response.data.message || err.response.statusText
           }`
         );
@@ -193,7 +194,7 @@ const OptiPage = () => {
     setFormModalOpen(false);
     setViewModalOpen(false);
     setEditingOpti(null);
-    fetchOptis(searchTerm, currentPage, activeProgram);
+    fetchOptis(currentPage, activeProgram);
   };
 
   const handleFormSubmit = async (formData) => {
@@ -243,7 +244,7 @@ const OptiPage = () => {
       })
       .then((res) => {
         console.log(`${API_BASE} said : Dokumen pendaftaran berhasil diunggah`);
-        fetchOptis(searchTerm, currentPage, activeProgram);
+        fetchOptis(currentPage, activeProgram);
         return res;
       })
       .catch((err) => {
@@ -285,7 +286,7 @@ const OptiPage = () => {
             <button
               key={program}
               onClick={() => setActiveProgram(program)}
-              className={`pb-2 text-sm font-medium transition-colors duration-200 ${
+              className={`pb-2 text-sm font-medium transition-colors duration-200 ${ 
                 activeProgram === program
                   ? "text-blue-600 font-semibold border-b-2 border-blue-600"
                   : "text-gray-500 hover:text-gray-700"
@@ -299,6 +300,12 @@ const OptiPage = () => {
     </div>
   );
 
+  const placeholderText = {
+    corpCustomer: "Cari Nama Perusahaan...",
+    nmOpti: "Cari Nama Opti...",
+    nmSales: "Cari Nama Sales...",
+  };
+
   return (
     <div className="flex-grow p-8 bg-gray-100">
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
@@ -308,18 +315,50 @@ const OptiPage = () => {
           </h1>
         </div>
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
-            <input
-              type="text"
-              placeholder="Cari Nama Perusahaan..."
-              className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Cari Nama Perusahaan"
-            />
-            <FaSearch className="absolute right-3 text-gray-400" />
-          </div>
-          <div className="flex items-center gap-3 pl-4 border-l">
+                    <Menu as="div" className="relative w-full md:w-80 mb-4 md:mb-0 md:mr-4">
+                      <div className="relative w-full">
+                        <input
+                          type="text"
+                          placeholder={placeholderText[searchBy] || "Cari..."}
+                          className="w-full h-10 pl-12 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          aria-label="Cari"
+                        />
+                        <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        
+                        <div className="absolute inset-y-0 left-0 flex items-center">
+                          <Menu.Button className="inline-flex justify-center items-center w-10 h-full text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                            </svg>
+                          </Menu.Button>
+                        </div>
+          
+                        <Menu.Items className="absolute left-0 right-0 top-full mt-1 w-full origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                          <div className="py-1">
+                            {Object.entries({
+                              corpCustomer: "Perusahaan",
+                              nmOpti: "Opti",
+                              nmSales: "Sales",
+                            }).map(([value, label]) => (
+                              <Menu.Item key={value}>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setSearchBy(value)}
+                                    className={`${
+                                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                                    } group flex w-full items-center rounded-md px-4 py-2 text-sm`}
+                                  >
+                                    {label}
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            ))}
+                          </div>
+                        </Menu.Items>
+                      </div>
+                    </Menu>          <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
                 src={getAvatarUrl(user)}

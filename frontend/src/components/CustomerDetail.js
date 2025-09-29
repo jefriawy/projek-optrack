@@ -20,6 +20,11 @@ const getStatusText = (id) => {
 const idStatValue = customer.idStat ?? customer.idstat ?? customer.idStatCustomer;
 const statusInfo = getStatusText(idStatValue);
 
+const formatDate = (dateString) => {
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-GB', options).replace(/ /g, ' ');
+  };
+
 
   return (
     <div className="p-6">
@@ -54,6 +59,7 @@ const statusInfo = getStatusText(idStatValue);
               {statusInfo.text}
             </span>
           </p>
+		  <p><strong>Tanggal Input</strong> : {formatDate(customer.tglInput)}</p>
         </div>
       </div>
 

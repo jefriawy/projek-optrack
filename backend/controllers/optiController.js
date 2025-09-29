@@ -332,14 +332,17 @@ const updateOpti = async (req, res) => {
 
 const getOptis = async (req, res) => {
   try {
-    const searchTerm = req.query.search;
-    const program = req.query.program;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    // Destructure search parameters from the query string
+    const { corpCustomer, nmOpti, nmSales, program, page: pageStr, limit: limitStr } = req.query;
+    const page = parseInt(pageStr) || 1;
+    const limit = parseInt(limitStr) || 10;
     const offset = (page - 1) * limit;
     const { user } = req;
+
+    const searchCriteria = { corpCustomer, nmOpti, nmSales };
+
     const [optis, totalCount] = await Opti.findAllPaginated(
-      searchTerm,
+      searchCriteria, // Pass criteria to the model
       limit,
       offset,
       user,

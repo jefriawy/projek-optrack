@@ -111,13 +111,7 @@ const getValidationSchema = (role) =>
       .required("Jenis Opti wajib diisi"),
     idExpert: Yup.number()
       .transform(emptyToNullNumber)
-      .nullable()
-      .when("jenisOpti", (jenisOpti, schema) => {
-        if (jenisOpti[0] === "Training" || jenisOpti[0] === "Project") {
-          return schema.required("Expert wajib dipilih untuk jenis ini");
-        }
-        return schema;
-      }),
+      .nullable(),
     idTypeTraining: Yup.number()
       .transform(emptyToNullNumber)
       .nullable()
@@ -130,11 +124,11 @@ const getValidationSchema = (role) =>
     startTraining: Yup.string().nullable(),
     endTraining: Yup.string().nullable(),
     placeTraining: Yup.string().nullable(),
-    contactOpti: Yup.string().nullable(),
-    emailOpti: Yup.string().email("Email tidak valid").nullable(),
-    mobileOpti: Yup.string().nullable(),
+    contactOpti: Yup.string().required("Kontak Opti wajib diisi"),
+    emailOpti: Yup.string().email("Email tidak valid").required("Email Opti wajib diisi"),
+    mobileOpti: Yup.string().required("Mobile Opti wajib diisi"),
     kebutuhan: Yup.string().nullable(),
-    valOpti: Yup.number().typeError("Value harus berupa angka").nullable(),
+    valOpti: Yup.number().typeError("Value harus berupa angka").required("Value Opti wajib diisi"),
   });
 
 const OptiForm = ({
@@ -450,21 +444,23 @@ const OptiForm = ({
                 {errors.nmOpti && <p className="text-red-600 text-sm">{errors.nmOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Kontak Opti</label>
+                <label className="block text-sm font-medium mb-1">Kontak Opti *</label>
                 <input type="text" name="contactOpti" value={formData.contactOpti || ""} onChange={handleChange} placeholder="Nama kontak PIC" className={inputClass} />
+                {errors.contactOpti && <p className="text-red-600 text-sm">{errors.contactOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <label className="block text-sm font-medium mb-1">Email *</label>
                 <input type="email" name="emailOpti" value={formData.emailOpti || ""} onChange={handleChange} placeholder="contoh@email.com" className={inputClass} />
                 {errors.emailOpti && <p className="text-red-600 text-sm">{errors.emailOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Mobile</label>
+                <label className="block text-sm font-medium mb-1">Mobile *</label>
                 <input type="text" name="mobileOpti" value={formData.mobileOpti || ""} onChange={handleChange} placeholder="08xxxxxxxxxx" className={inputClass} />
+                {errors.mobileOpti && <p className="text-red-600 text-sm">{errors.mobileOpti}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {formData.jenisOpti === "Training" ? "Trainer" : "Expert"} {isExpertRequired ? "*" : ""}
+                  {formData.jenisOpti === "Training" ? "Trainer" : "Expert"}
                 </label>
                 <Select
                   name="idExpert"
@@ -518,7 +514,7 @@ const OptiForm = ({
                       {errors.idTypeTraining && <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                      <label className="block text-sm font-medium mb-1">Value *</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
                         <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />
@@ -549,7 +545,7 @@ const OptiForm = ({
                       {errors.idTypeTraining && <p className="text-red-600 text-sm">{errors.idTypeTraining}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                      <label className="block text-sm font-medium mb-1">Value *</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
                         <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />
@@ -575,7 +571,7 @@ const OptiForm = ({
                 {activeTab === "Outsource" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Value</label>
+                      <label className="block text-sm font-medium mb-1">Value *</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
                         <input type="text" name="valOpti" value={displayValOpti} onChange={handleChange} onBlur={handleBlur} placeholder="Value" className={inputClass + " pl-12"} />

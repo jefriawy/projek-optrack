@@ -17,9 +17,11 @@ const Customer = {
       NPWP = null,
     } = customerData;
 
+    const tglInput = new Date();
+
     const query = `INSERT INTO customer
-      (idCustomer, nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idSales, idStatCustomer, descCustomer, customerCat, NPWP)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      (idCustomer, nmCustomer, mobileCustomer, emailCustomer, addrCustomer, corpCustomer, idSales, idStatCustomer, descCustomer, customerCat, NPWP, tglInput)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [
       idCustomer,
       nmCustomer,
@@ -32,13 +34,14 @@ const Customer = {
       descCustomer,
       customerCat,
       NPWP,
+      tglInput,
     ];
     const [result] = await pool.query(query, params);
     // kembalikan id yang kita set (jika ingin konsisten)
     return idCustomer;
   },
 
-  async findBySalesId(idSales, statusFilter, searchTerm) {
+  async findBySalesId(idSales, statusFilter, searchParams) {
     let query = `SELECT c.*, c.tglInput, sc.nmStatCustomer, s.nmSales FROM customer c JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer JOIN sales s ON c.idSales = s.idSales WHERE c.idSales = ?`;
     const params = [idSales];
 
@@ -47,16 +50,19 @@ const Customer = {
       params.push(statusFilter);
     }
 
-    if (searchTerm) {
-      query += ` AND c.corpCustomer LIKE ?`;
-      params.push(`%${searchTerm}%`);
+    if (searchParams && searchParams.searchTerm && searchParams.searchBy) {
+      const validSearchFields = { corpCustomer: "c.corpCustomer", nmSales: "s.nmSales" };
+      if (validSearchFields[searchParams.searchBy]) {
+        query += ` AND ${validSearchFields[searchParams.searchBy]} LIKE ?`;
+        params.push(`%${searchParams.searchTerm}%`);
+      }
     }
 
     const [rows] = await pool.query(query, params);
     return rows;
   },
 
-  async findAll(statusFilter, searchTerm) {
+  async findAll(statusFilter, searchParams) {
     let query = `SELECT c.*, c.tglInput, sc.nmStatCustomer, s.nmSales FROM customer c JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer JOIN sales s ON c.idSales = s.idSales`;
     const params = [];
     const conditions = [];
@@ -66,9 +72,12 @@ const Customer = {
       params.push(statusFilter);
     }
 
-    if (searchTerm) {
-      conditions.push("c.corpCustomer LIKE ?");
-      params.push(`%${searchTerm}%`);
+    if (searchParams && searchParams.searchTerm && searchParams.searchBy) {
+      const validSearchFields = { corpCustomer: "c.corpCustomer", nmSales: "s.nmSales" };
+      if (validSearchFields[searchParams.searchBy]) {
+        conditions.push(`${validSearchFields[searchParams.searchBy]} LIKE ?`);
+        params.push(`%${searchParams.searchTerm}%`);
+      }
     }
 
     if (conditions.length > 0) {

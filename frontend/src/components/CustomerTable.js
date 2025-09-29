@@ -28,6 +28,11 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const options = { day: '2-digit', month: 'short', year: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-GB', options).replace(/ /g, ' ');
+  };
+
   return (
     <div>
       {/* Table for medium and larger screens */}
@@ -52,6 +57,9 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tanggal Input
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aksi
@@ -85,6 +93,9 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
                     >
                       {getStatusText(customer.idStatCustomer)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(customer.tglInput)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
@@ -140,6 +151,9 @@ const CustomerTable = ({ customers, onViewCustomer, onEditCustomer }) => {
                 </p>
                 <p className="text-sm text-gray-500">
                   <strong>Telepon:</strong> {customer.mobileCustomer || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  <strong>Tanggal Input:</strong> {formatDate(customer.tglInput)}
                 </p>
               </div>
               <div className="mt-4 flex justify-end">

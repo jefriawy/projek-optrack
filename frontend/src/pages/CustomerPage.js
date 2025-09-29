@@ -8,14 +8,13 @@ import CustomerForm from "../components/CustomerForm";
 import Modal from "../components/Modal";
 import CustomerListPdf from "../components/CustomerListPdf";
 import { AuthContext } from "../context/AuthContext";
-import { FaSearch } from "react-icons/fa"; // FaUserCircle dihapus
+import { FaSearch } from "react-icons/fa";
+import { Menu } from "@headlessui/react";
 import CustomerTable from "../components/CustomerTable";
 import HeadSalesCustomerTable from "../components/HeadSalesCustomerTable";
 
-/* ===== Base URL (untuk avatar jika path relatif) ===== */
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== User chip helpers (nama & avatar) ===== */
 const getDisplayName = (user) => {
   if (!user) return "User";
   return (
@@ -26,6 +25,7 @@ const getDisplayName = (user) => {
     (user.email ? user.email.split("@")[0] : "User")
   );
 };
+
 const getAvatarUrl = (user) => {
   if (!user) return null;
   const candidate =
@@ -40,6 +40,7 @@ const getAvatarUrl = (user) => {
   if (/^https?:\/\//i.test(candidate)) return candidate;
   return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
 };
+
 const Initials = ({ name }) => {
   const ini = (name || "U")
     .split(" ")
@@ -58,55 +59,57 @@ const CustomerPage = () => {
   const { user, loading } = useContext(AuthContext);
   const [customers, setCustomers] = useState([]);
   const [error, setError] = useState("");
-
-  const [companyFilter, setCompanyFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchBy, setSearchBy] = useState("corpCustomer");
   const [sortOrder, setSortOrder] = useState("name_az");
-
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
-
-  // State untuk pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  // State untuk modal Update Status
   const [isUpdateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
   const [customerToUpdateStatus, setCustomerToUpdateStatus] = useState(null);
   const [statusOptions, setStatusOptions] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
-  // Fetch data pelanggan
-  const fetchCustomers = useCallback(async (searchQuery = "", page = 1) => {
+  const fetchCustomers = useCallback(async (page = 1) => {
     if (user && user.token) {
       try {
-        const response = await axios.get(`http://localhost:3000/api/customer`, {
-          params: { search: searchQuery, page, limit: 10 }, // Added pagination params
+        const params = { page, limit: 10 };
+        if (searchTerm) {
+          params[searchBy] = searchTerm;
+        }
+
+        const response = await axios.get(`${API_BASE}/api/customer`, {
+          params,
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setCustomers(Array.isArray(response.data.data) ? response.data.data : []); // Ensure customers is always an array
+        setCustomers(Array.isArray(response.data.data) ? response.data.data : []);
         setTotalPages(response.data.totalPages);
+        setCurrentPage(response.data.currentPage);
       } catch (err) {
         setError(err.response?.data?.error || "Gagal mengambil data pelanggan.");
       }
     }
-  }, [user]);
-
-  // Debounce untuk search
-  const [debounceTimeout, setDebounceTimeout] = useState(null);
+  }, [user, searchTerm, searchBy]);
 
   useEffect(() => {
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-    // Debounce logic dihapus karena searchTerm sudah tidak dipakai
-    return () => debounceTimeout && clearTimeout(debounceTimeout);
-  }, [debounceTimeout]);
+    const newTimeout = setTimeout(() => {
+      setCurrentPage(1);
+      fetchCustomers(1);
+    }, 500);
+    setDebounceTimeout(newTimeout);
 
-  // Fetch opsi status
+    return () => clearTimeout(newTimeout);
+  }, [searchTerm, searchBy, fetchCustomers]);
+
   const fetchStatusOptions = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/customer/status`, {
+      const response = await axios.get(`${API_BASE}/api/customer/status`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setStatusOptions(response.data);
@@ -116,44 +119,46 @@ const CustomerPage = () => {
     }
   }, [user]);
 
-  // Panggil semua fungsi fetch saat komponen dimuat
   useEffect(() => {
-    fetchCustomers(undefined, currentPage); // Tidak perlu searchTerm
+    fetchCustomers(currentPage);
     if (user && (user.role === "Head Sales" || user.role === "Admin")) {
       fetchStatusOptions();
     }
-  }, [fetchCustomers, fetchStatusOptions, user, currentPage]);
+  }, [user, currentPage, fetchCustomers, fetchStatusOptions]);
 
-  // Handler modal
   const handleViewCustomer = (customer) => {
     setEditingCustomer(customer);
     setViewModalOpen(true);
   };
+
   const handleAddCustomer = () => {
     setEditingCustomer(null);
     setFormModalOpen(true);
   };
+
   const handleEditCustomer = (customer) => {
     setEditingCustomer(customer);
     setFormModalOpen(true);
   };
+
   const handleCloseModal = () => {
     setViewModalOpen(false);
     setFormModalOpen(false);
     setEditingCustomer(null);
   };
 
-  // Handler modal update status
   const openUpdateStatusModal = (customer) => {
     setCustomerToUpdateStatus(customer);
     setUpdateStatusModalOpen(true);
     setSelectedStatus(customer.idStatCustomer || "");
   };
+
   const closeUpdateStatusModal = () => {
     setUpdateStatusModalOpen(false);
     setCustomerToUpdateStatus(null);
     setSelectedStatus("");
   };
+
   const handleStatusChange = (e) => setSelectedStatus(e.target.value);
 
   const handleUpdateStatusSubmit = async () => {
@@ -161,7 +166,7 @@ const CustomerPage = () => {
       try {
         const updatedData = { ...customerToUpdateStatus, idStatCustomer: selectedStatus };
         await axios.put(
-          `http://localhost:3000/api/customer/${customerToUpdateStatus.idCustomer}`,
+          `${API_BASE}/api/customer/${customerToUpdateStatus.idCustomer}`,
           updatedData,
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
@@ -178,12 +183,12 @@ const CustomerPage = () => {
     try {
       const method = editingCustomer ? "put" : "post";
       const url = editingCustomer
-        ? `http://localhost:3000/api/customer/${editingCustomer.idCustomer}`
-        : `http://localhost:3000/api/customer`;
+        ? `${API_BASE}/api/customer/${editingCustomer.idCustomer}`
+        : `${API_BASE}/api/customer`;
       await axios[method](url, formData, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-  await fetchCustomers(undefined, currentPage);
+      await fetchCustomers(currentPage);
       handleCloseModal();
     } catch (err) {
       console.error("Failed to submit form:", err);
@@ -194,20 +199,11 @@ const CustomerPage = () => {
   const handlePageChange = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
-  fetchCustomers(undefined, pageNumber);
+    fetchCustomers(pageNumber);
   };
 
-  const filteredAndSortedCustomers = useMemo(() => {
-    let filtered = Array.isArray(customers) ? customers : [];
-
-    // companyFilter tetap di frontend jika ingin filter perusahaan secara lokal
-    if (companyFilter) {
-      filtered = filtered.filter((customer) =>
-        customer.corpCustomer && customer.corpCustomer.toLowerCase().includes(companyFilter.toLowerCase())
-      );
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
+  const sortedCustomers = useMemo(() => {
+    return [...customers].sort((a, b) => {
       if (sortOrder === "name_az") {
         return a.nmCustomer.localeCompare(b.nmCustomer);
       } else if (sortOrder === "company_az") {
@@ -215,34 +211,66 @@ const CustomerPage = () => {
       }
       return 0;
     });
-    return sorted;
-  }, [customers, companyFilter, sortOrder]);
+  }, [customers, sortOrder]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
   if (!user || !["Sales", "Admin", "Head Sales"].includes(user.role)) return <Navigate to="/login" />;
 
+  const placeholderText = {
+    corpCustomer: "Cari Nama Perusahaan...",
+    nmSales: "Cari Nama Sales...",
+  };
+
   return (
     <div className="flex-grow p-8 bg-gray-100">
-      {/* Header Konten Utama */}
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-sm rounded-lg mb-6">
         <div className="w-full md:w-auto mb-4 md:mb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Customer Page</h1>
         </div>
 
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          {/* Search */}
-          <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
-            <input
-              type="text"
-              placeholder="Cari Nama Perusahaan..."
-              className="w-full pl-3 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-            />
-            <FaSearch className="absolute right-3 text-gray-400" />
-          </div>
+          <Menu as="div" className="relative w-full md:w-80 mb-4 md:mb-0 md:mr-4">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder={placeholderText[searchBy] || "Cari..."}
+                className="w-full h-10 pl-12 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Cari"
+              />
+              <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              
+              <div className="absolute inset-y-0 left-0 flex items-center">
+                <Menu.Button className="inline-flex justify-center items-center w-10 h-full text-gray-500 hover:text-gray-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  </svg>
+                </Menu.Button>
+              </div>
 
-          {/* User chip (senada) */}
+              <Menu.Items className="absolute left-0 right-0 top-full mt-1 w-full origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                <div className="py-1">
+                  {Object.entries({
+                    corpCustomer: "Nama Perusahaan",
+                    nmSales: "Nama Sales",
+                  }).map(([value, label]) => (
+                    <Menu.Item key={value}>
+                      {({ active }) => (
+                        <button
+                          onClick={() => setSearchBy(value)}
+                          className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-4 py-2 text-sm`}
+                        >
+                          {label}
+                        </button>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              </Menu.Items>
+            </div>
+          </Menu>
+
           <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
@@ -277,8 +305,8 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`${companyFilter}-${sortOrder}`}
-                    document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
+                    key={sortOrder}
+                    document={<CustomerListPdf customers={sortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
                   >
@@ -305,7 +333,7 @@ const CustomerPage = () => {
           {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
 
             <CustomerTable
-              customers={filteredAndSortedCustomers}
+              customers={sortedCustomers}
               onViewCustomer={handleViewCustomer}
               onEditCustomer={handleEditCustomer}
             />
@@ -327,8 +355,8 @@ const CustomerPage = () => {
                 </button>
                 {customers.length > 0 && (
                   <PDFDownloadLink
-                    key={`${companyFilter}-${sortOrder}`}
-                    document={<CustomerListPdf customers={filteredAndSortedCustomers} />}
+                    key={sortOrder}
+                    document={<CustomerListPdf customers={sortedCustomers} />}
                     fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`}
                     className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
                   >
@@ -361,7 +389,7 @@ const CustomerPage = () => {
           {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
 
             <HeadSalesCustomerTable
-              customers={filteredAndSortedCustomers}
+              customers={sortedCustomers}
               onViewCustomer={handleViewCustomer}
               openUpdateStatusModal={openUpdateStatusModal}
             />
@@ -369,7 +397,6 @@ const CustomerPage = () => {
         </>
       )}
 
-      {/* Modal untuk View, Add, dan Edit */}
       {isViewModalOpen && (
         <Modal isOpen={isViewModalOpen} onClose={handleCloseModal} title="Customer Detail">
           <CustomerDetail customer={editingCustomer} />
@@ -385,7 +412,6 @@ const CustomerPage = () => {
         </Modal>
       )}
 
-      {/* Modal Update Status Baru */}
       {isUpdateStatusModalOpen && customerToUpdateStatus && (
         <Modal isOpen={isUpdateStatusModalOpen} onClose={closeUpdateStatusModal} title="UPDATE STATUS CUSTOMERS">
           <div className="p-4">

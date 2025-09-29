@@ -1,4 +1,4 @@
--- phpMyAdmin SQL Dump
+  -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
@@ -723,7 +723,39 @@ ALTER TABLE `training`
   ADD CONSTRAINT `training_ibfk_1` FOREIGN KEY (`idTypeTraining`) REFERENCES `typetraining` (`idTypeTraining`),
   ADD CONSTRAINT `training_ibfk_2` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`),
   ADD CONSTRAINT `training_ibfk_3` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);
+
+--
+-- Dumping data for table `opti` (ADDITIONAL DUMMY DATA)
+--
+INSERT INTO `opti` (`nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `valOpti`, `idTypeTraining`, `placeProgram`) VALUES
+('Leadership Workshop - PT Karya Nusantara', 'Ani Santoso', '081881191903', 'ani.santoso1@example.com', 'opti entry', '2025-09-24', 2505001, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 3, 2503003, 'Training', 2514003, 18800000, 3, 'Online via Microsoft Teams'),
+('Digital Marketing Seminar - PT Vision Teknologi', 'Lina Wijaya', '081993892367', 'lina.wijaya23@example.com', 'opti entry', '2025-09-24', 2505003, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 1, 2503003, 'Training', 2514002, 19700000, 4, 'Hotel Grand Hyatt, Bali'),
+('Advanced Excel Training - CV Solusi Inovasi', 'Joko Kusuma', '081633493788', 'joko.kusuma45@example.com', 'opti entry', '2025-09-24', 2505002, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 2, 2503003, 'Training', 2514003, 18000000, 2, 'Online via Zoom'),
+('Project Management Certification - PT Cerdas Mandiri', 'Dewi Lestari', '081603325943', 'dewi.lestari67@example.com', 'opti entry', '2025-09-24', 2505004, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 3, 2503003, 'Training', 2514002, 22300000, 3, 'Kantor Pusat Klien'),
+('Cybersecurity Awareness - CV Harmoni Jaya', 'Rina Pratama', '081838858556', 'rina.pratama89@example.com', 'opti entry', '2025-09-24', 2505005, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 1, 2503003, 'Training', 2514003, 22000000, 4, 'Surabaya Co-working Space'),
+('Cloud Computing Basics - PT Solusi Digital', 'Agus Setiawan', '081877903743', 'agus.setiawan11@example.com', 'opti entry', '2025-09-24', 2505008, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 2, 2503004, 'Training', 2514002, 19000000, 2, 'Hotel Aston, Jakarta'),
+('Data Analysis with Python - PT Gemilang Teknologi', 'Siti Hidayat', '081911258391', 'siti.hidayat33@example.com', 'opti entry', '2025-09-24', 2505006, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 3, 2503004, 'Training', 2514003, 28000000, 3, 'Online via Microsoft Teams'),
+('Customer Service Excellence - CV Teknologi Cerdas', 'Eko Putri', '081672199393', 'eko.putri55@example.com', 'opti entry', '2025-09-24', 2505010, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 1, 2503004, 'Training', 2514002, 16000000, 4, 'Ruang Meeting Perusahaan'),
+('Agile & Scrum Fundamentals - PT Harmoni Solusi', 'Budi Nugroho', '081782833586', 'budi.nugroho77@example.com', 'opti entry', '2025-09-24', 2505009, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 2, 2503004, 'Training', 2514003, 21000000, 2, 'Yogyakarta Expo Center'),
+('Public Speaking Masterclass - CV Inovasi Kreatif', 'Adi Wati', '081613398889', 'adi.wati99@example.com', 'opti entry', '2025-09-24', 2505007, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 3, 2503004, 'Training', 2514002, 17500000, 3, 'Hotel Aston, Jakarta'),
+('Leadership Workshop - PT Bintang Terang', 'Lina Santoso', '081195118248', 'lina.santoso12@example.com', 'opti entry', '2025-09-24', 2505014, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 1, 2503005, 'Training', 2514003, 26000000, 4, 'Online via Zoom'),
+('Digital Marketing Seminar - CV Sentosa Jaya', 'Joko Wijaya', '081884986899', 'joko.wijaya34@example.com', 'opti entry', '2025-09-24', 2505012, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 2, 2503005, 'Training', 2514002, 14000000, 2, 'Kantor Pusat Klien'),
+('Advanced Excel Training - PT Nusantara Inovasi', 'Dewi Kusuma', '081438862153', 'dewi.kusuma56@example.com', 'opti entry', '2025-09-24', 2505013, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 3, 2503005, 'Training', 2514003, 19500000, 3, 'Bandung Convention Center'),
+('Project Management Certification - CV Harmoni Bali', 'Rina Lestari', '081222583943', 'rina.lestari78@example.com', 'opti entry', '2025-09-24', 2505015, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 1, 2503005, 'Training', 2514002, 32000000, 4, 'Surabaya Co-working Space'),
+('Cybersecurity Awareness - PT Cahaya Abadi', 'Agus Pratama', '081628933940', 'agus.pratama90@example.com', 'opti entry', '2025-09-24', 2505011, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 2, 2503005, 'Training', 2514003, 23000000, 2, 'Hotel Grand Hyatt, Bali'),
+('Cloud Computing Basics - PT Gemilang Nusantara', 'Siti Setiawan', '081881858468', 'siti.setiawan13@example.com', 'opti entry', '2025-09-24', 2505018, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 3, 2503006, 'Training', 2514002, 20000000, 3, 'Online via Microsoft Teams'),
+('Data Analysis with Python - CV Bintang Timur', 'Eko Hidayat', '081283600956', 'eko.hidayat24@example.com', 'opti entry', '2025-09-24', 2505020, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 1, 2503006, 'Training', 2514003, 29000000, 4, 'Ruang Meeting Perusahaan'),
+('Customer Service Excellence', 'Budi Putri', '081683865339', 'budi.putri46@example.com', 'opti entry', '2025-09-24', 2505026, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 2, 2503006, 'Training', 2514002, 17000000, 2, 'Yogyakarta Expo Center'),
+('Agile & Scrum Fundamentals - PT Sinar Jaya', 'Adi Nugroho', '081251848589', 'adi.nugroho68@example.com', 'opti entry', '2025-09-24', 2505016, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 3, 2503006, 'Training', 2514003, 22500000, 3, 'Hotel Aston, Jakarta'),
+('Public Speaking Masterclass - PT Cakra Teknologi', 'Lina Wati', '081226891332', 'lina.wati80@example.com', 'opti entry', '2025-09-24', 2505019, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 1, 2503006, 'Training', 2514002, 18500000, 4, 'Online via Zoom'),
+('Leadership Workshop - PT Hijau Makmur', 'Joko Santoso', '081618538268', 'joko.santoso21@example.com', 'opti entry', '2025-09-24', 2505023, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 2, 2503007, 'Training', 2514003, 27000000, 2, 'Kantor Pusat Klien'),
+('Digital Marketing Seminar - CV Nusantara Laut', 'Dewi Wijaya', '081835931129', 'dewi.wijaya43@example.com', 'opti entry', '2025-09-24', 2505025, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 3, 2503007, 'Training', 2514002, 15500000, 3, 'Bandung Convention Center'),
+('Advanced Excel Training - PT Samudra Jaya', 'Rina Kusuma', '081258398488', 'rina.kusuma65@example.com', 'opti entry', '2025-09-24', 2505021, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 1, 2503007, 'Training', 2514003, 20500000, 4, 'Surabaya Co-working Space'),
+('Project Management Certification - CV Alam Lestari', 'Agus Lestari', '081228499019', 'agus.lestari87@example.com', 'opti entry', '2025-09-24', 2505022, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 2, 2503007, 'Training', 2514002, 33000000, 2, 'Hotel Grand Hyatt, Bali'),
+('Cybersecurity Awareness - PT Papua Cerdas', 'Siti Pratama', '081339831379', 'siti.pratama99@example.com', 'opti entry', '2025-09-24', 2505024, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 3, 2503007, 'Training', 2514003, 24000000, 3, 'Online via Microsoft Teams');
+
 COMMIT;
+
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

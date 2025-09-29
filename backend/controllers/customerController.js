@@ -48,15 +48,15 @@ const getCustomers = async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
-    const statusFilter = req.query.status;
-    const searchTerm = req.query.search; // Ambil search term dari query parameter
+    const { status: statusFilter, corpCustomer, nmSales } = req.query;
 
-    console.log("Fetching customers for user:", { userId, role, statusFilter, searchTerm });
+    const searchParams = { searchTerm: corpCustomer || nmSales, searchBy: corpCustomer ? 'corpCustomer' : 'nmSales' };
+
+    console.log("Fetching customers for user:", { userId, role, statusFilter, searchParams });
 
     let customers;
     
     if (role === "Sales") {
-      // Use idSales directly (req.user.id) and verify existence
       const idSales = userId;
       const [salesRow] = await pool.query(
         "SELECT idSales FROM sales WHERE idSales = ?",
@@ -65,15 +65,15 @@ const getCustomers = async (req, res) => {
       if (!salesRow.length) {
         return res.status(403).json({ error: "User is not a registered sales" });
       }
-      customers = await Customer.findBySalesId(idSales, statusFilter, searchTerm);
+      customers = await Customer.findBySalesId(idSales, statusFilter, searchParams);
     } else if (role === "Admin" || role === "Head Sales") {
-      customers = await Customer.findAll(statusFilter, searchTerm);
+      customers = await Customer.findAll(statusFilter, searchParams);
     } else {
       console.log("Unauthorized role:", role);
       return res.status(403).json({ error: "Unauthorized access" });
     }
 
-    res.json({ data: customers, totalPages: 1 }); // Assuming totalPages is not yet implemented for all cases, setting to 1 for now.
+    res.json({ data: customers, totalPages: 1 });
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });
