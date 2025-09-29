@@ -41,7 +41,7 @@ const Customer = {
     return idCustomer;
   },
 
-  async findBySalesId(idSales, statusFilter, searchParams) {
+  async findBySalesId(idSales, statusFilter, searchParams, limit, offset) {
     let query = `SELECT c.*, c.tglInput, sc.nmStatCustomer, s.nmSales FROM customer c JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer JOIN sales s ON c.idSales = s.idSales WHERE c.idSales = ?`;
     const params = [idSales];
 
@@ -58,11 +58,35 @@ const Customer = {
       }
     }
 
+    query += ` ORDER BY c.tglInput DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
     const [rows] = await pool.query(query, params);
     return rows;
   },
 
-  async findAll(statusFilter, searchParams) {
+  async countBySalesId(idSales, statusFilter, searchParams) {
+    let query = `SELECT COUNT(*) as total FROM customer c JOIN sales s ON c.idSales = s.idSales WHERE c.idSales = ?`;
+    const params = [idSales];
+
+    if (statusFilter) {
+      query += ` AND c.idStatCustomer = ?`;
+      params.push(statusFilter);
+    }
+
+    if (searchParams && searchParams.searchTerm && searchParams.searchBy) {
+      const validSearchFields = { corpCustomer: "c.corpCustomer", nmSales: "s.nmSales" };
+      if (validSearchFields[searchParams.searchBy]) {
+        query += ` AND ${validSearchFields[searchParams.searchBy]} LIKE ?`;
+        params.push(`%${searchParams.searchTerm}%`);
+      }
+    }
+
+    const [rows] = await pool.query(query, params);
+    return rows[0].total;
+  },
+
+  async findAll(statusFilter, searchParams, limit, offset) {
     let query = `SELECT c.*, c.tglInput, sc.nmStatCustomer, s.nmSales FROM customer c JOIN statcustomer sc ON c.idStatCustomer = sc.idStatCustomer JOIN sales s ON c.idSales = s.idSales`;
     const params = [];
     const conditions = [];
@@ -84,8 +108,37 @@ const Customer = {
       query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
+    query += ` ORDER BY c.tglInput DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
     const [rows] = await pool.query(query, params);
     return rows;
+  },
+
+  async countAll(statusFilter, searchParams) {
+    let query = `SELECT COUNT(*) as total FROM customer c JOIN sales s ON c.idSales = s.idSales`;
+    const params = [];
+    const conditions = [];
+
+    if (statusFilter) {
+      conditions.push("c.idStatCustomer = ?");
+      params.push(statusFilter);
+    }
+
+    if (searchParams && searchParams.searchTerm && searchParams.searchBy) {
+      const validSearchFields = { corpCustomer: "c.corpCustomer", nmSales: "s.nmSales" };
+      if (validSearchFields[searchParams.searchBy]) {
+        conditions.push(`${validSearchFields[searchParams.searchBy]} LIKE ?`);
+        params.push(`%${searchParams.searchTerm}%`);
+      }
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    const [rows] = await pool.query(query, params);
+    return rows[0].total;
   },
 
   async findStatusOptions() {

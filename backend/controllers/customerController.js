@@ -49,13 +49,17 @@ const getCustomers = async (req, res) => {
     const userId = req.user.id;
     const role = req.user.role;
     const { status: statusFilter, corpCustomer, nmSales } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
     const searchParams = { searchTerm: corpCustomer || nmSales, searchBy: corpCustomer ? 'corpCustomer' : 'nmSales' };
 
-    console.log("Fetching customers for user:", { userId, role, statusFilter, searchParams });
+    console.log("Fetching customers for user:", { userId, role, statusFilter, searchParams, page, limit });
 
     let customers;
-    
+    let totalCustomers;
+
     if (role === "Sales") {
       const idSales = userId;
       const [salesRow] = await pool.query(
@@ -65,15 +69,19 @@ const getCustomers = async (req, res) => {
       if (!salesRow.length) {
         return res.status(403).json({ error: "User is not a registered sales" });
       }
-      customers = await Customer.findBySalesId(idSales, statusFilter, searchParams);
+      customers = await Customer.findBySalesId(idSales, statusFilter, searchParams, limit, offset);
+      totalCustomers = await Customer.countBySalesId(idSales, statusFilter, searchParams);
     } else if (role === "Admin" || role === "Head Sales") {
-      customers = await Customer.findAll(statusFilter, searchParams);
+      customers = await Customer.findAll(statusFilter, searchParams, limit, offset);
+      totalCustomers = await Customer.countAll(statusFilter, searchParams);
     } else {
       console.log("Unauthorized role:", role);
       return res.status(403).json({ error: "Unauthorized access" });
     }
 
-    res.json({ data: customers, totalPages: 1 });
+    const totalPages = Math.ceil(totalCustomers / limit);
+
+    res.json({ data: customers, totalPages, currentPage: parseInt(page) });
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ error: error.sqlMessage || "Server error" });

@@ -333,7 +333,7 @@ const updateOpti = async (req, res) => {
 const getOptis = async (req, res) => {
   try {
     // Destructure search parameters from the query string
-    const { corpCustomer, nmOpti, nmSales, program, page: pageStr, limit: limitStr } = req.query;
+    const { corpCustomer, nmOpti, nmSales, program, status, page: pageStr, limit: limitStr } = req.query;
     const page = parseInt(pageStr) || 1;
     const limit = parseInt(limitStr) || 10;
     const offset = (page - 1) * limit;
@@ -346,7 +346,8 @@ const getOptis = async (req, res) => {
       limit,
       offset,
       user,
-      program
+      program,
+      status
     );
     const transformedOptis = optis.map((opti) => ({
       ...opti,
