@@ -58,6 +58,23 @@ const CustomerPage = () => {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [isUpdateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
   const [customerToUpdateStatus, setCustomerToUpdateStatus] = useState(null);
+
+  // PDF Export
+  const handleDownloadPdf = async () => {
+    // Dynamically import pdf from @react-pdf/renderer
+    const { pdf } = await import("@react-pdf/renderer");
+    const doc = <CustomerListPdf customers={Array.isArray(sortedCustomers) ? sortedCustomers : []} />;
+    const asPdf = pdf(doc);
+    const blob = await asPdf.toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `customer_report_${new Date().toISOString().split("T")[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
   const [statusOptions, setStatusOptions] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("");
 
@@ -255,9 +272,12 @@ const CustomerPage = () => {
                 Tambah Customer
               </button>
               {customers.length > 0 && (
-                <PDFDownloadLink document={<CustomerListPdf customers={sortedCustomers} />} fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`} className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center">
-                  {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
-                </PDFDownloadLink>
+                <button
+                  onClick={handleDownloadPdf}
+                  className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+                >
+                  Export to PDF
+                </button>
               )}
             </div>
             <div className="w-full md:w-auto flex items-center">
@@ -283,9 +303,12 @@ const CustomerPage = () => {
                 Tambah Customer
               </button>
               {customers.length > 0 && (
-                <PDFDownloadLink document={<CustomerListPdf customers={sortedCustomers} />} fileName={`customer_report_${new Date().toISOString().split("T")[0]}.pdf`} className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center">
-                  {({ loading }) => (loading ? "Preparing PDF..." : "Export to PDF")}
-                </PDFDownloadLink>
+                <button
+                  onClick={handleDownloadPdf}
+                  className="w-full md:w-auto bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 transition-colors duration-300 text-center"
+                >
+                  Export to PDF
+                </button>
               )}
               <Link to="/sales" className="w-full md:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 text-center">
                 View Sales Data
