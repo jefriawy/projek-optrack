@@ -6,10 +6,11 @@ const { generateUserId } = require("../utils/idGenerator");
 const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
-
     // Server-side validation for NPWP
-    if (customerData.customerCat === 'Perusahaan' && !customerData.NPWP) {
-      return res.status(400).json({ error: "NPWP is required for company customers" });
+    if (customerData.customerCat === "Perusahaan" && !customerData.NPWP) {
+      return res
+        .status(400)
+        .json({ error: "NPWP is required for company customers" });
     }
 
     // generate idCustomer
@@ -52,14 +53,21 @@ const getCustomers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-
-    const searchParams = { searchTerm: corpCustomer || nmSales, searchBy: corpCustomer ? 'corpCustomer' : 'nmSales' };
-
-    console.log("Fetching customers for user:", { userId, role, statusFilter, searchParams, page, limit });
+    const searchParams = {
+      searchTerm: corpCustomer || nmSales,
+      searchBy: corpCustomer ? "corpCustomer" : "nmSales",
+    };
+    console.log("Fetching customers for user:", {
+      userId,
+      role,
+      statusFilter,
+      searchParams,
+      page,
+      limit,
+    });
 
     let customers;
     let totalCustomers;
-
     if (role === "Sales") {
       const idSales = userId;
       const [salesRow] = await pool.query(
@@ -67,12 +75,29 @@ const getCustomers = async (req, res) => {
         [idSales]
       );
       if (!salesRow.length) {
-        return res.status(403).json({ error: "User is not a registered sales" });
+        return res
+          .status(403)
+          .json({ error: "User is not a registered sales" });
       }
-      customers = await Customer.findBySalesId(idSales, statusFilter, searchParams, limit, offset);
-      totalCustomers = await Customer.countBySalesId(idSales, statusFilter, searchParams);
+      customers = await Customer.findBySalesId(
+        idSales,
+        statusFilter,
+        searchParams,
+        limit,
+        offset
+      );
+      totalCustomers = await Customer.countBySalesId(
+        idSales,
+        statusFilter,
+        searchParams
+      );
     } else if (role === "Admin" || role === "Head Sales") {
-      customers = await Customer.findAll(statusFilter, searchParams, limit, offset);
+      customers = await Customer.findAll(
+        statusFilter,
+        searchParams,
+        limit,
+        offset
+      );
       totalCustomers = await Customer.countAll(statusFilter, searchParams);
     } else {
       console.log("Unauthorized role:", role);
@@ -80,7 +105,6 @@ const getCustomers = async (req, res) => {
     }
 
     const totalPages = Math.ceil(totalCustomers / limit);
-
     res.json({ data: customers, totalPages, currentPage: parseInt(page) });
   } catch (error) {
     console.error("Error fetching customers:", error);
@@ -118,8 +142,10 @@ const updateCustomer = async (req, res) => {
     const customerData = req.body;
 
     // Server-side validation for NPWP on update
-    if (customerData.customerCat === 'Perusahaan' && !customerData.NPWP) {
-      return res.status(400).json({ error: "NPWP is required for company customers" });
+    if (customerData.customerCat === "Perusahaan" && !customerData.NPWP) {
+      return res
+        .status(400)
+        .json({ error: "NPWP is required for company customers" });
     }
 
     // Lakukan update ke database sesuai kebutuhan
@@ -147,4 +173,37 @@ const updateCustomer = async (req, res) => {
   }
 };
 
-module.exports = { createCustomer, getCustomers, getStatusOptions, getCustomerById, updateCustomer };
+// --- TAMBAHAN: Fungsi baru khusus untuk update status ---
+const updateCustomerStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { idStatCustomer } = req.body;
+
+    if (!idStatCustomer) {
+      return res.status(400).json({ error: "Status ID is required." });
+    }
+
+    const [result] = await pool.query(
+      "UPDATE customer SET idStatCustomer = ? WHERE idCustomer = ?",
+      [idStatCustomer, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Customer not found." });
+    }
+    res.json({ message: "Customer status updated successfully." });
+  } catch (error) {
+    console.error("Error updating customer status:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+// --- AKHIR TAMBAHAN ---
+
+module.exports = {
+  createCustomer,
+  getCustomers,
+  getStatusOptions,
+  getCustomerById,
+  updateCustomer,
+  updateCustomerStatus, // <-- Ekspor fungsi baru
+};
