@@ -370,10 +370,15 @@ const getOptis = async (req, res) => {
 
 const getFormOptions = async (req, res) => {
   try {
-    // ambil customer, sumber, expert langsung via pool untuk menghindari ketergantungan pada model yang mungkin belum terupdate
-    const [customers] = await pool.query(
-      "SELECT idCustomer, corpCustomer, nmCustomer FROM customer ORDER BY corpCustomer"
-    );
+    // ambil customer yang statusnya approved dan diinput oleh sales yang sedang login
+    let customersQuery = "SELECT idCustomer, corpCustomer, nmCustomer FROM customer WHERE idStatCustomer = 2";
+    const params = [];
+    if (req.user && req.user.role === "Sales") {
+      customersQuery += " AND idSales = ?";
+      params.push(req.user.id);
+    }
+    customersQuery += " ORDER BY corpCustomer";
+    const [customers] = await pool.query(customersQuery, params);
     const [sumber] = await pool.query(
       "SELECT idSumber, nmSumber FROM sumber ORDER BY nmSumber"
     );
