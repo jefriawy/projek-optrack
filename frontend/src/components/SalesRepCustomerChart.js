@@ -5,17 +5,22 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
   CartesianGrid,
   LabelList,
 } from "recharts";
 
-const SalesRepCustomerChart = ({ data }) => {
+const SalesRepCustomerChart = ({ data, onBarClick }) => {
   const sortedData = useMemo(() => {
     if (!Array.isArray(data)) return [];
     return [...data].sort((a, b) => (b.customers || 0) - (a.customers || 0));
   }, [data]);
+
+  const handleBarClick = (data) => {
+    if (onBarClick && data) {
+      onBarClick(data);
+    }
+  };
 
   return (
     <div className="w-full h-80">
@@ -31,6 +36,7 @@ const SalesRepCustomerChart = ({ data }) => {
             domain={[0, "dataMax + 1"]}
             stroke="#6b7280"
             tick={{ fontSize: 12 }}
+            allowDecimals={false}
           />
           <YAxis
             type="category"
@@ -39,11 +45,13 @@ const SalesRepCustomerChart = ({ data }) => {
             tick={{ fontSize: 12 }}
             width={80} // 👉 cukup buat teks
           />
-          <Tooltip
-            contentStyle={{ fontSize: "0.875rem" }}
-            cursor={{ fill: "rgba(0,0,0,0.05)" }}
-          />
-          <Bar dataKey="customers" fill="rgba(59, 130, 246, 0.85)" radius={[0, 6, 6, 0]}>
+          <Bar 
+            dataKey="customers" 
+            fill="rgba(59, 130, 246, 0.85)" 
+            radius={[0, 6, 6, 0]}
+            onClick={handleBarClick}
+            cursor="pointer"
+          >
             <LabelList
               dataKey="customers"
               position="insideRight" // 👉 biar angkanya di dalam bar

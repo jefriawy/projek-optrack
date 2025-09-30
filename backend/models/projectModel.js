@@ -9,6 +9,7 @@ const BASE_QUERY = `
     tp.nmTypeProject,
     o.nmOpti, 
     o.statOpti, 
+    o.valOpti,
     s.nmSales, 
     e.nmExpert, 
     c.corpCustomer,

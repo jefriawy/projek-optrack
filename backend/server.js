@@ -19,6 +19,7 @@ const adminRoutes = require("./routes/admin");
 const expertRoutes = require("./routes/expert");
 const activityRoutes = require("./routes/activity");
 const notificationRoutes = require("./routes/notification"); // Import rute aktivitas yang baru
+const headOfSalesDetailRoutes = require("./routes/headOfSalesDetail");
 
 // ⬇️ Scheduler untuk auto-update status Training/Project
 const { startStatusScheduler } = require("./jobs/statusUpdater");
@@ -52,6 +53,7 @@ app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/expert", expertRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/head-of-sales-detail", headOfSalesDetailRoutes);
 
 // Static files (uploads)
 app.use("/uploads", express.static("uploads"));

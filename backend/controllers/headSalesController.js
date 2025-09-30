@@ -35,7 +35,7 @@ const getHeadSalesDashboardData = async (req, res) => {
     `);
 
     const customersPerSalesQ = pool.query(`
-      SELECT s.nmSales AS name, COUNT(c.idCustomer) AS customers
+      SELECT s.idSales AS id, s.nmSales AS name, COUNT(c.idCustomer) AS customers
       FROM sales s
       LEFT JOIN customer c ON c.idSales = s.idSales
       GROUP BY s.idSales, s.nmSales

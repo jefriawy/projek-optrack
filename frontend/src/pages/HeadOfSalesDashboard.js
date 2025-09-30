@@ -6,7 +6,8 @@ import OpportunityTypePie from "../components/OpportunityTypePie";
 import MonthlyPerformanceChart from "../components/MonthlyPerformanceChart";
 import TopDealsTable from "../components/TopDealsTable";
 import { AuthContext } from "../context/AuthContext";
-import NotificationBell from "../components/NotificationBell"; // <-- BARU
+import NotificationBell from "../components/NotificationBell";
+import HeadOfSalesDetailModal from "../components/HeadOfSalesDetailModal";
 
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
@@ -143,6 +144,12 @@ const HeadOfSalesDashboard = () => {
   const [statusVis, setStatusVis] = useState("bar");
   const [expanded, setExpanded] = useState(null);
 
+  // State for the new sales detail modal
+  const [isSalesDetailModalOpen, setIsSalesDetailModalOpen] = useState(false);
+  const [selectedSales, setSelectedSales] = useState(null);
+  const [salesDetailData, setSalesDetailData] = useState(null);
+  const [isSalesDetailLoading, setIsSalesDetailLoading] = useState(false);
+
   const fetchData = useCallback(
     async (signal) => {
       setErr(null);
@@ -183,6 +190,45 @@ const HeadOfSalesDashboard = () => {
     fetchData(ac.signal);
     return () => ac.abort();
   }, [user?.token, fetchData]);
+
+  // New useEffect to fetch sales detail data when a sales is selected
+  useEffect(() => {
+    if (!selectedSales || !user?.token) return;
+
+    const fetchSalesDetail = async () => {
+      setIsSalesDetailLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/head-of-sales-detail/${selectedSales.id}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        if (!res.ok) {
+          throw new Error('Failed to fetch sales details');
+        }
+        const data = await res.json();
+        console.log('[Frontend] Received sales detail data from API:', data);
+        setSalesDetailData(data);
+      } catch (error) {
+        console.error("Error fetching sales detail:", error);
+        setSalesDetailData(null); // Clear data on error
+      } finally {
+        setIsSalesDetailLoading(false);
+      }
+    };
+
+    fetchSalesDetail();
+  }, [selectedSales, user?.token]);
+
+  const handleSalesRepClick = (sales) => {
+    console.log('[Frontend] Bar clicked. Sales object:', sales);
+    setSelectedSales(sales);
+    setIsSalesDetailModalOpen(true);
+  };
+
+  const handleCloseSalesDetailModal = () => {
+    setIsSalesDetailModalOpen(false);
+    setSelectedSales(null);
+    setSalesDetailData(null);
+  };
 
   if (loading) return <div className="p-6 text-gray-600">Memuat dashboard...</div>;
   if (err) return <div className="p-6 text-red-600">Gagal memuat: {err}</div>;
@@ -233,15 +279,13 @@ const HeadOfSalesDashboard = () => {
         {/* Segmented Tabs di dalam card */}
         <div className="absolute top-4 left-4">
           <div className="inline-flex bg-gray-100 rounded-xl border border-gray-200 overflow-hidden">
-            {[
-              { key: "customers", label: "Customers" },
-              { key: "status", label: "Project" }, // label "Project"
-              { key: "performance", label: "Performance" },
+            {[{"key": "customers", "label": "Customers"}, {"key": "status", "label": "Project"}, // label "Project"
+              {"key": "performance", "label": "Performance"},
             ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`px-4 py-2 text-xs sm:text-sm font-medium transition ${
+                className={`px-4 py-2 text-xs sm:text-sm font-medium transition ${ 
                   tab === t.key
                     ? "bg-blue-600 text-white"
                     : "text-gray-700 hover:bg-white"
@@ -261,7 +305,7 @@ const HeadOfSalesDashboard = () => {
             title={statusVis === "bar" ? "Switch to Pie" : "Switch to Bar"}
           >
             <div
-              className={`w-8 h-8 bg-white rounded-full shadow flex items-center justify-center transform transition-transform duration-300 ${
+              className={`w-8 h-8 bg-white rounded-full shadow flex items-center justify-center transform transition-transform duration-300 ${ 
                 statusVis === "pie" ? "translate-x-12" : ""
               }`}
             >
@@ -275,7 +319,7 @@ const HeadOfSalesDashboard = () => {
           key={`${tab}-${statusVis}`}
           className="w-full h-full pt-10" /* padding top agar tidak ketutup segmented tabs */
         >
-          {tab === "customers" && <SalesRepCustomerChart data={salesRepCustomers} />}
+          {tab === "customers" && <SalesRepCustomerChart data={salesRepCustomers} onBarClick={handleSalesRepClick} />}
           {tab === "status" &&
             (statusVis === "bar" ? (
               <SalesPipelineChart data={pipelineStats} />
@@ -318,7 +362,7 @@ const HeadOfSalesDashboard = () => {
           }
           onClose={() => setExpanded(null)}
         >
-          {expanded === "customers" && <SalesRepCustomerChart data={salesRepCustomers} />}
+          {expanded === "customers" && <SalesRepCustomerChart data={salesRepCustomers} onBarClick={handleSalesRepClick} />}
           {expanded === "status" &&
             (statusVis === "bar" ? (
               <SalesPipelineChart data={pipelineStats} />
@@ -330,6 +374,14 @@ const HeadOfSalesDashboard = () => {
           )}
         </ExpandOverlay>
       )}
+
+      <HeadOfSalesDetailModal
+        isOpen={isSalesDetailModalOpen}
+        onClose={handleCloseSalesDetailModal}
+        salesData={salesDetailData}
+        selectedSales={selectedSales}
+        isLoading={isSalesDetailLoading}
+      />
 
       <style>{`
         @keyframes fadeIn { from {opacity:.001} to {opacity:1} }
