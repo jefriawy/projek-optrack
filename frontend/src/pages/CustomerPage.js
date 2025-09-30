@@ -12,6 +12,7 @@ import { Menu } from "@headlessui/react";
 import CustomerTable from "../components/CustomerTable";
 import HeadSalesCustomerTable from "../components/HeadSalesCustomerTable";
 import Pagination from "../components/Pagination";
+import NotificationBell from "../components/NotificationBell";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -326,7 +327,13 @@ const CustomerPage = () => {
               <div className="text-xs text-gray-500">
                 Logged in • {user?.role || "User"}
               </div>
+              
             </div>
+            <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+                        
+                        {/* Lonceng Notifikasi */}
+                        {user && <NotificationBell />}
+             </div> 
           </div>
         </div>
       </header>

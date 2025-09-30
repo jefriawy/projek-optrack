@@ -12,6 +12,7 @@ import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
 import FeedbackModal from "../components/FeedbackModal";
 import axios from "axios";
+import NotificationBell from "../components/NotificationBell";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -402,6 +403,11 @@ const TrainingPage = () => {
                 Logged in • {user?.role || "User"}
               </div>
             </div>
+            <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+                        
+                        {/* Lonceng Notifikasi */}
+                        {user && <NotificationBell />}
+             </div> 
           </div>
         </div>
       </header>

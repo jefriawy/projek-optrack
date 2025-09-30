@@ -202,10 +202,6 @@ const HeadOfSalesDashboard = () => {
       <header className="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-xl mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Head of Sales Dashboard</h1>
 
-        <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
-          
-          {/* Lonceng Notifikasi */}
-          {user && <NotificationBell />}
 
           {/* User chip */}
           <div className="flex items-center gap-3 pl-4 border-l">
@@ -224,6 +220,10 @@ const HeadOfSalesDashboard = () => {
                 Logged in • {user?.role || "User"}
               </div>
             </div>
+            <div className="flex items-center gap-4 mt-4 md:mt-0"> {/* Container untuk Lonceng + Chip */}
+          
+          {/* Lonceng Notifikasi */}
+          {user && <NotificationBell />}
           </div>
         </div>
       </header>
