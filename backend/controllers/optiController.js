@@ -10,6 +10,7 @@ const Training = require("../models/trainingModel");
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
 const { exportToXlsx } = require("../utils/OptiXlsx.js");
+const Notification = require("../models/notificationModel"); // BARU: Import Notif Model
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
 
@@ -46,6 +47,7 @@ const createOpti = async (req, res) => {
 
     const b = { ...req.body };
     const { user } = req;
+    const userName = req.user.name || req.user.username || "Sales"; // Ambil nama Sales
 
     let idSalesForOpti;
     if (user.role === "Sales") {
@@ -97,10 +99,23 @@ const createOpti = async (req, res) => {
       proposalOpti: null,
     };
     if (req.file) {
-  optiData.proposalOpti = path.basename(req.file.filename);
-}
+      optiData.proposalOpti = path.basename(req.file.filename);
+    }
 
     await Opti.create(optiData, idSalesForOpti, connection);
+    
+    // NOTIFIKASI 1.C: Sales menambahkan Opti -> Kirim ke Head Sales
+    if (user.role === "Sales") {
+      await Notification.createNotification({
+        recipientRole: "Head Sales",
+        message: `Sales (${userName}) Telah menambahkan OPTI: ${optiData.nmOpti}`,
+        type: "opti_added",
+        senderId: user.id,
+        senderName: userName,
+        relatedEntityId: idOpti, // idOpti
+      });
+    }
+
     await connection.commit();
     res.status(201).json({ message: "Opportunity created", data: { idOpti } });
   } catch (error) {
@@ -116,6 +131,7 @@ const updateOpti = async (req, res) => {
   const { id } = req.params;
   const b = { ...req.body };
   const { user } = req;
+  const userName = req.user.name || req.user.username || req.user.role; // Ambil nama user
 
   const connection = await pool.getConnection();
   try {
@@ -134,16 +150,16 @@ const updateOpti = async (req, res) => {
       });
     }
 
+    const oldStatus = existingOpti.statOpti;
+    const isStatusUpdateAllowed = user.role === "Head Sales" || user.role === "Admin";
+    
     const optiData = {
       nmOpti: b.nmOpti || existingOpti.nmOpti,
       idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
       contactOpti: toNull(b.contactOpti) ?? existingOpti.contactOpti,
       emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
       mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
-      statOpti:
-        user.role === "Head Sales" || user.role === "Admin"
-          ? b.statOpti || existingOpti.statOpti
-          : existingOpti.statOpti,
+      statOpti: isStatusUpdateAllowed ? b.statOpti || existingOpti.statOpti : existingOpti.statOpti, 
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
@@ -189,6 +205,37 @@ const updateOpti = async (req, res) => {
     }
 
     await Opti.update(id, optiData, connection);
+    
+    const newStatus = optiData.statOpti;
+
+    // NOTIFIKASI 1.D: Sales mengupdate Opti -> Kirim ke Head Sales
+    if (user.role === "Sales") {
+        await Notification.createNotification({
+            recipientRole: "Head Sales",
+            message: `Sales (${userName}) Telah mengupdate OPTI: ${optiData.nmOpti}`,
+            type: "opti_updated",
+            senderId: user.id,
+            senderName: userName,
+            relatedEntityId: id, // idOpti
+        });
+    }
+
+    // Cek perubahan status (hanya dilakukan oleh Head Sales/Admin)
+    const isStatusChanged = isStatusUpdateAllowed && newStatus !== oldStatus;
+
+    if (isStatusChanged) {
+        // NOTIFIKASI 2.B: Head Sales mengupdate Status OPTI -> Kirim ke Sales terkait
+        await Notification.createNotification({
+            recipientId: existingOpti.idSales, 
+            recipientRole: "Sales",
+            message: `Head Sales (${userName}) Telah Mengupdate Status OPTI (${optiData.nmOpti}) menjadi ${newStatus}`,
+            type: "opti_status_updated",
+            senderId: user.id,
+            senderName: userName,
+            relatedEntityId: id, // idOpti
+        });
+    }
+
 
     const isStatusChangedToPoReceived =
       optiData.statOpti === "po received" &&
@@ -202,7 +249,7 @@ const updateOpti = async (req, res) => {
             ? "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1"
             : "SELECT idProject FROM project WHERE idOpti = ? LIMIT 1";
         const [existing] = await connection.query(query, [idOpti]);
-
+        
         if (existing.length === 0) {
           console.log(`Creating new ${type} for Opti ${idOpti}`);
           const newId = await generateUserId(type);
@@ -235,6 +282,20 @@ const updateOpti = async (req, res) => {
               },
               connection
             );
+
+            // NOTIFIKASI 2.C: Head Sales mengupdate Status OPTI menjadi "PO Receive" -> Kirim ke Trainer (Expert)
+            if (payload.idExpert) {
+              await Notification.createNotification({
+                recipientId: payload.idExpert, 
+                recipientRole: "Expert", // Asumsi Trainer/Expert memiliki role 'Expert'
+                message: `Jadwal Training Telah ditambahkan oleh Head Sales: ${payload.nm}`,
+                type: "training_scheduled_po_receive",
+                senderId: user.id,
+                senderName: userName,
+                relatedEntityId: idOpti, // idOpti
+              });
+            }
+            
           } else {
             await Project.createProject(
               {

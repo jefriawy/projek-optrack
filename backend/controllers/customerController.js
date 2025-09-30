@@ -3,6 +3,7 @@ const Customer = require("../models/customer");
 const pool = require("../config/database");
 const { generateUserId } = require("../utils/idGenerator");
 const { exportToXlsx } = require("../utils/CustomerXlsx.js");
+const Notification = require("../models/notificationModel"); // Import Notif Model
 
 const createCustomer = async (req, res) => {
   try {
@@ -17,13 +18,9 @@ const createCustomer = async (req, res) => {
     customerData.idCustomer = await generateUserId("Customer");
 
     const userId = req.user.id;
-    console.log(
-      "Creating customer with data:",
-      customerData,
-      "userId:",
-      userId
-    );
-    // req.user.id already contains idSales for Sales users (see authController login).
+    // Ambil nama user. Asumsi: nama ada di req.user.name atau fallback ke username.
+    const userName = req.user.name || req.user.username || "Sales"; 
+    
     // Verify that the idSales exists in the sales table.
     const idSales = userId;
     const [salesRow] = await pool.query(
@@ -38,6 +35,17 @@ const createCustomer = async (req, res) => {
     }
 
     const newCustomer = await Customer.create(customerData, idSales);
+    
+    // NOTIFIKASI 1.A: Sales menambahkan Customer -> Kirim ke Head Sales
+    await Notification.createNotification({
+        recipientRole: "Head Sales",
+        message: `Sales (${userName}) Telah menambahkan Customer: ${customerData.corpCustomer || customerData.nmCustomer}`,
+        type: "customer_added",
+        senderId: userId,
+        senderName: userName,
+        relatedEntityId: newCustomer, // idCustomer
+    });
+
     res.status(201).json({ message: "Customer created", data: newCustomer });
   } catch (error) {
     console.error("Error creating customer:", error);
@@ -117,6 +125,7 @@ const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const customerData = req.body;
+    const userName = req.user.name || req.user.username || "Sales"; // Ambil nama Sales
 
     // Server-side validation for NPWP on update
     if (customerData.customerCat === 'Perusahaan' && !customerData.NPWP) {
@@ -142,6 +151,17 @@ const updateCustomer = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Customer not found" });
     }
+    
+    // NOTIFIKASI 1.B: Sales mengupdate Customer -> Kirim ke Head Sales
+    await Notification.createNotification({
+        recipientRole: "Head Sales",
+        message: `Sales (${userName}) Telah mengupdate Customer: ${customerData.corpCustomer || customerData.nmCustomer}`,
+        type: "customer_updated",
+        senderId: req.user.id,
+        senderName: userName,
+        relatedEntityId: id, // idCustomer
+    });
+
     res.json({ message: "Customer updated" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -190,10 +210,26 @@ const updateCustomerStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { idStatCustomer } = req.body;
+    const userName = req.user.name || req.user.username || "Head Sales";
+    const userRole = req.user.role;
 
     if (!idStatCustomer) {
       return res.status(400).json({ error: "idStatCustomer is required" });
     }
+
+    // Ambil detail Customer sebelum diupdate untuk mendapatkan idSales
+    const customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    
+    // Ambil nama status baru
+    const [statusRow] = await pool.query(
+      "SELECT nmStatCustomer FROM statcustomer WHERE idStatCustomer = ?",
+      [idStatCustomer]
+    );
+    const newStatusName = statusRow.length ? statusRow[0].nmStatCustomer : `Status ${idStatCustomer}`;
+
 
     const [result] = await pool.query(
       `UPDATE customer SET idStatCustomer = ? WHERE idCustomer = ?`,
@@ -204,10 +240,32 @@ const updateCustomerStatus = async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
+    // NOTIFIKASI 2.A: Head Sales mengupdate Status Customer -> Kirim ke Sales terkait
+    if (userRole === "Head Sales" && customer.idSales) {
+        // Asumsi customer.idSales adalah ID Sales yang relevan
+        await Notification.createNotification({
+            recipientId: customer.idSales, 
+            recipientRole: "Sales",
+            message: `Head Sales (${userName}) Telah Mengupdate Status Customer (${customer.corpCustomer || customer.nmCustomer}) menjadi ${newStatusName}`,
+            type: "customer_status_updated",
+            senderId: req.user.id,
+            senderName: userName,
+            relatedEntityId: id, // idCustomer
+        });
+    }
+
     res.json({ message: "Customer status updated successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-module.exports = { createCustomer, getCustomers, getStatusOptions, getCustomerById, updateCustomer, exportCustomers, updateCustomerStatus };
+module.exports = { 
+  createCustomer, 
+  getCustomers, 
+  getStatusOptions, 
+  getCustomerById, 
+  updateCustomer, 
+  exportCustomers, 
+  updateCustomerStatus 
+};
