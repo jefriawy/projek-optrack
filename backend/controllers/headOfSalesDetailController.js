@@ -24,7 +24,7 @@ exports.getSalesDetail = async (req, res) => {
 
     const salesInfoQuery = `SELECT s.nmSales, COUNT(o.idOpti) as totalOpportunities, COUNT(DISTINCT o.idCustomer) as totalCustomers
        FROM sales s
-       LEFT JOIN opti o ON s.idSales = o.idSales
+       LEFT JOIN opti o ON s.idSales = o.idSales AND o.statOpti = 'po received'
        WHERE s.idSales = ?
        GROUP BY s.idSales`;
        
