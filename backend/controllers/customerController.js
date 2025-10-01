@@ -189,7 +189,31 @@ const exportCustomers = async (req, res) => {
       'NPWP'
     ];
 
-    const xlsxBuffer = exportToXlsx(customers, columns, 'Customers');
+    // Mapping nama kolom ke header user-friendly
+    const headerMap = {
+      nmCustomer: "Nama Customer",
+      mobileCustomer: "No. HP",
+      emailCustomer: "Email",
+      addrCustomer: "Alamat",
+      corpCustomer: "Perusahaan",
+      nmStatCustomer: "Status",
+      nmSales: "Sales",
+      tglInput: "Tanggal Input",
+      customerCat: "Kategori",
+      NPWP: "NPWP"
+    };
+
+    // Ubah data agar header di worksheet menggunakan nama user-friendly
+    const exportData = customers.map(item => {
+      const row = {};
+      columns.forEach(col => {
+        row[headerMap[col] || col] = item[col] !== undefined ? item[col] : null;
+      });
+      return row;
+    });
+
+    // Gunakan header user-friendly
+    const xlsxBuffer = require("../utils/CustomerXlsx.js").exportToXlsx(exportData, columns.map(col => headerMap[col] || col), 'Customers');
 
     res.setHeader(
       "Content-Type",

@@ -700,7 +700,35 @@ const exportOptis = async (req, res) => {
       'placeProgram',
     ];
 
-    const xlsxBuffer = exportToXlsx(optis, columns, 'Opportunities');
+    // Mapping nama kolom ke header user-friendly
+    const headerMap = {
+      nmOpti: "Nama Opportunity",
+      mobileOpti: "No. HP",
+      emailOpti: "Email",
+      statOpti: "Status",
+      datePropOpti: "Tanggal Input",
+      corpCustomer: "Perusahaan",
+      nmSumber: "Sumber",
+      nmSales: "Sales",
+      jenisOpti: "Jenis",
+      nmExpert: "Expert",
+      valOpti: "Value",
+      startProgram: "Mulai Program",
+      endProgram: "Akhir Program",
+      placeProgram: "Lokasi Program"
+    };
+
+    // Ubah data agar header di worksheet menggunakan nama user-friendly
+    const exportData = optis.map(item => {
+      const row = {};
+      columns.forEach(col => {
+        row[headerMap[col] || col] = item[col] !== undefined ? item[col] : null;
+      });
+      return row;
+    });
+
+    // Gunakan header user-friendly
+    const xlsxBuffer = require("../utils/OptiXlsx.js").exportToXlsx(exportData, columns.map(col => headerMap[col] || col), 'Opportunities');
 
     res.setHeader(
       "Content-Type",
