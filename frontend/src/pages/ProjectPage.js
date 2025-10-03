@@ -3,7 +3,9 @@ import React, { useEffect, useMemo, useState, useContext, useRef, useCallback } 
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
 import { FaSearch } from "react-icons/fa";
+import Select from "react-select";
 import FeedbackModal from "../components/FeedbackModal";
+import AddExpertForm from "../components/AddExpertForm";
 import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -225,6 +227,7 @@ const ProjectPage = () => {
   const [detailErr, setDetailErr] = useState("");
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
+  const [activeTab, setActiveTab] = useState('detail');
 
   const [, forceTick] = useState(0);
   const tickRef = useRef(null);
@@ -311,6 +314,7 @@ const ProjectPage = () => {
 
   const handleFeedbackSubmit = async (target, feedbackText) => {
     if (!target) return;
+    const controller = new AbortController();
     try {
       await axios.put(
         `${API_BASE}/api/project/${target.idProject}/feedback`,
@@ -319,10 +323,12 @@ const ProjectPage = () => {
       );
       setOpenFeedback(false);
       // Refresh data automatically after submitting feedback
-      fetchProjects();
+      fetchProjects(controller.signal);
     } catch (error) {
       console.error("Failed to submit feedback", error);
       alert("Gagal menyimpan feedback.");
+    } finally {
+      controller.abort();
     }
   };
 
@@ -456,7 +462,7 @@ const ProjectPage = () => {
                       className="px-4 py-2 text-xs font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
                       onClick={() => openDetail(p.idProject)}
                     >
-                      Lihat Detail
+                      {['PM', 'Expert'].includes(user.role) ? 'Menu' : 'Lihat Detail'}
                     </button>
                     <button
                       type="button"
@@ -504,73 +510,125 @@ const ProjectPage = () => {
           <div className="text-center text-red-600 py-6">{detailErr}</div>
         )}
         {!detailLoading && !detailErr && detail && (
-          <div className="space-y-6">
-            {/* Jadwal & Lokasi */}
-            <div className="rounded-lg border p-4">
-              <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Mulai</span>
-                  <b>{fmtDateTime(detail.startProject)}</b>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Selesai</span>
-                  <b>{fmtDateTime(detail.endProject)}</b>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Durasi</span>
-                  <b>
-                    {diffDays(detail.startProject, detail.endProject) ?? "-"} hari
-                  </b>
-                </div>
-              </div>
-            </div>
-            {/* Sales, PM & Expert Box */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-lg border p-4 flex flex-col items-start">
-                <div className="text-sm text-gray-500 mb-2">Sales</div>
-                <div className="text-sm font-normal text-gray-800">{detail.nmSales || "-"}</div>
-              </div>
-              <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
-                <div className="text-sm text-gray-500 mb-2">Project Manager</div>
-                <div className="text-sm font-normal text-gray-800">{detail.nmPM || "-"}</div>
-                <div className="text-sm text-gray-500 mt-4 mb-2">Expert</div>
-                <div className="text-sm font-normal text-gray-800">{detail.nmExpert || "-"}</div>
-              </div>
-            </div>
-            {/* Deskripsi & Dokumen */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
-                <div className="text-sm text-gray-700 leading-6">
-                  {detail.kebutuhan || "Belum ada deskripsi."}
-                </div>
-              </div>
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Dokumen</div>
-                {detail.proposalOpti ? (
-                  <a
-                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
-                      .split(/[\\/]/)
-                      .pop()}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-black hover:underline flex items-center gap-2"
+          <div>
+            {['PM', 'Expert'].includes(user.role) && (
+              <div className="border-b border-gray-200 mb-4">
+                <div className="flex items-center gap-2 -mb-px">
+                  <button
+                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                      activeTab === 'detail'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('detail')}
                   >
-                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
-                  </a>
-                ) : (
-                  <div className="text-sm text-gray-700">
-                    Belum ada dokumen.
+                    Detail
+                  </button>
+                  <button
+                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                      activeTab === 'addExpert'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('addExpert')}
+                  >
+                    Tambah Expert
+                  </button>
+                  <button
+                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                      activeTab === 'uploadDocument'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('uploadDocument')}
+                  >
+                    Upload Dokumen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'detail' && (
+              <div className="space-y-6">
+                {/* Jadwal & Lokasi */}
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Mulai</span>
+                      <b>{fmtDateTime(detail.startProject)}</b>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Selesai</span>
+                      <b>{fmtDateTime(detail.endProject)}</b>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Durasi</span>
+                      <b>
+                        {diffDays(detail.startProject, detail.endProject) ?? "-"} hari
+                      </b>
+                    </div>
+                  </div>
+                </div>
+                {/* Sales, PM & Expert Box */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="rounded-lg border p-4 flex flex-col items-start">
+                    <div className="text-sm text-gray-500 mb-2">Sales</div>
+                    <div className="text-sm font-normal text-gray-800">{detail.nmSales || "-"}</div>
+                  </div>
+                  <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
+                    <div className="text-sm text-gray-500 mb-2">Project Manager</div>
+                    <div className="text-sm font-normal text-gray-800">{detail.nmPM || "-"}</div>
+                    <div className="text-sm text-gray-500 mt-4 mb-2">Expert</div>
+                    <div className="text-sm font-normal text-gray-800">{detail.nmExpert || "-"}</div>
+                  </div>
+                </div>
+                {/* Deskripsi & Dokumen */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="rounded-lg border p-4">
+                    <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
+                    <div className="text-sm text-gray-700 leading-6">
+                      {detail.kebutuhan || "Belum ada deskripsi."}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <div className="text-sm text-gray-500 mb-2">Dokumen</div>
+                    {detail.proposalOpti ? (
+                      <a
+                        href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
+                          .split(/[\\/]/)
+                          .pop()}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-black hover:underline flex items-center gap-2"
+                      >
+                        <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
+                        <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
+                      </a>
+                    ) : (
+                      <div className="text-sm text-gray-700">
+                        Belum ada dokumen.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {detail.feedback && (
+                  <div className="rounded-lg border p-4">
+                    <div className="text-sm text-gray-500 mb-2">Feedback</div>
+                    <p className="text-sm whitespace-pre-wrap">{detail.feedback}</p>
                   </div>
                 )}
               </div>
-            </div>
-            {detail.feedback && (
-              <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">Feedback</div>
-                <p className="text-sm whitespace-pre-wrap">{detail.feedback}</p>
+            )}
+
+            {activeTab === 'addExpert' && (
+              <AddExpertForm projectId={detail.idProject} />
+            )}
+
+            {activeTab === 'uploadDocument' && (
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Upload Dokumen</h4>
+                <p>Form untuk mengunggah dokumen akan ditampilkan di sini.</p>
               </div>
             )}
           </div>

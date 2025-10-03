@@ -35,4 +35,10 @@ router.put(
   projectController.submitProjectFeedback
 );
 
+router.put(
+  "/:projectId/experts",
+  authMiddleware(["Admin", "Head of Expert", "PM"]),
+  projectController.updateProjectExperts
+);
+
 module.exports = router;

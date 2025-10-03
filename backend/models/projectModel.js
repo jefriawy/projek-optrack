@@ -2,7 +2,6 @@
 
 const db = require("../config/database");
 
-// Query dasar yang lengkap dengan semua JOIN yang dibutuhkan
 const BASE_QUERY = `
   SELECT 
     p.*, 
@@ -11,32 +10,72 @@ const BASE_QUERY = `
     o.statOpti, 
     o.valOpti,
     s.nmSales, 
-    e.nmExpert, 
     c.corpCustomer,
     o.kebutuhan,
     o.proposalOpti,
-    pm.nmPM
+    pm.nmPM,
+    GROUP_CONCAT(e.nmExpert SEPARATOR ', ') AS nmExpert
   FROM project p
   LEFT JOIN typeproject tp ON tp.idTypeProject = p.idTypeProject
   LEFT JOIN opti o ON o.idOpti = p.idOpti
   LEFT JOIN sales s ON o.idSales = s.idSales
-  LEFT JOIN expert e ON e.idExpert = p.idExpert
   LEFT JOIN customer c ON p.idCustomer = c.idCustomer
   LEFT JOIN pm pm ON pm.idPM = o.idPM
+  LEFT JOIN project_expert pe ON p.idProject = pe.idProject
+  LEFT JOIN expert e ON pe.idExpert = e.idExpert
 `;
 
 // Get all projects (untuk Admin)
 const getAllProjects = async () => {
-  const [rows] = await db.query(
-    `${BASE_QUERY} WHERE o.statOpti = 'po received' ORDER BY p.startProject DESC`
-  );
+  const query = `
+    ${BASE_QUERY}
+    WHERE o.statOpti = 'po received'
+    GROUP BY p.idProject
+    ORDER BY p.startProject DESC
+  `;
+  const [rows] = await db.query(query);
   return rows;
 };
 
 // Get project by ID (sekarang menggunakan BASE_QUERY)
 const getProjectById = async (id) => {
-  const [rows] = await db.query(`${BASE_QUERY} WHERE p.idProject = ?`, [id]);
-  return rows[0];
+  const [projectRows] = await db.query(`
+    SELECT 
+      p.*, 
+      tp.nmTypeProject,
+      o.nmOpti, 
+      o.statOpti, 
+      o.valOpti,
+      s.nmSales, 
+      c.corpCustomer,
+      o.kebutuhan,
+      o.proposalOpti,
+      pm.nmPM
+    FROM project p
+    LEFT JOIN typeproject tp ON tp.idTypeProject = p.idTypeProject
+    LEFT JOIN opti o ON o.idOpti = p.idOpti
+    LEFT JOIN sales s ON o.idSales = s.idSales
+    LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+    LEFT JOIN pm pm ON pm.idPM = o.idPM
+    WHERE p.idProject = ?
+  `, [id]);
+
+  if (projectRows.length === 0) {
+    return null;
+  }
+
+  const project = projectRows[0];
+
+  const [expertRows] = await db.query(`
+    SELECT e.idExpert, e.nmExpert
+    FROM expert e
+    JOIN project_expert pe ON e.idExpert = pe.idExpert
+    WHERE pe.idProject = ?
+  `, [id]);
+
+  project.experts = expertRows;
+
+  return project;
 };
 
 // Create project
@@ -49,12 +88,11 @@ async function createProject(data, connection = db) {
     endProject,
     idCustomer,
     idOpti,
-    idExpert,
     placeProject,
   } = data;
   const query = `INSERT INTO project 
-    (idProject, nmProject, idTypeProject, startProject, endProject, idCustomer, idOpti, idExpert, placeProject) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    (idProject, nmProject, idTypeProject, startProject, endProject, idCustomer, idOpti, placeProject) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   await connection.query(query, [
     idProject,
     nmProject,
@@ -63,7 +101,6 @@ async function createProject(data, connection = db) {
     endProject,
     idCustomer,
     idOpti,
-    idExpert,
     placeProject,
   ]);
   return idProject;
@@ -76,20 +113,18 @@ const updateProject = async (id, data) => {
     idTypeProject,
     startProject,
     endProject,
-    idExpert,
     placeProject,
     idCustomer,
   } = data;
   const [result] = await db.query(
     `UPDATE project SET 
-     nmProject=?, idTypeProject=?, startProject=?, endProject=?, idExpert=?, placeProject=?, idCustomer=?
+     nmProject=?, idTypeProject=?, startProject=?, endProject=?, placeProject=?, idCustomer=?
      WHERE idProject=?`,
     [
       nmProject,
       idTypeProject,
       startProject,
       endProject,
-      idExpert,
       placeProject,
       idCustomer,
       id,
@@ -108,30 +143,38 @@ const deleteProject = async (id) => {
 
 // Ambil project berdasarkan idExpert (sekarang menggunakan BASE_QUERY)
 async function getByExpertId(expertId) {
-  const [rows] = await db.query(
-    `${BASE_QUERY} WHERE p.idExpert = ? AND o.statOpti = 'po received' ORDER BY p.startProject DESC`,
-    [expertId]
-  );
+  const query = `
+    ${BASE_QUERY}
+    WHERE pe.idExpert = ? AND o.statOpti = 'po received'
+    GROUP BY p.idProject
+    ORDER BY p.startProject DESC
+  `;
+  const [rows] = await db.query(query, [expertId]);
   return rows;
 }
 
 // Ambil project berdasarkan idSales (sekarang menggunakan BASE_QUERY)
 async function getBySalesId(salesId) {
-  const [rows] = await db.query(
-    `${BASE_QUERY} WHERE o.idSales = ? AND o.statOpti = 'po received' ORDER BY p.startProject DESC`,
-    [salesId]
-  );
+  const query = `
+    ${BASE_QUERY}
+    WHERE o.idSales = ? AND o.statOpti = 'po received'
+    GROUP BY p.idProject
+    ORDER BY p.startProject DESC
+  `;
+  const [rows] = await db.query(query, [salesId]);
   return rows;
 }
 
 // ==================== PERUBAHAN DIMULAI ====================
 // Fungsi baru untuk mengambil project berdasarkan idPM
 async function getByPmId(pmId) {
-  const [rows] = await db.query(
-    // Query ini mengambil project yang terhubung ke opti, lalu memfilter berdasarkan idPM di opti
-    `${BASE_QUERY} WHERE o.idPM = ? ORDER BY p.startProject DESC`,
-    [pmId]
-  );
+  const query = `
+    ${BASE_QUERY}
+    WHERE o.idPM = ?
+    GROUP BY p.idProject
+    ORDER BY p.startProject DESC
+  `;
+  const [rows] = await db.query(query, [pmId]);
   return rows;
 }
 // ==================== AKHIR PERUBAHAN ====================
@@ -144,6 +187,34 @@ async function updateFeedback(idProject, feedback) {
   return result.affectedRows;
 }
 
+async function updateProjectExperts(projectId, expertIds) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Hapus semua expert yang ada untuk project ini
+    await connection.query("DELETE FROM project_expert WHERE idProject = ?", [
+      projectId,
+    ]);
+
+    // Jika ada expertIds baru, masukkan
+    if (expertIds && expertIds.length > 0) {
+      const values = expertIds.map((expertId) => [projectId, expertId]);
+      await connection.query(
+        "INSERT INTO project_expert (idProject, idExpert) VALUES ?",
+        [values]
+      );
+    }
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -154,4 +225,5 @@ module.exports = {
   getBySalesId,
   getByPmId, // <-- Ekspor fungsi baru
   updateFeedback,
+  updateProjectExperts,
 };

@@ -102,6 +102,24 @@ const submitProjectFeedback = async (req, res) => {
   }
 };
 
+const updateProjectExperts = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { expertIds } = req.body;
+
+    if (!Array.isArray(expertIds)) {
+      return res.status(400).json({ error: "expertIds must be an array." });
+    }
+
+    await Project.updateProjectExperts(projectId, expertIds);
+
+    res.json({ message: "Project experts updated successfully." });
+  } catch (err) {
+    console.error("Error updating project experts:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getProjects,
   getProjectById,
@@ -110,4 +128,5 @@ module.exports = {
   deleteProject,
   getMyProjects,
   submitProjectFeedback,
+  updateProjectExperts,
 };

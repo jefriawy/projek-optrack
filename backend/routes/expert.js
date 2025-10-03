@@ -20,7 +20,7 @@ const validateExpertInput = [
 ];
 
 // Route yang sudah ada (tidak berubah)
-router.get("/", authMiddleware(["Admin"]), getExperts);
+router.get("/", authMiddleware(["Admin", "PM", "Expert"]), getExperts);
 router.post("/", authMiddleware(["Admin"]), validateExpertInput, createExpertUser);
 router.get("/my-dashboard", authMiddleware(["Expert"]), getMyDashboardData);
 
