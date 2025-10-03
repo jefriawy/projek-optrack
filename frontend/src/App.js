@@ -31,7 +31,6 @@ import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import AkademikDashboard from "./pages/AkademikDashboard";
 
-
 import Layout from "./components/Layout";
 import "./App.css";
 
@@ -91,31 +90,32 @@ const AppRoutes = () => {
       <Route
         path="/"
         element={
-          user
-            ? (
-              <Navigate
-                to={user.redirectPath || pathByRole(user.role)}
-                replace
-              />
-              )
-            : <Navigate to="/login" replace />
+          user ? (
+            <Navigate to={user.redirectPath || pathByRole(user.role)} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
       <Route
-  path="/dashboard/akademik"
-  element={
-    <Protected allow={["Akademik"]}>
-      <Layout><AkademikDashboard /></Layout>
-    </Protected>
-  }
-/>
+        path="/dashboard/akademik"
+        element={
+          <Protected allow={["Akademik"]}>
+            <Layout>
+              <AkademikDashboard />
+            </Layout>
+          </Protected>
+        }
+      />
       {/* ===== DASHBOARDS ===== */}
       <Route
         path="/dashboard-admin"
         element={
           <Protected allow={["Admin"]}>
-            <Layout><AdminDashboardPage /></Layout>
+            <Layout>
+              <AdminDashboardPage />
+            </Layout>
           </Protected>
         }
       />
@@ -124,7 +124,9 @@ const AppRoutes = () => {
         path="/dashboard/head-sales"
         element={
           <Protected allow={["Head Sales", "Admin"]}>
-            <Layout><HeadOfSalesDashboard /></Layout>
+            <Layout>
+              <HeadOfSalesDashboard />
+            </Layout>
           </Protected>
         }
       />
@@ -133,7 +135,9 @@ const AppRoutes = () => {
         path="/dashboard/sales"
         element={
           <Protected allow={["Sales", "Head Sales"]}>
-            <Layout><SalesDashboard /></Layout>
+            <Layout>
+              <SalesDashboard />
+            </Layout>
           </Protected>
         }
       />
@@ -142,18 +146,21 @@ const AppRoutes = () => {
         path="/dashboard/expert"
         element={
           <Protected allow={["Expert"]}>
-            <Layout><ExpertDashboard /></Layout>
+            <Layout>
+              <ExpertDashboard />
+            </Layout>
           </Protected>
         }
       />
-
 
       {/* ===== MODULE PAGES ===== */}
       <Route
         path="/opti"
         element={
           <Protected allow={["Sales", "Head Sales", "Admin"]}>
-            <Layout><OptiPage /></Layout>
+            <Layout>
+              <OptiPage />
+            </Layout>
           </Protected>
         }
       />
@@ -162,7 +169,9 @@ const AppRoutes = () => {
         path="/customer"
         element={
           <Protected allow={["Sales", "Head Sales", "Admin"]}>
-            <Layout><CustomerPage /></Layout>
+            <Layout>
+              <CustomerPage />
+            </Layout>
           </Protected>
         }
       />
@@ -171,7 +180,9 @@ const AppRoutes = () => {
         path="/customer/add"
         element={
           <Protected allow={["Sales", "Head Sales", "Admin"]}>
-            <Layout><AddCustomerPage /></Layout>
+            <Layout>
+              <AddCustomerPage />
+            </Layout>
           </Protected>
         }
       />
@@ -180,7 +191,9 @@ const AppRoutes = () => {
         path="/customer/:id"
         element={
           <Protected allow={["Sales", "Head Sales", "Admin"]}>
-            <Layout><CustomerDetailPage /></Layout>
+            <Layout>
+              <CustomerDetailPage />
+            </Layout>
           </Protected>
         }
       />
@@ -189,7 +202,9 @@ const AppRoutes = () => {
         path="/sales"
         element={
           <Protected allow={["Admin", "Head Sales"]}>
-            <Layout><SalesPage /></Layout>
+            <Layout>
+              <SalesPage />
+            </Layout>
           </Protected>
         }
       />
@@ -198,8 +213,20 @@ const AppRoutes = () => {
       <Route
         path="/training"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "Trainer", "Akademik"]}>
-            <Layout><TrainingPage /></Layout>
+          <Protected
+            allow={[
+              "Sales",
+              "Head Sales",
+              "Expert",
+              "Head of Expert",
+              "Admin",
+              "Trainer",
+              "Akademik",
+            ]}
+          >
+            <Layout>
+              <TrainingPage />
+            </Layout>
           </Protected>
         }
       />
@@ -207,8 +234,12 @@ const AppRoutes = () => {
       <Route
         path="/project"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
-            <Layout><ProjectPage /></Layout>
+          <Protected
+            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}
+          >
+            <Layout>
+              <ProjectPage />
+            </Layout>
           </Protected>
         }
       />
@@ -216,8 +247,12 @@ const AppRoutes = () => {
       <Route
         path="/outsource"
         element={
-          <Protected allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}>
-            <Layout><OutsourcePage /></Layout>
+          <Protected
+            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}
+          >
+            <Layout>
+              <OutsourcePage />
+            </Layout>
           </Protected>
         }
       />
@@ -227,7 +262,9 @@ const AppRoutes = () => {
         path="/expert"
         element={
           <Protected allow={["Admin"]}>
-            <Layout><ExpertPage /></Layout>
+            <Layout>
+              <ExpertPage />
+            </Layout>
           </Protected>
         }
       />
@@ -237,7 +274,9 @@ const AppRoutes = () => {
         path="/akademik-list"
         element={
           <Protected allow={["Admin"]}>
-            <Layout><AkademikPage /></Layout>
+            <Layout>
+              <AkademikPage />
+            </Layout>
           </Protected>
         }
       />
@@ -245,7 +284,9 @@ const AppRoutes = () => {
         path="/pm-list"
         element={
           <Protected allow={["Admin"]}>
-            <Layout><PmPage /></Layout>
+            <Layout>
+              <PmPage />
+            </Layout>
           </Protected>
         }
       />
@@ -254,7 +295,9 @@ const AppRoutes = () => {
         path="/users"
         element={
           <Protected allow={["Admin"]}>
-            <Layout><UserManagementPage /></Layout>
+            <Layout>
+              <UserManagementPage />
+            </Layout>
           </Protected>
         }
       />

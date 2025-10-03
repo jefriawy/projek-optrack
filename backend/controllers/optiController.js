@@ -10,10 +10,10 @@ const Training = require("../models/trainingModel");
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
 const { exportToXlsx } = require("../utils/OptiXlsx.js");
-const Notification = require("../models/notificationModel"); // BARU: Import Notif Model
+const Notification = require("../models/notificationModel");
+// BARU: Import Notif Model
 
 const toNull = (v) => (v === "" || v === undefined ? null : v);
-
 // Fungsi helper untuk memastikan format tanggal sesuai dengan MySQL
 const formatDateForDB = (dateString) => {
   if (!dateString) return null;
@@ -32,7 +32,6 @@ const formatDateForDB = (dateString) => {
   const s = String(dateObj.getSeconds()).padStart(2, "0");
   return `${y}-${m}-${d} ${h}:${mi}:${s}`;
 };
-
 const createOpti = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -77,7 +76,9 @@ const createOpti = async (req, res) => {
       kebutuhan: toNull(b.kebutuhan),
       jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
-      idProjectManager: toNull(b.idProjectManager) ? Number(b.idProjectManager) : null,
+      idPM: toNull(b.idPM) // PERUBAHAN
+        ? Number(b.idPM)
+        : null, // PERUBAHAN
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
 
@@ -104,7 +105,6 @@ const createOpti = async (req, res) => {
     }
 
     await Opti.create(optiData, idSalesForOpti, connection);
-    
     // NOTIFIKASI 1.C: Sales menambahkan Opti -> Kirim ke Head Sales
     if (user.role === "Sales") {
       await Notification.createNotification({
@@ -132,12 +132,12 @@ const updateOpti = async (req, res) => {
   const { id } = req.params;
   const b = { ...req.body };
   const { user } = req;
-  const userName = req.user.name || req.user.username || req.user.role; // Ambil nama user
+  const userName = req.user.name || req.user.username || req.user.role;
+  // Ambil nama user
 
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-
     const existingOpti = await Opti.findById(id, user);
     if (!existingOpti) {
       await connection.rollback();
@@ -152,21 +152,23 @@ const updateOpti = async (req, res) => {
     }
 
     const oldStatus = existingOpti.statOpti;
-    const isStatusUpdateAllowed = user.role === "Head Sales" || user.role === "Admin";
-    
+    const isStatusUpdateAllowed =
+      user.role === "Head Sales" || user.role === "Admin";
     const optiData = {
       nmOpti: b.nmOpti || existingOpti.nmOpti,
       idCustomer: b.idCustomer ? Number(b.idCustomer) : existingOpti.idCustomer,
       contactOpti: toNull(b.contactOpti) ?? existingOpti.contactOpti,
       emailOpti: toNull(b.emailOpti) ?? existingOpti.emailOpti,
       mobileOpti: toNull(b.mobileOpti) ?? existingOpti.mobileOpti,
-      statOpti: isStatusUpdateAllowed ? b.statOpti || existingOpti.statOpti : existingOpti.statOpti, 
+      statOpti: isStatusUpdateAllowed
+        ? b.statOpti || existingOpti.statOpti
+        : existingOpti.statOpti,
       datePropOpti: b.datePropOpti || existingOpti.datePropOpti,
       idSumber: b.idSumber ? Number(b.idSumber) : existingOpti.idSumber,
       kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
-      idProjectManager: toNull(b.idProjectManager) ? Number(b.idProjectManager) : existingOpti.idProjectManager,
+      idPM: toNull(b.idPM) ? Number(b.idPM) : existingOpti.idPM, // PERUBAHAN
       valOpti:
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
@@ -188,8 +190,7 @@ const updateOpti = async (req, res) => {
             : existingOpti.idTypeProject
           : existingOpti.idTypeProject,
       proposalOpti: existingOpti.proposalOpti,
-      dokPendaftaran:
-        toNull(b.dokPendaftaran) ?? existingOpti.dokPendaftaran,
+      dokPendaftaran: toNull(b.dokPendaftaran) ?? existingOpti.dokPendaftaran,
     };
 
     if (req.file) {
@@ -207,42 +208,38 @@ const updateOpti = async (req, res) => {
     }
 
     await Opti.update(id, optiData, connection);
-    
-    const newStatus = optiData.statOpti;
 
+    const newStatus = optiData.statOpti;
     // NOTIFIKASI 1.D: Sales mengupdate Opti -> Kirim ke Head Sales
     if (user.role === "Sales") {
-        await Notification.createNotification({
-            recipientRole: "Head Sales",
-            message: `Sales (${userName}) Telah mengupdate OPTI: ${optiData.nmOpti}`,
-            type: "opti_updated",
-            senderId: user.id,
-            senderName: userName,
-            relatedEntityId: id, // idOpti
-        });
+      await Notification.createNotification({
+        recipientRole: "Head Sales",
+        message: `Sales (${userName}) Telah mengupdate OPTI: ${optiData.nmOpti}`,
+        type: "opti_updated",
+        senderId: user.id,
+        senderName: userName,
+        relatedEntityId: id, // idOpti
+      });
     }
 
     // Cek perubahan status (hanya dilakukan oleh Head Sales/Admin)
     const isStatusChanged = isStatusUpdateAllowed && newStatus !== oldStatus;
-
     if (isStatusChanged) {
-        // NOTIFIKASI 2.B: Head Sales mengupdate Status OPTI -> Kirim ke Sales terkait
-        await Notification.createNotification({
-            recipientId: existingOpti.idSales, 
-            recipientRole: "Sales",
-            message: `Head Sales (${userName}) Telah Mengupdate Status OPTI (${optiData.nmOpti}) menjadi ${newStatus}`,
-            type: "opti_status_updated",
-            senderId: user.id,
-            senderName: userName,
-            relatedEntityId: id, // idOpti
-        });
+      // NOTIFIKASI 2.B: Head Sales mengupdate Status OPTI -> Kirim ke Sales terkait
+      await Notification.createNotification({
+        recipientId: existingOpti.idSales,
+        recipientRole: "Sales",
+        message: `Head Sales (${userName}) Telah Mengupdate Status OPTI (${optiData.nmOpti}) menjadi ${newStatus}`,
+        type: "opti_status_updated",
+        senderId: user.id,
+        senderName: userName,
+        relatedEntityId: id, // idOpti
+      });
     }
-
 
     const isStatusChangedToPoReceived =
       optiData.statOpti === "po received" &&
       existingOpti.statOpti !== "po received";
-
     if (isStatusChangedToPoReceived) {
       const createRelatedEntity = async (type) => {
         const idOpti = id;
@@ -251,7 +248,7 @@ const updateOpti = async (req, res) => {
             ? "SELECT idTraining FROM training WHERE idOpti = ? LIMIT 1"
             : "SELECT idProject FROM project WHERE idOpti = ? LIMIT 1";
         const [existing] = await connection.query(query, [idOpti]);
-        
+
         if (existing.length === 0) {
           console.log(`Creating new ${type} for Opti ${idOpti}`);
           const newId = await generateUserId(type);
@@ -268,7 +265,6 @@ const updateOpti = async (req, res) => {
             place: optiData.placeProgram,
             idCustomer: optiData.idCustomer,
           };
-
           if (type === "Training") {
             await Training.createTraining(
               {
@@ -284,11 +280,10 @@ const updateOpti = async (req, res) => {
               },
               connection
             );
-
             // NOTIFIKASI 2.C: Head Sales mengupdate Status OPTI menjadi "PO Receive" -> Kirim ke Trainer (Expert)
             if (payload.idExpert) {
               await Notification.createNotification({
-                recipientId: payload.idExpert, 
+                recipientId: payload.idExpert,
                 recipientRole: "Expert", // Asumsi Trainer/Expert memiliki role 'Expert'
                 message: `Jadwal Training Telah ditambahkan oleh Head Sales: ${payload.nm}`,
                 type: "training_scheduled_po_receive",
@@ -297,7 +292,6 @@ const updateOpti = async (req, res) => {
                 relatedEntityId: idOpti, // idOpti
               });
             }
-            
           } else {
             await Project.createProject(
               {
@@ -316,7 +310,6 @@ const updateOpti = async (req, res) => {
           }
         }
       };
-
       if (optiData.jenisOpti === "Training") {
         await createRelatedEntity("Training");
       } else if (optiData.jenisOpti === "Project") {
@@ -394,17 +387,27 @@ const updateOpti = async (req, res) => {
   }
 };
 
+// ... sisa kode di controller (getOptis, getFormOptions, dll) tidak perlu diubah ...
+// (Kode di bawah ini tidak diubah dan dibiarkan seperti aslinya)
+
 const getOptis = async (req, res) => {
   try {
     // Destructure search parameters from the query string
-    const { corpCustomer, nmOpti, nmSales, program, status, page: pageStr, limit: limitStr } = req.query;
+    const {
+      corpCustomer,
+      nmOpti,
+      nmSales,
+      program,
+      status,
+      page: pageStr,
+      limit: limitStr,
+    } = req.query;
     const page = parseInt(pageStr) || 1;
     const limit = parseInt(limitStr) || 10;
     const offset = (page - 1) * limit;
     const { user } = req;
 
     const searchCriteria = { corpCustomer, nmOpti, nmSales };
-
     const [optis, totalCount] = await Opti.findAllPaginated(
       searchCriteria, // Pass criteria to the model
       limit,
@@ -431,11 +434,11 @@ const getOptis = async (req, res) => {
     res.status(500).json({ error: error.sqlMessage || "Server error" });
   }
 };
-
 const getFormOptions = async (req, res) => {
   try {
     // ambil customer yang statusnya approved dan diinput oleh sales yang sedang login
-    let customersQuery = "SELECT idCustomer, corpCustomer, nmCustomer FROM customer WHERE idStatCustomer = 2";
+    let customersQuery =
+      "SELECT idCustomer, corpCustomer, nmCustomer FROM customer WHERE idStatCustomer = 2";
     const params = [];
     if (req.user && req.user.role === "Sales") {
       customersQuery += " AND idSales = ?";
@@ -449,10 +452,7 @@ const getFormOptions = async (req, res) => {
     const [experts] = await pool.query(
       "SELECT idExpert, nmExpert, role FROM expert ORDER BY nmExpert"
     );
-    const [pms] = await pool.query(
-      "SELECT idPM, nmPM FROM pm ORDER BY nmPM"
-    );
-
+    const [pms] = await pool.query("SELECT idPM, nmPM FROM pm ORDER BY nmPM");
     res.json({
       customers: Array.isArray(customers) ? customers : [],
       sumber: Array.isArray(sumber) ? sumber : [],
@@ -481,19 +481,19 @@ const getOptiById = async (req, res) => {
         .json({ error: "Opportunity not found or not accessible" });
     }
     const transformedOpti = {
-  ...opti,
-  startTraining: opti.startProgram ?? null,
-  endTraining: opti.endProgram ?? null,
-  placeTraining: opti.placeProgram ?? null,
-  idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
-  proposalPath: opti.proposalOpti
-    ? `uploads/proposals/${opti.proposalOpti}`
-    : null,
-  proposalFileName: opti.proposalOpti || null, // <-- tambahkan ini
-  dokPendaftaranPath: opti.dokPendaftaran
-    ? `uploads/dokumen/${opti.dokPendaftaran}`
-    : null,
-};
+      ...opti,
+      startTraining: opti.startProgram ?? null,
+      endTraining: opti.endProgram ?? null,
+      placeTraining: opti.placeProgram ?? null,
+      idTypeTraining: opti.idTypeTraining ?? opti.idTypeProject ?? null,
+      proposalPath: opti.proposalOpti
+        ? `uploads/proposals/${opti.proposalOpti}`
+        : null,
+      proposalFileName: opti.proposalOpti || null, // <-- tambahkan ini
+      dokPendaftaranPath: opti.dokPendaftaran
+        ? `uploads/dokumen/${opti.dokPendaftaran}`
+        : null,
+    };
     delete transformedOpti.proposalOpti;
     delete transformedOpti.startProgram;
     delete transformedOpti.endProgram;
@@ -501,14 +501,12 @@ const getOptiById = async (req, res) => {
     delete transformedOpti.idTypeProject;
     // remove old field name if existed
     delete transformedOpti.buktiPembayaran;
-
     res.json(transformedOpti);
   } catch (error) {
     console.error("Error fetching opportunity detail:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
-
 const uploadPaymentProof = async (req, res) => {
   const { id } = req.params;
   const { user } = req;
@@ -562,7 +560,6 @@ const uploadPaymentProof = async (req, res) => {
     connection.release();
   }
 };
-
 const getSalesDashboardData = async (req, res) => {
   const { id: idSales, role } = req.user;
   try {
@@ -574,7 +571,8 @@ const getSalesDashboardData = async (req, res) => {
       FROM (
         SELECT p.startProject AS start_date, o.valOpti AS value, o.idSales FROM project p JOIN opti o ON p.idOpti = o.idOpti WHERE p.startProject IS NOT NULL
         UNION ALL
-        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti = o.idOpti WHERE t.startTraining IS NOT NULL
+        SELECT t.startTraining AS start_date, o.valOpti AS value, o.idSales FROM training t JOIN opti o ON t.idOpti 
+ = o.idOpti WHERE t.startTraining IS NOT NULL
       ) AS won_deals
     `;
     if (role === "Admin" || role === "Head Sales") {
@@ -596,13 +594,15 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
+     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
           UNION ALL
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON t.idCustomer = c.idCustomer
+          JOIN customer c ON 
+ t.idCustomer = c.idCustomer
         ) AS won_deals
         ORDER BY won_deals.value DESC
         LIMIT 5
@@ -632,13 +632,15 @@ const getSalesDashboardData = async (req, res) => {
         FROM (
           SELECT p.nmProject AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM project p
+     
           JOIN opti o ON p.idOpti = o.idOpti
           JOIN customer c ON p.idCustomer = c.idCustomer
           UNION ALL
           SELECT t.nmTraining AS name, c.corpCustomer AS customer, o.valOpti AS value, o.idSales
           FROM training t
           JOIN opti o ON t.idOpti = o.idOpti
-          JOIN customer c ON t.idCustomer = c.idCustomer
+          JOIN customer c ON 
+ t.idCustomer = c.idCustomer
         ) AS won_deals
         WHERE won_deals.idSales = ?
         ORDER BY won_deals.value DESC
@@ -680,32 +682,34 @@ const getSalesDashboardData = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 const exportOptis = async (req, res) => {
   try {
     const { corpCustomer, nmOpti, nmSales, program, status } = req.query;
     const { user } = req;
     const searchCriteria = { corpCustomer, nmOpti, nmSales };
-
-    const optis = await Opti.findAllForExport(searchCriteria, user, program, status);
+    const optis = await Opti.findAllForExport(
+      searchCriteria,
+      user,
+      program,
+      status
+    );
 
     const columns = [
-      'nmOpti',
-      'mobileOpti',
-      'emailOpti',
-      'statOpti',
-      'datePropOpti',
-      'corpCustomer',
-      'nmSumber',
-      'nmSales',
-      'jenisOpti',
-      'nmExpert',
-      'valOpti',
-      'startProgram',
-      'endProgram',
-      'placeProgram',
+      "nmOpti",
+      "mobileOpti",
+      "emailOpti",
+      "statOpti",
+      "datePropOpti",
+      "corpCustomer",
+      "nmSumber",
+      "nmSales",
+      "jenisOpti",
+      "nmExpert",
+      "valOpti",
+      "startProgram",
+      "endProgram",
+      "placeProgram",
     ];
-
     // Mapping nama kolom ke header user-friendly
     const headerMap = {
       nmOpti: "Nama Opportunity",
@@ -721,21 +725,22 @@ const exportOptis = async (req, res) => {
       valOpti: "Value",
       startProgram: "Mulai Program",
       endProgram: "Akhir Program",
-      placeProgram: "Lokasi Program"
+      placeProgram: "Lokasi Program",
     };
-
     // Ubah data agar header di worksheet menggunakan nama user-friendly
-    const exportData = optis.map(item => {
+    const exportData = optis.map((item) => {
       const row = {};
-      columns.forEach(col => {
+      columns.forEach((col) => {
         row[headerMap[col] || col] = item[col] !== undefined ? item[col] : null;
       });
       return row;
     });
-
     // Gunakan header user-friendly
-    const xlsxBuffer = require("../utils/OptiXlsx.js").exportToXlsx(exportData, columns.map(col => headerMap[col] || col), 'Opportunities');
-
+    const xlsxBuffer = require("../utils/OptiXlsx.js").exportToXlsx(
+      exportData,
+      columns.map((col) => headerMap[col] || col),
+      "Opportunities"
+    );
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

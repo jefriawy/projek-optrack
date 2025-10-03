@@ -4,20 +4,58 @@ const pool = require("../config/database");
 const Opti = {
   async create(optiData, idSales, connection = pool) {
     const {
-      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      idOpti,
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      jenisOpti,
+      idExpert,
+      idPM,
+      proposalOpti,
+      valOpti,
+      startProgram,
+      endProgram,
+      placeProgram,
+      idTypeTraining,
+      idTypeProject,
+      dokPendaftaran,
     } = optiData;
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
+         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idPM, proposalOpti, valOpti,
          startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
-      idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      idOpti,
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      idSales,
+      jenisOpti,
+      idExpert,
+      idPM,
+      proposalOpti,
+      valOpti,
+      startProgram,
+      endProgram,
+      placeProgram,
+      idTypeTraining,
+      idTypeProject,
+      dokPendaftaran,
     ];
     await connection.query(query, params);
     return { idOpti };
@@ -34,7 +72,6 @@ const Opti = {
     const params = [];
     const whereClauses = [];
 
-    // Dynamically build the WHERE clause based on the search criteria
     if (searchCriteria) {
       const { corpCustomer, nmOpti, nmSales } = searchCriteria;
       if (corpCustomer) {
@@ -56,13 +93,13 @@ const Opti = {
       params.push(user.id);
     }
 
-    if (program && program !== 'Semua Program') {
-      whereClauses.push('o.jenisOpti = ?');
+    if (program && program !== "Semua Program") {
+      whereClauses.push("o.jenisOpti = ?");
       params.push(program);
     }
 
     if (status) {
-      whereClauses.push('o.statOpti = ?');
+      whereClauses.push("o.statOpti = ?");
       params.push(status);
     }
 
@@ -118,12 +155,12 @@ const Opti = {
       whereClauses.push(`o.idSales = ?`);
       params.push(user.id);
     }
-    if (program && program !== 'Semua Program') {
-      whereClauses.push('o.jenisOpti = ?');
+    if (program && program !== "Semua Program") {
+      whereClauses.push("o.jenisOpti = ?");
       params.push(program);
     }
     if (status) {
-      whereClauses.push('o.statOpti = ?');
+      whereClauses.push("o.statOpti = ?");
       params.push(status);
     }
     if (whereClauses.length > 0) {
@@ -157,22 +194,24 @@ const Opti = {
   },
 
   async findById(idOpti, user) {
+    // PERUBAHAN DIMULAI: Menambahkan LEFT JOIN ke tabel pm dan mengambil nmPM
     const query = `
       SELECT
-        o.*, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales
+        o.*, c.corpCustomer, s.nmSumber, e.nmExpert, sl.nmSales, p.nmPM
       FROM opti o
       LEFT JOIN customer     c  ON o.idCustomer = c.idCustomer
       LEFT JOIN sumber       s  ON o.idSumber   = s.idSumber
       LEFT JOIN sales        sl ON o.idSales    = sl.idSales
       LEFT JOIN expert       e  ON o.idExpert   = e.idExpert
+      LEFT JOIN pm           p  ON o.idPM       = p.idPM
       WHERE o.idOpti = ?
       LIMIT 1
     `;
+    // AKHIR PERUBAHAN
 
     const [rows] = await pool.query(query, [idOpti]);
     const opti = rows[0];
     if (!opti) return null;
-
     if (user && user.role === "Sales" && opti.idSales !== user.id) {
       return null;
     }
@@ -182,23 +221,56 @@ const Opti = {
 
   async update(idOpti, optiData, connection = pool) {
     const {
-      nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
-      startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
+      nmOpti,
+      contactOpti,
+      mobileOpti,
+      emailOpti,
+      statOpti,
+      datePropOpti,
+      idCustomer,
+      idSumber,
+      kebutuhan,
+      jenisOpti,
+      idExpert,
+      idPM,
+      proposalOpti,
+      valOpti,
+      startProgram,
+      endProgram,
+      placeProgram,
+      idTypeTraining,
+      idTypeProject,
+      dokPendaftaran,
     } = optiData;
-
     const [result] = await connection.query(
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
-         jenisOpti = ?, idExpert = ?, idProjectManager = ?, proposalOpti = ?, valOpti = ?,
+         jenisOpti = ?, idExpert = ?, idPM = ?, proposalOpti = ?, valOpti = ?,
          startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
          idTypeProject = ?, dokPendaftaran = ?
        WHERE idOpti = ?`,
       [
-        nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-        idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
-        startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran,
+        nmOpti,
+        contactOpti,
+        mobileOpti,
+        emailOpti,
+        statOpti,
+        datePropOpti,
+        idCustomer,
+        idSumber,
+        kebutuhan,
+        jenisOpti,
+        idExpert,
+        idPM,
+        proposalOpti,
+        valOpti,
+        startProgram,
+        endProgram,
+        placeProgram,
+        idTypeTraining,
+        idTypeProject,
+        dokPendaftaran,
         idOpti,
       ]
     );

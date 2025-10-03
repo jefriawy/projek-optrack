@@ -29,7 +29,6 @@ const isBadDate = (v) =>
 
 const OptiDetail = ({ opti }) => {
   if (!opti) return null;
-
   const formatDate = (dateString) => {
     if (!dateString || isBadDate(dateString)) return "N/A";
     const d = new Date(dateString);
@@ -55,7 +54,6 @@ const OptiDetail = ({ opti }) => {
     });
   };
 
-  // --- TAMBAHAN: Fungsi untuk format Rupiah ---
   const formatRupiah = (value) => {
     if (value === null || value === undefined) return "N/A";
     return new Intl.NumberFormat("id-ID", {
@@ -65,7 +63,6 @@ const OptiDetail = ({ opti }) => {
       maximumFractionDigits: 0,
     }).format(value);
   };
-  // --- AKHIR TAMBAHAN ---
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -162,20 +159,26 @@ const OptiDetail = ({ opti }) => {
             <p>
               <strong>Kontak PIC:</strong> {opti.contactOpti || "-"}
             </p>
-            {/* --- TAMBAHAN: Email dan Mobile Phone --- */}
             <p>
               <strong>Email:</strong> {opti.emailOpti || "-"}
             </p>
             <p>
               <strong>Mobile Phone:</strong> {opti.mobileOpti || "-"}
             </p>
-            {/* --- AKHIR TAMBAHAN --- */}
             <p>
               <strong>Sales:</strong> {opti.nmSales || "-"}
             </p>
-            <p>
-              <strong>Trainer:</strong> {opti.nmExpert || "-"}
-            </p>
+            {/* PERUBAHAN DIMULAI: Menampilkan PM atau Trainer secara kondisional */}
+            {opti.jenisOpti === "Project" ? (
+              <p>
+                <strong>PM:</strong> {opti.nmPM || "-"}
+              </p>
+            ) : (
+              <p>
+                <strong>Trainer:</strong> {opti.nmExpert || "-"}
+              </p>
+            )}
+            {/* AKHIR PERUBAHAN */}
           </div>
         </div>
         <div>
@@ -186,11 +189,9 @@ const OptiDetail = ({ opti }) => {
             <p>
               <strong>Perusahaan:</strong> {opti.corpCustomer || "-"}
             </p>
-            {/* --- TAMBAHAN: Value Opportunity --- */}
             <p>
               <strong>Value:</strong> {formatRupiah(opti.valOpti)}
             </p>
-            {/* --- AKHIR TAMBAHAN --- */}
             <p className="flex items-center">
               <strong>Status:</strong>
               <span
