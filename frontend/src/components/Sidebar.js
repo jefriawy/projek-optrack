@@ -64,26 +64,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
     ];
   } else if (user && user.role === "Expert") {
-    menuItems = [
-      { icon: homeIcon, name: "Home", link: homeLinkByRole },
-      { icon: trainerIcon, name: "Training", link: "/training" },
-      { icon: projectIcon, name: "Project", link: "/project" },
-      { icon: outsourceIcon, name: "Outsource", link: "/outsource" },
-    ];
+    menuItems = [{ icon: projectIcon, name: "Project", link: "/project" }];
   } else if (user && user.role === "Trainer") {
-    menuItems = [
-      { icon: trainerIcon, name: "Training", link: "/training" },
-    ];
+    menuItems = [{ icon: trainerIcon, name: "Training", link: "/training" }];
   } else if (user && user.role === "Akademik") {
     menuItems = [
       { icon: homeIcon, name: "Home", link: homeLinkByRole },
       { icon: trainerIcon, name: "Training", link: "/training" },
     ];
   } else if (user && user.role === "PM") {
-    menuItems = [
-      { icon: homeIcon, name: "Home", link: homeLinkByRole },
-      { icon: projectIcon, name: "Project", link: "/project" },
-    ];
+    menuItems = [{ icon: projectIcon, name: "Project", link: "/project" }];
   }
 
   return (
