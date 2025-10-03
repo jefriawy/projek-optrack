@@ -1,11 +1,14 @@
 // backend/routes/user.js 
 const express = require("express");
 const router = express.Router();
-const { getAllUsers, deleteUserByRole, updateUserByRole } = require("../controllers/userController");
+const { getAllUsers, deleteUserByRole, updateUserByRole, getPMs } = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Get all users from all tables
 router.get("/all", authMiddleware(["Admin"]), getAllUsers);
+
+// Get all PMs
+router.get("/pms", authMiddleware(["Admin", "Head Sales"]), getPMs);
 
 // Update a user from a specific table based on role and id
 router.put("/:role/:id", authMiddleware(["Admin"]), updateUserByRole);

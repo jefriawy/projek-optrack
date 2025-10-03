@@ -4,20 +4,19 @@ const pool = require("../config/database");
 const Opti = {
   async create(optiData, idSales, connection = pool) {
     const {
-      idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
+      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
       startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
+         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
          startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, proposalOpti, valOpti,
+      idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
       startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     ];
     await connection.query(query, params);
@@ -184,7 +183,7 @@ const Opti = {
   async update(idOpti, optiData, connection = pool) {
     const {
       nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
+      idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
       startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran
     } = optiData;
 
@@ -192,13 +191,13 @@ const Opti = {
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
-         jenisOpti = ?, idExpert = ?, proposalOpti = ?, valOpti = ?,
+         jenisOpti = ?, idExpert = ?, idProjectManager = ?, proposalOpti = ?, valOpti = ?,
          startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
          idTypeProject = ?, dokPendaftaran = ?
        WHERE idOpti = ?`,
       [
         nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-        idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, proposalOpti, valOpti,
+        idCustomer, idSumber, kebutuhan, jenisOpti, idExpert, idProjectManager, proposalOpti, valOpti,
         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran,
         idOpti,
       ]

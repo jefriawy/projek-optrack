@@ -112,6 +112,9 @@ const getValidationSchema = (role) =>
     idExpert: Yup.number()
       .transform(emptyToNullNumber)
       .nullable(),
+    idProjectManager: Yup.number()
+      .transform(emptyToNullNumber)
+      .nullable(),
     idTypeTraining: Yup.number()
       .transform(emptyToNullNumber)
       .nullable()
@@ -138,6 +141,7 @@ const OptiForm = ({
   onClose,
 }) => {
   const { user } = useContext(AuthContext);
+  console.log('User Role:', user?.role);
   const [activeTab, setActiveTab] = useState("Training");
   const [editTab, setEditTab] = useState("edit_details");
   const [paymentProofFile, setPaymentProofFile] = useState(null);
@@ -156,6 +160,7 @@ const OptiForm = ({
     kebutuhan: "",
     jenisOpti: activeTab,
     idExpert: "",
+    idProjectManager: "",
     idTypeTraining: "",
     startTraining: "",
     endTraining: "",
@@ -178,6 +183,7 @@ const OptiForm = ({
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
   const [experts, setExperts] = useState([]);
+  const [projectManagers, setProjectManagers] = useState([]);
   const [proposalFile, setProposalFile] = useState(null);
 
   useEffect(() => {
@@ -229,6 +235,8 @@ const OptiForm = ({
           }))
           .filter((e) => e.idExpert && e.nmExpert);
         setExperts(normalizedExperts);
+
+        setProjectManagers(res.data.pms || []);
       } catch (e) {
         console.error("Error fetching form options:", e);
       }
@@ -255,6 +263,11 @@ const OptiForm = ({
   const projectTypeOptions = useMemo(() => 
     TYPE_PROJECTS.map(p => ({ value: p.id, label: p.name })), 
     []
+  );
+
+  const projectManagerOptions = useMemo(() =>
+    projectManagers.map(pm => ({ value: pm.idPM, label: pm.nmPM })),
+    [projectManagers]
   );
 
   const statusOptions = useMemo(() => STATUS_OPTIONS_DATA, []);
@@ -387,6 +400,7 @@ const OptiForm = ({
   const selectedStatusValue = statusOptions.find(option => option.value === formData.statOpti);
   const selectedTrainingTypeValue = trainingTypeOptions.find(option => option.value === Number(formData.idTypeTraining));
   const selectedProjectTypeValue = projectTypeOptions.find(option => option.value === Number(formData.idTypeTraining));
+  const selectedProjectManagerValue = projectManagerOptions.find(option => option.value === formData.idProjectManager);
 
   const selectStyles = {
     control: (base, state) => ({
@@ -459,21 +473,58 @@ const OptiForm = ({
                 {errors.mobileOpti && <p className="text-red-600 text-sm">{errors.mobileOpti}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  {formData.jenisOpti === "Training" ? "Trainer" : "Expert"}
-                </label>
-                <Select
-                  name="idExpert"
-                  options={expertOptions}
-                  value={selectedExpertValue}
-                  onChange={handleSelectChange('idExpert')}
-                  placeholder={formData.jenisOpti === "Training" ? "Pilih atau cari Trainer..." : "Pilih atau cari Expert..."}
-                  isClearable
-                  isDisabled={!isExpertRequired}
-                  styles={selectStyles}
-                  classNamePrefix="react-select"
-                />
-                {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
+                {activeTab === 'Project' ? (
+                  user?.role === 'Head Sales' || user?.role === 'Admin' ? (
+                    <>
+                      <label className="block text-sm font-medium mb-1">Project Manager *</label>
+                      <Select
+                        name="idProjectManager"
+                        options={projectManagerOptions}
+                        value={selectedProjectManagerValue}
+                        onChange={handleSelectChange('idProjectManager')}
+                        placeholder="Pilih atau cari Project Manager..."
+                        isClearable
+                        styles={selectStyles}
+                        classNamePrefix="react-select"
+                      />
+                      {errors.idProjectManager && <p className="text-red-600 text-sm">{errors.idProjectManager}</p>}
+                    </>
+                  ) : user?.role === 'Sales' ? null : (
+                    <>
+                      <label className="block text-sm font-medium mb-1">Expert</label>
+                      <Select
+                        name="idExpert"
+                        options={expertOptions}
+                        value={selectedExpertValue}
+                        onChange={handleSelectChange('idExpert')}
+                        placeholder="Pilih atau cari Expert..."
+                        isClearable
+                        isDisabled={!isExpertRequired}
+                        styles={selectStyles}
+                        classNamePrefix="react-select"
+                      />
+                      {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
+                    </>
+                  )
+                ) : (
+                  <>
+                    <label className="block text-sm font-medium mb-1">
+                      {formData.jenisOpti === 'Training' ? 'Trainer' : 'Expert'}
+                    </label>
+                    <Select
+                      name="idExpert"
+                      options={expertOptions}
+                      value={selectedExpertValue}
+                      onChange={handleSelectChange('idExpert')}
+                      placeholder={formData.jenisOpti === 'Training' ? 'Pilih atau cari Trainer...' : 'Pilih atau cari Expert...'}
+                      isClearable
+                      isDisabled={!isExpertRequired}
+                      styles={selectStyles}
+                      classNamePrefix="react-select"
+                    />
+                    {errors.idExpert && <p className="text-red-600 text-sm">{errors.idExpert}</p>}
+                  </>
+                )}
               </div>
               {user?.role === "Head Sales" && initialData && (
                 <div>

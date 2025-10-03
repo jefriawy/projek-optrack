@@ -77,6 +77,7 @@ const createOpti = async (req, res) => {
       kebutuhan: toNull(b.kebutuhan),
       jenisOpti: b.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : null,
+      idProjectManager: toNull(b.idProjectManager) ? Number(b.idProjectManager) : null,
       valOpti:
         b.valOpti !== undefined && b.valOpti !== "" ? Number(b.valOpti) : null,
 
@@ -165,6 +166,7 @@ const updateOpti = async (req, res) => {
       kebutuhan: toNull(b.kebutuhan) ?? existingOpti.kebutuhan,
       jenisOpti: b.jenisOpti || existingOpti.jenisOpti,
       idExpert: toNull(b.idExpert) ? Number(b.idExpert) : existingOpti.idExpert,
+      idProjectManager: toNull(b.idProjectManager) ? Number(b.idProjectManager) : existingOpti.idProjectManager,
       valOpti:
         b.valOpti !== undefined && b.valOpti !== ""
           ? Number(b.valOpti)
@@ -447,11 +449,15 @@ const getFormOptions = async (req, res) => {
     const [experts] = await pool.query(
       "SELECT idExpert, nmExpert, role FROM expert ORDER BY nmExpert"
     );
+    const [pms] = await pool.query(
+      "SELECT idPM, nmPM FROM pm ORDER BY nmPM"
+    );
 
     res.json({
       customers: Array.isArray(customers) ? customers : [],
       sumber: Array.isArray(sumber) ? sumber : [],
       experts: Array.isArray(experts) ? experts : [],
+      pms: Array.isArray(pms) ? pms : [],
     });
   } catch (error) {
     console.error("Error in getFormOptions:", error);

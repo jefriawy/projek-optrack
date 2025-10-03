@@ -167,4 +167,15 @@ const updateUserByRole = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, deleteUserByRole, updateUserByRole };
+
+const getPMs = async (req, res) => {
+  try {
+    const [pms] = await pool.query("SELECT idPM, nmPM FROM pm");
+    res.json(pms);
+  } catch (error) {
+    console.error("Error fetching PMs:", error);
+    res.status(500).json({ error: "Server error while fetching PMs." });
+  }
+};
+
+module.exports = { getAllUsers, deleteUserByRole, updateUserByRole, getPMs };
