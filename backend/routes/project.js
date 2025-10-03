@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 // RUTE BARU: untuk mengambil project milik user yang login (Expert/Sales)
 router.get(
   "/mine",
-  authMiddleware(["Expert", "Sales", "Head Sales"]),
+  authMiddleware(["Expert", "Sales", "Head Sales", "PM"]),
   projectController.getMyProjects
 );
 
@@ -18,7 +18,7 @@ router.get(
 );
 router.get(
   "/:id",
-  authMiddleware(["Admin", "Expert", "Sales", "Head Sales"]),
+  authMiddleware(["Admin", "Expert", "Sales", "Head Sales", "PM"]),
   projectController.getProjectById
 );
 router.post("/", authMiddleware(["Admin"]), projectController.createProject);

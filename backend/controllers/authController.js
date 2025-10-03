@@ -1,6 +1,6 @@
 // backend/controllers/authController.js
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken"); // Import jsonwebtoken directly
+const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const Sales = require("../models/sales");
@@ -52,7 +52,6 @@ const login = [
     }
 
     const { email, password } = req.body;
-
     try {
       let user = null;
 
@@ -65,11 +64,20 @@ const login = [
         user = adminRows[0];
       }
 
+      // ==================== PERUBAHAN DIMULAI ====================
+      // Logika di bawah ini distandarkan untuk memastikan konsistensi
+
       // Try to find user in Sales table
       if (!user) {
         const salesUser = await Sales.findByEmail(email);
         if (salesUser) {
-          user = { ...salesUser, id: salesUser.idSales, name: salesUser.nmSales };
+          user = {
+            id: salesUser.idSales,
+            name: salesUser.nmSales,
+            email: salesUser.emailSales,
+            role: salesUser.role, // role didapat dari tabel sales
+            password: salesUser.password,
+          };
         }
       }
 
@@ -77,7 +85,13 @@ const login = [
       if (!user) {
         const expertUser = await Expert.findByEmail(email);
         if (expertUser) {
-          user = { ...expertUser, id: expertUser.idExpert, name: expertUser.nmExpert };
+          user = {
+            id: expertUser.idExpert,
+            name: expertUser.nmExpert,
+            email: expertUser.emailExpert,
+            role: expertUser.role, // role didapat dari tabel expert
+            password: expertUser.password,
+          };
         }
       }
 
@@ -85,7 +99,13 @@ const login = [
       if (!user) {
         const akademikUser = await Akademik.findByEmail(email);
         if (akademikUser) {
-          user = { ...akademikUser, id: akademikUser.idAkademik, name: akademikUser.nmAkademik, role: "Akademik", password: akademikUser.password };
+          user = {
+            id: akademikUser.idAkademik,
+            name: akademikUser.nmAkademik,
+            email: akademikUser.emailAkademik,
+            role: "Akademik", // role di-hardcode karena tidak ada di tabel
+            password: akademikUser.password,
+          };
         }
       }
 
@@ -93,9 +113,17 @@ const login = [
       if (!user) {
         const pmUser = await PM.findByEmail(email);
         if (pmUser) {
-          user = { ...pmUser, id: pmUser.idPM, name: pmUser.nmPM, role: "PM", password: pmUser.password };
+          user = {
+            id: pmUser.idPM,
+            name: pmUser.nmPM,
+            email: pmUser.emailPM,
+            role: "PM", // role di-hardcode karena tidak ada di tabel
+            password: pmUser.password,
+          };
         }
       }
+
+      // ==================== AKHIR PERUBAHAN ====================
 
       // If user not found in any table
       if (!user) {

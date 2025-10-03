@@ -12,10 +12,8 @@ const getProjects = async (req, res) => {
   }
 };
 
-// ====================== PERUBAHAN DI FUNGSI INI ======================
 const getProjectById = async (req, res) => {
   try {
-    // Memanggil fungsi dari model yang query-nya sudah lengkap
     const project = await Project.getProjectById(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
     res.json(project);
@@ -24,7 +22,6 @@ const getProjectById = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// ====================== AKHIR PERUBAHAN ======================
 
 const createProject = async (req, res) => {
   try {
@@ -61,6 +58,7 @@ const deleteProject = async (req, res) => {
   }
 };
 
+// ==================== PERUBAHAN DIMULAI ====================
 const getMyProjects = async (req, res) => {
   try {
     const { role, id } = req.user;
@@ -69,6 +67,9 @@ const getMyProjects = async (req, res) => {
       data = await Project.getByExpertId(id);
     } else if (role === "Sales") {
       data = await Project.getBySalesId(id);
+    } else if (role === "PM") {
+      // <-- Tambahkan blok ini
+      data = await Project.getByPmId(id);
     } else if (role === "Head Sales" || role === "Admin") {
       data = await Project.getAllProjects();
     } else {
@@ -82,6 +83,7 @@ const getMyProjects = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+// ==================== AKHIR PERUBAHAN ====================
 
 const submitProjectFeedback = async (req, res) => {
   try {

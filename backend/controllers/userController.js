@@ -1,35 +1,66 @@
 // backend/controllers/userController.js
 const pool = require("../config/database");
+const bcrypt = require("bcrypt"); // Pastikan bcrypt di-import di atas
 
-// New function to get all users from all role tables
+// Fungsi getAllUsers dan deleteUserByRole tidak berubah
 const getAllUsers = async (req, res) => {
   try {
-    // Query all tables in parallel
-    const [adminPromise, salesPromise, expertPromise, akademikPromise, pmPromise] = [
-      pool.query("SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"),
-      pool.query("SELECT idSales, nmSales, emailSales, role, mobileSales FROM sales"),
-      pool.query("SELECT idExpert, nmExpert, emailExpert, role, mobileExpert FROM expert"),
-      pool.query("SELECT idAkademik, nmAkademik, emailAkademik, 'Akademik' as role, mobileAkademik FROM akademik"),
-      pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
-    ];
-
-    const [[admins], [sales], [experts], [akademiks], [pms]] = await Promise.all([
+    const [
       adminPromise,
       salesPromise,
       expertPromise,
       akademikPromise,
       pmPromise,
-    ]);
-
-    // Combine all users into a single array
-    const allUsers = [
-      ...admins.map(u => ({ ...u, id: u.idAdmin, name: u.nmAdmin, email: u.emailAdmin })),
-      ...sales.map(u => ({ ...u, id: u.idSales, name: u.nmSales, email: u.emailSales })),
-      ...experts.map(u => ({ ...u, id: u.idExpert, name: u.nmExpert, email: u.emailExpert })),
-      ...akademiks.map(u => ({ ...u, id: u.idAkademik, name: u.nmAkademik, email: u.emailAkademik })),
-      ...pms.map(u => ({ ...u, id: u.idPM, name: u.nmPM, email: u.emailPM })),
+    ] = [
+      pool.query(
+        "SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"
+      ),
+      pool.query(
+        "SELECT idSales, nmSales, emailSales, role, mobileSales FROM sales"
+      ),
+      pool.query(
+        "SELECT idExpert, nmExpert, emailExpert, role, mobileExpert FROM expert"
+      ),
+      pool.query(
+        "SELECT idAkademik, nmAkademik, emailAkademik, 'Akademik' as role, mobileAkademik FROM akademik"
+      ),
+      pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
     ];
-
+    const [[admins], [sales], [experts], [akademiks], [pms]] =
+      await Promise.all([
+        adminPromise,
+        salesPromise,
+        expertPromise,
+        akademikPromise,
+        pmPromise,
+      ]);
+    const allUsers = [
+      ...admins.map((u) => ({
+        ...u,
+        id: u.idAdmin,
+        name: u.nmAdmin,
+        email: u.emailAdmin,
+      })),
+      ...sales.map((u) => ({
+        ...u,
+        id: u.idSales,
+        name: u.nmSales,
+        email: u.emailSales,
+      })),
+      ...experts.map((u) => ({
+        ...u,
+        id: u.idExpert,
+        name: u.nmExpert,
+        email: u.emailExpert,
+      })),
+      ...akademiks.map((u) => ({
+        ...u,
+        id: u.idAkademik,
+        name: u.nmAkademik,
+        email: u.emailAkademik,
+      })),
+      ...pms.map((u) => ({ ...u, id: u.idPM, name: u.nmPM, email: u.emailPM })),
+    ];
     res.json(allUsers);
   } catch (error) {
     console.error("Error fetching all users:", error);
@@ -37,10 +68,8 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// New function to delete a user from the correct table based on their role
 const deleteUserByRole = async (req, res) => {
   const { id, role } = req.params;
-
   if (!id || !role) {
     return res.status(400).json({ error: "User ID and role are required." });
   }
@@ -48,39 +77,40 @@ const deleteUserByRole = async (req, res) => {
   let tableName, idColumn;
 
   switch (role) {
-    case 'Admin':
-      tableName = 'admin';
-      idColumn = 'idAdmin';
+    case "Admin":
+      tableName = "admin";
+      idColumn = "idAdmin";
       break;
-    case 'Sales':
-    case 'Head Sales':
-      tableName = 'sales';
-      idColumn = 'idSales';
+    case "Sales":
+    case "Head Sales":
+      tableName = "sales";
+      idColumn = "idSales";
       break;
-    case 'Expert':
-    case 'Trainer':
-      tableName = 'expert';
-      idColumn = 'idExpert';
+    case "Expert":
+    case "Trainer":
+      tableName = "expert";
+      idColumn = "idExpert";
       break;
-    case 'Akademik':
-      tableName = 'akademik';
-      idColumn = 'idAkademik';
+    case "Akademik":
+      tableName = "akademik";
+      idColumn = "idAkademik";
       break;
-    case 'PM':
-      tableName = 'pm';
-      idColumn = 'idPM';
+    case "PM":
+      tableName = "pm";
+      idColumn = "idPM";
       break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
   }
 
   try {
-    const [result] = await pool.query(`DELETE FROM ${tableName} WHERE ${idColumn} = ?`, [id]);
-
+    const [result] = await pool.query(
+      `DELETE FROM ${tableName} WHERE ${idColumn} = ?`,
+      [id]
+    );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "User not found." });
     }
-
     res.json({ message: "User deleted successfully" });
   } catch (error) {
     console.error(`Error deleting user from ${tableName}:`, error);
@@ -88,8 +118,8 @@ const deleteUserByRole = async (req, res) => {
   }
 };
 
-
-// Update user by role and id
+// ==================== PERUBAHAN DIMULAI ====================
+// Fungsi updateUserByRole ditulis ulang untuk keamanan dan fungsionalitas
 const updateUserByRole = async (req, res) => {
   const { id, role } = req.params;
   const data = req.body;
@@ -98,65 +128,124 @@ const updateUserByRole = async (req, res) => {
     return res.status(400).json({ error: "User ID and role are required." });
   }
 
-  let tableName, idColumn, updateFields = [];
+  let tableName, idColumn;
+  const setClauses = [];
+  const params = [];
 
-  // Check for password update
+  // Check for password update first
   if (data.password) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    updateFields.push(`password = '${hashedPassword}'`);
+    setClauses.push("password = ?");
+    params.push(hashedPassword);
   }
 
   switch (role) {
-    case 'Admin':
-      tableName = 'admin';
-      idColumn = 'idAdmin';
-      if (data.name) updateFields.push(`nmAdmin = '${data.name}'`);
-      if (data.email) updateFields.push(`emailAdmin = '${data.email}'`);
-      if (data.mobile) updateFields.push(`mobileAdmin = '${data.mobile}'`);
+    case "Admin":
+      tableName = "admin";
+      idColumn = "idAdmin";
+      if (data.name) {
+        setClauses.push("nmAdmin = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailAdmin = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileAdmin = ?");
+        params.push(data.mobile);
+      }
       break;
-    case 'Sales':
-    case 'Head Sales':
-      tableName = 'sales';
-      idColumn = 'idSales';
-      if (data.name) updateFields.push(`nmSales = '${data.name}'`);
-      if (data.email) updateFields.push(`emailSales = '${data.email}'`);
-      if (data.mobile) updateFields.push(`mobileSales = '${data.mobile}'`);
-      if (data.role) updateFields.push(`role = '${data.role}'`);
+    case "Sales":
+    case "Head Sales":
+      tableName = "sales";
+      idColumn = "idSales";
+      if (data.name) {
+        setClauses.push("nmSales = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailSales = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileSales = ?");
+        params.push(data.mobile);
+      }
+      if (data.role) {
+        setClauses.push("role = ?");
+        params.push(data.role);
+      }
       break;
-    case 'Expert':
-      tableName = 'expert';
-      idColumn = 'idExpert';
-      if (data.name) updateFields.push(`nmExpert = '${data.name}'`);
-      if (data.email) updateFields.push(`emailExpert = '${data.email}'`);
-      if (data.mobile) updateFields.push(`mobileExpert = '${data.mobile}'`);
+    case "Expert":
+    case "Trainer": // Menambahkan 'Trainer' karena mereka ada di tabel 'expert'
+      tableName = "expert";
+      idColumn = "idExpert";
+      if (data.name) {
+        setClauses.push("nmExpert = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailExpert = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileExpert = ?");
+        params.push(data.mobile);
+      }
+      if (data.role) {
+        setClauses.push("role = ?");
+        params.push(data.role);
+      }
       break;
-    case 'Akademik':
-      tableName = 'akademik';
-      idColumn = 'idAkademik';
-      if (data.name) updateFields.push(`nmAkademik = '${data.name}'`);
-      if (data.email) updateFields.push(`emailAkademik = '${data.email}'`);
-      if (data.mobile) updateFields.push(`mobileAkademik = '${data.mobile}'`);
+    case "Akademik":
+      tableName = "akademik";
+      idColumn = "idAkademik";
+      if (data.name) {
+        setClauses.push("nmAkademik = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailAkademik = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileAkademik = ?");
+        params.push(data.mobile);
+      }
       break;
-    case 'PM':
-      tableName = 'pm';
-      idColumn = 'idPM';
-      if (data.name) updateFields.push(`nmPM = '${data.name}'`);
-      if (data.email) updateFields.push(`emailPM = '${data.email}'`);
-      if (data.mobile) updateFields.push(`mobilePM = '${data.mobile}'`);
+    case "PM":
+      tableName = "pm";
+      idColumn = "idPM";
+      if (data.name) {
+        setClauses.push("nmPM = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailPM = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobilePM = ?");
+        params.push(data.mobile);
+      }
       break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
   }
 
-  if (updateFields.length === 0) {
+  if (setClauses.length === 0) {
     return res.status(400).json({ error: "No valid fields to update." });
   }
 
+  params.push(id); // Menambahkan ID untuk klausa WHERE di akhir
+
+  const query = `UPDATE ${tableName} SET ${setClauses.join(
+    ", "
+  )} WHERE ${idColumn} = ?`;
+
   try {
-    const [result] = await pool.query(
-      `UPDATE ${tableName} SET ${updateFields.join(", ")} WHERE ${idColumn} = ?`,
-      [id]
-    );
+    const [result] = await pool.query(query, params);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "User not found." });
     }
@@ -166,7 +255,7 @@ const updateUserByRole = async (req, res) => {
     res.status(500).json({ error: `Server error while updating user.` });
   }
 };
-
+// ==================== AKHIR PERUBAHAN ====================
 
 const getPMs = async (req, res) => {
   try {

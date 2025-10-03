@@ -122,6 +122,18 @@ async function getBySalesId(salesId) {
   return rows;
 }
 
+// ==================== PERUBAHAN DIMULAI ====================
+// Fungsi baru untuk mengambil project berdasarkan idPM
+async function getByPmId(pmId) {
+  const [rows] = await db.query(
+    // Query ini mengambil project yang terhubung ke opti, lalu memfilter berdasarkan idPM di opti
+    `${BASE_QUERY} WHERE o.idPM = ? ORDER BY p.startProject DESC`,
+    [pmId]
+  );
+  return rows;
+}
+// ==================== AKHIR PERUBAHAN ====================
+
 async function updateFeedback(idProject, feedback) {
   const [result] = await db.query(
     `UPDATE project SET fbProject = ? WHERE idProject = ?`,
@@ -138,5 +150,6 @@ module.exports = {
   deleteProject,
   getByExpertId,
   getBySalesId,
+  getByPmId, // <-- Ekspor fungsi baru
   updateFeedback,
 };

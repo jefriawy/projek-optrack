@@ -20,7 +20,7 @@ import SalesPage from "./pages/SalesPage";
 import TrainingPage from "./pages/TrainingPage";
 import ProjectPage from "./pages/ProjectPage";
 import OutsourcePage from "./pages/OutsourcePage";
-import ExpertPage from "./pages/ExpertPage"; // <- penting utk /expert (Admin)
+import ExpertPage from "./pages/ExpertPage";
 import AkademikPage from "./pages/AkademikPage";
 import PmPage from "./pages/PmPage";
 
@@ -30,6 +30,7 @@ import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import AkademikDashboard from "./pages/AkademikDashboard";
+import PMDashboard from "./pages/PMDashboard"; // Pastikan ini sudah di-import
 
 import Layout from "./components/Layout";
 import "./App.css";
@@ -48,21 +49,21 @@ const pathByRole = (role) => {
       return "/dashboard/head-expert";
     case "Expert":
       return "/dashboard/expert";
+    // PERUBAHAN: Tambahkan case untuk PM di sini juga jika belum ada
+    case "PM":
+      return "/dashboard/pm";
     default:
       return "/login";
   }
 };
-
 /* ===== Protected wrapper (case-insensitive role check) ===== */
 const Protected = ({ children, allow }) => {
   const { user, loading } = useContext(AuthContext);
   if (loading) return null; // bisa diganti spinner/loading state
   if (!user) return <Navigate to="/login" replace />;
-
   // Normalisasi role untuk perbandingan konsisten
   const userRole = (user.role || "").toLowerCase();
   const allowNormalized = (allow || []).map((r) => (r || "").toLowerCase());
-
   if (allow && !allowNormalized.includes(userRole)) {
     const fallback = user.redirectPath || pathByRole(user.role);
     return <Navigate to={fallback} replace />;
@@ -80,7 +81,6 @@ const AppRoutes = () => {
       navigate("/login", { replace: true });
     }
   }, [user, loading, navigate]);
-
   return (
     <Routes>
       {/* Auth */}
@@ -152,6 +152,19 @@ const AppRoutes = () => {
           </Protected>
         }
       />
+
+      {/* PERUBAHAN DIMULAI: Tambahkan Rute untuk Dasbor PM di sini */}
+      <Route
+        path="/dashboard/pm"
+        element={
+          <Protected allow={["PM"]}>
+            <Layout>
+              <PMDashboard />
+            </Layout>
+          </Protected>
+        }
+      />
+      {/* AKHIR PERUBAHAN */}
 
       {/* ===== MODULE PAGES ===== */}
       <Route
@@ -235,7 +248,14 @@ const AppRoutes = () => {
         path="/project"
         element={
           <Protected
-            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}
+            allow={[
+              "Sales",
+              "Head Sales",
+              "Expert",
+              "Head of Expert",
+              "Admin",
+              "PM",
+            ]}
           >
             <Layout>
               <ProjectPage />
@@ -315,5 +335,4 @@ const App = () => (
     </AuthProvider>
   </Router>
 );
-
 export default App;
