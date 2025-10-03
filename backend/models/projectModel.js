@@ -14,13 +14,15 @@ const BASE_QUERY = `
     e.nmExpert, 
     c.corpCustomer,
     o.kebutuhan,
-    o.proposalOpti
+    o.proposalOpti,
+    pm.nmPM
   FROM project p
   LEFT JOIN typeproject tp ON tp.idTypeProject = p.idTypeProject
   LEFT JOIN opti o ON o.idOpti = p.idOpti
   LEFT JOIN sales s ON o.idSales = s.idSales
   LEFT JOIN expert e ON e.idExpert = p.idExpert
   LEFT JOIN customer c ON p.idCustomer = c.idCustomer
+  LEFT JOIN pm pm ON pm.idPM = o.idPM
 `;
 
 // Get all projects (untuk Admin)

@@ -187,7 +187,7 @@ const Modal = ({ open, onClose, title, badge, children }) => {
           <div className="px-6 py-4 border-b flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">{title}</h3>
-              <p className="text-xs text-gray-500">Detail informasi proyek</p>
+              <p className="text-xs text-gray-500">{badge && badge.customer ? badge.customer : "Detail informasi proyek"}</p>
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
@@ -488,7 +488,11 @@ const ProjectPage = () => {
                   detail.startProject,
                   detail.endProject
                 );
-                return { text: st.label, cls: st.className };
+                return {
+                  text: st.label,
+                  cls: st.className,
+                  customer: detail.corpCustomer || ""
+                };
               })()
             : null
         }
@@ -501,6 +505,7 @@ const ProjectPage = () => {
         )}
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
+            {/* Jadwal & Lokasi */}
             <div className="rounded-lg border p-4">
               <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
               <div className="space-y-2 text-sm">
@@ -515,9 +520,51 @@ const ProjectPage = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Durasi</span>
                   <b>
-                    {diffDays(detail.startProject, detail.endProject) ?? "-"}
+                    {diffDays(detail.startProject, detail.endProject) ?? "-"} hari
                   </b>
                 </div>
+              </div>
+            </div>
+            {/* Sales, PM & Expert Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-lg border p-4 flex flex-col items-start">
+                <div className="text-sm text-gray-500 mb-2">Sales</div>
+                <div className="text-sm font-normal text-gray-800">{detail.nmSales || "-"}</div>
+              </div>
+              <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
+                <div className="text-sm text-gray-500 mb-2">Project Manager</div>
+                <div className="text-sm font-normal text-gray-800">{detail.nmPM || "-"}</div>
+                <div className="text-sm text-gray-500 mt-4 mb-2">Expert</div>
+                <div className="text-sm font-normal text-gray-800">{detail.nmExpert || "-"}</div>
+              </div>
+            </div>
+            {/* Deskripsi & Dokumen */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
+                <div className="text-sm text-gray-700 leading-6">
+                  {detail.kebutuhan || "Belum ada deskripsi."}
+                </div>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-gray-500 mb-2">Dokumen</div>
+                {detail.proposalOpti ? (
+                  <a
+                    href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
+                      .split(/[\\/]/)
+                      .pop()}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-black hover:underline flex items-center gap-2"
+                  >
+                    <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
+                    <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
+                  </a>
+                ) : (
+                  <div className="text-sm text-gray-700">
+                    Belum ada dokumen.
+                  </div>
+                )}
               </div>
             </div>
             {detail.feedback && (

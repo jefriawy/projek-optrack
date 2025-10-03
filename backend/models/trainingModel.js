@@ -61,11 +61,15 @@ async function getTrainingById(idTraining) {
         o.statOpti,
         o.proposalOpti,
         o.kebutuhan,
+        s.nmSales,
+        e.nmExpert,
         c.corpCustomer,
         tr.fbAttachments
      FROM training tr
      LEFT JOIN typetraining tt ON tt.idTypeTraining = tr.idTypeTraining
      LEFT JOIN opti o          ON o.idOpti        = tr.idOpti
+     LEFT JOIN sales s         ON s.idSales       = o.idSales
+     LEFT JOIN expert e        ON e.idExpert      = tr.idExpert
      LEFT JOIN customer c      ON c.idCustomer    = tr.idCustomer
      WHERE tr.idTraining = ?`,
     [idTraining]

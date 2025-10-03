@@ -135,7 +135,7 @@ const Modal = ({ open, onClose, title, badge, children }) => {
           <div className="px-6 py-4 border-b flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">{title}</h3>
-              <p className="text-xs text-gray-500">Detail informasi training</p>
+              <p className="text-xs text-gray-500">{badge && badge.customer ? badge.customer : "Detail informasi training"}</p>
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
@@ -521,7 +521,11 @@ const TrainingPage = () => {
                   detail.startTraining,
                   detail.endTraining
                 );
-                return { text: st.label, cls: st.className };
+                return {
+                  text: st.label,
+                  cls: st.className,
+                  customer: detail.corpCustomer || ""
+                };
               })()
             : null
         }
@@ -534,11 +538,10 @@ const TrainingPage = () => {
         )}
         {!detailLoading && !detailErr && detail && (
           <div className="space-y-6">
+            {/* Jadwal & Lokasi */}
             <div className="grid grid-cols-1 gap-6">
               <div className="rounded-lg border p-4">
-                <div className="text-sm text-gray-500 mb-2">
-                  Jadwal & Lokasi
-                </div>
+                <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Mulai</span>
@@ -551,9 +554,7 @@ const TrainingPage = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Durasi</span>
                     <b>
-                      {diffDays(detail.startTraining, detail.endTraining) ??
-                        "-"}{" "}
-                      hari
+                      {diffDays(detail.startTraining, detail.endTraining) ?? "-"} hari
                     </b>
                   </div>
                   <div className="flex items-center justify-between">
@@ -565,6 +566,18 @@ const TrainingPage = () => {
                 </div>
               </div>
             </div>
+            {/* Sales & Trainer Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
+                <div className="text-sm text-gray-500 mb-2">Sales</div>
+                <div className="text-sm font-normal text-gray-800">{detail.nmSales || "-"}</div>
+              </div>
+              <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
+                <div className="text-sm text-gray-500 mb-2">Trainer</div>
+                <div className="text-sm font-normal text-gray-800">{detail.nmExpert || "-"}</div>
+              </div>
+            </div>
+            {/* Deskripsi & Dokumen */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
