@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import Select from 'react-select';
 import axios from 'axios';
@@ -24,17 +23,22 @@ const AddExpertForm = ({ projectId }) => {
         });
         const allExperts = [...response.data.headExperts, ...response.data.regularExperts];
         setAvailableExperts(allExperts);
-
+ 
         // Mengambil expert yang sudah ditugaskan ke proyek ini
         const projectResponse = await axios.get(`${API_BASE}/api/project/${projectId}`, {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
-        // Pastikan data expert ada di response
-        if (projectResponse.data && projectResponse.data.experts) {
-          const assigned = projectResponse.data.experts.map(exp => ({ value: exp.idExpert, label: exp.nmExpert }));
+           headers: { Authorization: `Bearer ${user.token}` }
+         });
+         // Pastikan data expert ada di response
+        if (projectResponse.data) {
+          const exArr = projectResponse.data.experts || projectResponse.data.assignedExperts || projectResponse.data.expertList || [];
+          const assigned = (Array.isArray(exArr) ? exArr : []).map(exp => {
+            const id = exp.idExpert || exp.id || exp._id || exp.id_expert || exp.idProjectExpert;
+            const label = exp.nmExpert || exp.name || exp.fullName || exp.username || (typeof exp === 'string' ? exp : '');
+            return { value: id || label, label: label || 'Expert' };
+          });
           setAssignedExperts(assigned);
         }
-
+ 
       } catch (err) {
         setError('Gagal memuat data expert.');
         console.error(err);
@@ -45,18 +49,18 @@ const AddExpertForm = ({ projectId }) => {
       fetchExperts();
     }
   }, [projectId, user?.token]);
-
+ 
   const handleAddExpert = () => {
     if (selectedExpert && !assignedExperts.find(e => e.value === selectedExpert.value)) {
       setAssignedExperts([...assignedExperts, selectedExpert]);
       setSelectedExpert(null);
     }
   };
-
+ 
   const handleRemoveExpert = (expertToRemove) => {
     setAssignedExperts(assignedExperts.filter(expert => expert.value !== expertToRemove.value));
   };
-
+ 
   const handleSaveChanges = async () => {
     setLoading(true);
     setError('');
@@ -76,12 +80,12 @@ const AddExpertForm = ({ projectId }) => {
       setLoading(false);
     }
   };
-
+ 
   const expertOptions = Array.isArray(availableExperts) ? availableExperts.map(expert => ({
-    value: expert.idExpert,
-    label: expert.nmExpert,
-  })) : [];
-
+    value: expert.idExpert || expert.id || expert._id,
+    label: expert.nmExpert || expert.name || expert.fullName || expert.username || (expert.email ? expert.email.split('@')[0] : 'Expert'),
+   })) : [];
+ 
   return (
     <div>
       <h4 className="text-lg font-semibold mb-4">Tambah Expert</h4>

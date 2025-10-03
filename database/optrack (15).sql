@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 03 Okt 2025 pada 15.51
+-- Waktu pembuatan: 03 Okt 2025 pada 19.52
 -- Versi server: 10.4.32-MariaDB
--- Versi PHP: 8.1.25
+-- Versi PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -292,7 +292,7 @@ CREATE TABLE `pm` (
 --
 
 INSERT INTO `pm` (`idPM`, `nmPM`, `mobilePM`, `emailPM`, `password`) VALUES
-(2512001, 'Hendra Gunawan', '08571212700', 'hendragunawannn@gmail.com', '$2b$10$X0heRRCF5h16CjJV02HgiOFDw.XpuYLTeLlm/.DZXi48.wCcBKoaO');
+(2512001, 'Hendra Gunawan', '08571212700', 'hendragunawannn@gmail.com', '$2b$10$ZKt4YfygdYnuzfzRrko0DOYLKkU5fPCiAeXjxy/rQ9bRkpXCgsho.');
 
 -- --------------------------------------------------------
 
@@ -340,35 +340,6 @@ INSERT INTO `project_expert` (`idProject`, `idExpert`) VALUES
 (2508001, 2504007),
 (2508001, 2504008),
 (2508001, 2514003);
-
--- --------------------------------------------------------
-
---
--- Struktur dari tabel `recent_activities`
---
-
-CREATE TABLE `recent_activities` (
-  `id` int(11) NOT NULL,
-  `type` varchar(50) NOT NULL,
-  `description` text NOT NULL,
-  `related_id` varchar(255) DEFAULT NULL,
-  `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data untuk tabel `recent_activities`
---
-
-INSERT INTO `recent_activities` (`id`, `type`, `description`, `related_id`, `timestamp`) VALUES
-(1, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 17:01:07'),
-(2, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 17:27:25'),
-(3, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 17:39:50'),
-(4, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 17:47:11'),
-(5, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 17:47:22'),
-(6, 'feedback', 'Feedback baru dari training: \"Ujian Gelar PRINCE\"', '2507002', '2025-09-17 18:27:58'),
-(7, 'feedback', 'Feedback baru dari training: \"pelatihan coaching si\"', '2507001', '2025-09-17 18:31:35'),
-(8, 'feedback', 'Feedback baru dari training: \"pelatihan coaching aja\"', '2507003', '2025-09-22 09:05:55'),
-(9, 'feedback', 'Feedback baru dari training: \"pelatihan coaching aja\"', '2507003', '2025-09-22 09:06:37');
 
 -- --------------------------------------------------------
 
@@ -629,12 +600,6 @@ ALTER TABLE `project_expert`
   ADD KEY `idExpert` (`idExpert`);
 
 --
--- Indeks untuk tabel `recent_activities`
---
-ALTER TABLE `recent_activities`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Indeks untuk tabel `sales`
 --
 ALTER TABLE `sales`
@@ -737,12 +702,6 @@ ALTER TABLE `pm`
 --
 ALTER TABLE `project`
   MODIFY `idProject` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2508008;
-
---
--- AUTO_INCREMENT untuk tabel `recent_activities`
---
-ALTER TABLE `recent_activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `sales`

@@ -29,7 +29,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SalesDashboard from "./pages/SalesDashboard";
 import HeadOfSalesDashboard from "./pages/HeadOfSalesDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
-import AkademikDashboard from "./pages/AkademikDashboard";
+// import AkademikDashboard from "./pages/AkademikDashboard"; // removed
 import PMDashboard from "./pages/PMDashboard"; // Pastikan ini sudah di-import
 
 import Layout from "./components/Layout";
@@ -49,9 +49,10 @@ const pathByRole = (role) => {
       return "/dashboard/head-expert";
     case "Expert":
       return "/dashboard/expert";
-    // PERUBAHAN: Tambahkan case untuk PM di sini juga jika belum ada
     case "PM":
       return "/dashboard/pm";
+    case "Akademik":
+      return "/training"; // Akademik diarahkan ke halaman Training
     default:
       return "/login";
   }
@@ -98,16 +99,7 @@ const AppRoutes = () => {
         }
       />
 
-      <Route
-        path="/dashboard/akademik"
-        element={
-          <Protected allow={["Akademik"]}>
-            <Layout>
-              <AkademikDashboard />
-            </Layout>
-          </Protected>
-        }
-      />
+      {/* Removed Akademik dashboard route - Akademik users now go to /training */}
       {/* ===== DASHBOARDS ===== */}
       <Route
         path="/dashboard-admin"

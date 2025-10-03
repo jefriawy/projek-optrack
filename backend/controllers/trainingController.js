@@ -1,6 +1,6 @@
 // backend/controllers/trainingController.js
 const Training = require("../models/trainingModel");
-const activityModel = require("../models/activityModel"); // Import model aktivitas
+const Activity = { create: async () => {} }; // noop stub to preserve existing calls
 const { generateUserId } = require("../utils/idGenerator");
 
 const getTraining = async (_req, res) => {
@@ -33,7 +33,7 @@ const createTraining = async (req, res) => {
     const id = await Training.createTraining(payload);
 
     // Mencatat aktivitas baru setelah training berhasil dibuat
-    await activityModel.createActivity(
+    await Activity.create(
       "new_training",
       `Training baru: "${payload.nmTraining}"`,
       payload.idTraining
@@ -63,7 +63,7 @@ const updateTraining = async (req, res) => {
     const newStatus = req.body.statOpti;
     // Cek apakah 'statOpti' ada di body dan berbeda dari status sebelumnya
     if (newStatus && newStatus !== existingTraining.statOpti) {
-      await activityModel.createActivity(
+      await Activity.create(
         "status_update",
         `Status training "${existingTraining.nmTraining}" diubah menjadi ${newStatus}.`,
         existingTraining.idTraining
@@ -113,7 +113,6 @@ const getMyTrainings = async (req, res) => {
   }
 };
 
-// ...existing code...
 const submitTrainingFeedback = async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,7 +148,6 @@ const submitTrainingFeedback = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// ...existing code...
 
 module.exports = {
   getTraining,

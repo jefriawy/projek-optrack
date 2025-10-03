@@ -419,18 +419,59 @@ const ProjectPage = () => {
                       <div className="text-xs text-gray-500">
                         {p.corpCustomer || "-"}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        Sales:{" "}
-                        <span className="text-green-600 font-bold">
-                          {p.nmSales || "-"}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Expert:{" "}
-                        <span className="text-purple-600 font-bold">
-                          {p.nmExpert || "-"}
-                        </span>
-                      </div>
+
+                      { /* Kondisional tampilan ringkasan berdasarkan role user */ }
+                      {(() => {
+                        const role = (user?.role || "").toLowerCase();
+                        const isHeadSales = role.includes("head") && role.includes("sales");
+                        // Expert dan Sales : hanya lihat PM
+                        if (role === "expert" || role === "sales") {
+                          return (
+                            <div className="text-xs text-gray-500">
+                              PM:{" "}
+                              <span className="text-green-600 font-bold">
+                                {p.nmPM || "-"}
+                              </span>
+                            </div>
+                          );
+                        }
+                        // Head Sales: lihat PM + Sales (tidak tampilkan Expert)
+                        if (isHeadSales) {
+                          return (
+                            <>
+                              <div className="text-xs text-gray-500">
+                                PM:{" "}
+                                <span className="text-purple-600 font-bold">
+                                  {p.nmPM || "-"}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Sales:{" "}
+                                <span className="text-green-600 font-bold">
+                                  {p.nmSales || "-"}
+                                </span>
+                              </div>
+                            </>
+                          );
+                        }
+                        // Default (Admin, PM, dll.): lihat Sales + Expert
+                        return (
+                          <>
+                            <div className="text-xs text-gray-500">
+                              Sales:{" "}
+                              <span className="text-green-600 font-bold">
+                                {p.nmSales || "-"}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Expert:{" "}
+                              <span className="text-purple-600 font-bold">
+                                {p.nmExpert || "-"}
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                     <span
                       className={`px-3 py-1 text-xs rounded-full font-semibold ${badge.cls}`}
@@ -524,16 +565,18 @@ const ProjectPage = () => {
                   >
                     Detail
                   </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === 'addExpert'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                    onClick={() => setActiveTab('addExpert')}
-                  >
-                    Tambah Expert
-                  </button>
+                  {user.role === 'PM' && (
+                    <button
+                      className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                        activeTab === 'addExpert'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                      onClick={() => setActiveTab('addExpert')}
+                    >
+                      Tambah Expert
+                    </button>
+                  )}
                   <button
                     className={`px-4 py-2 text-sm font-semibold border-b-2 ${
                       activeTab === 'uploadDocument'
@@ -580,7 +623,19 @@ const ProjectPage = () => {
                     <div className="text-sm text-gray-500 mb-2">Project Manager</div>
                     <div className="text-sm font-normal text-gray-800">{detail.nmPM || "-"}</div>
                     <div className="text-sm text-gray-500 mt-4 mb-2">Expert</div>
-                    <div className="text-sm font-normal text-gray-800">{detail.nmExpert || "-"}</div>
+                    <div className="text-sm font-normal text-gray-800">
+                      {Array.isArray(detail.experts) && detail.experts.length > 0 ? (
+                        <div className="space-y-1">
+                          {detail.experts.map((e, i) => (
+                            <div key={i}>
+                              {e.nmExpert || e.name || e.fullName || e.username || "-"}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        (detail.nmExpert || detail.nmExperts || "-")
+                      )}
+                    </div>
                   </div>
                 </div>
                 {/* Deskripsi & Dokumen */}
@@ -621,7 +676,7 @@ const ProjectPage = () => {
               </div>
             )}
 
-            {activeTab === 'addExpert' && (
+            {activeTab === 'addExpert' && user.role === 'PM' && (
               <AddExpertForm projectId={detail.idProject} />
             )}
 
