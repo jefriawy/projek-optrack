@@ -1,5 +1,5 @@
 // frontend/src/components/FeedbackModal.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Modal from "./Modal";
 import { FaFilePdf, FaFileImage, FaFileAlt } from 'react-icons/fa';
 
@@ -8,15 +8,28 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
   const feedbackText = targetData?.fbTraining || targetData?.fbProject || "";
   // Pastikan fbAttachments adalah array, meskipun dari database berbentuk string JSON
-  const attachments = Array.isArray(targetData?.fbAttachments) ? targetData.fbAttachments : [];
+  const attachments = useMemo(() => {
+    const fbAttachments = targetData?.fbAttachments;
+    if (Array.isArray(fbAttachments)) {
+      return fbAttachments;
+    }
+    if (typeof fbAttachments === 'string') {
+      try { return JSON.parse(fbAttachments); } catch (e) { return []; }
+    }
+    return [];
+  }, [targetData?.fbAttachments]);
   const [feedback, setFeedback] = useState("");
   const [files, setFiles] = useState([]); // State untuk file
   const [isSubmitting, setIsSubmitting] = useState(false); // State untuk loading saat submit
 
+  // Tentukan path lampiran berdasarkan jenis data (training atau project)
+  const isTrainingFeedback = !!targetData?.nmTraining;
+  const attachmentPath = isTrainingFeedback ? 'feedback' : 'feedback_project';
+
   useEffect(() => {
     if (isOpen) {
       setFeedback(feedbackText);
-      setFiles([]); // Reset file saat modal dibuka
+      setFiles([]); // Reset pilihan file baru saat modal dibuka
     }
   }, [isOpen, feedbackText]);
 
@@ -33,14 +46,14 @@ const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
     files.forEach((file) => {
       formData.append("attachments", file);
     });
-    
+
     await onSubmit(targetData, formData);
     setIsSubmitting(false);
   };
-  
+
   const getFileIcon = (fileName) => {
-    const extension = fileName.split('.').pop().toLowerCase();
-    if (['pdf'].includes(extension)) return <FaFilePdf className="text-red-500" />;
+    const extension = String(fileName).split(".").pop().toLowerCase();
+    if (["pdf"].includes(extension)) return <FaFilePdf className="text-red-500" />;
     if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) return <FaFileImage className="text-blue-500" />;
     return <FaFileAlt className="text-gray-500" />;
   };
@@ -52,43 +65,38 @@ const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
       title={`Feedback - ${targetData?.nmTraining || targetData?.nmProject}`}
     >
       <form onSubmit={handleSubmit} className="p-4">
-        <textarea
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          placeholder={
-            canEdit
-              ? "Tulis feedback Anda di sini..."
-              : "Belum ada feedback."
-          }
-          className="w-full p-2 border rounded-md min-h-[120px]"
-          disabled={!canEdit || isSubmitting}
-        />
         {/* Tambahkan bagian ini untuk menampilkan lampiran yang sudah ada */}
         {attachments.length > 0 && (
-  <div className="mt-4">
-    <h4 className="text-sm font-semibold text-gray-700 mb-2">Lampiran</h4>
-    <ul className="space-y-2">
-      {attachments.map((file, index) => (
-        <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-          {getFileIcon(file.original || file.stored || file)}
-          <a
-            href={`${API_BASE}/uploads/feedback/${file.stored || file}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            {file.original || file.stored || file}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
-
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+              Lampiran
+            </h4>
+            <ul className="space-y-2">
+              {attachments.map((file, index) => (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-sm text-gray-600"
+                >
+                  {getFileIcon(file.original || file.stored || file)}
+                  <a
+                    href={`${API_BASE}/uploads/${attachmentPath}/${
+                      file.stored || file
+                    }`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {file.original || file.stored || file}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {canEdit && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700">
-              Lampiran File (Opsional)
+              Lampiran Feedback (Opsional)
             </label>
             <input
               type="file"
@@ -109,6 +117,20 @@ const FeedbackModal = ({ isOpen, onClose, targetData, canEdit, onSubmit }) => {
             )}
           </div>
         )}
+
+        <textarea
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          placeholder={
+            canEdit
+              ? "Tulis feedback Anda di sini..."
+              : "Belum ada feedback."
+          }
+          className="w-full p-2 border rounded-md min-h-[60px] mt-4"
+          disabled={!canEdit || isSubmitting}
+          readOnly={!canEdit}
+        />
+
         <div className="flex justify-end space-x-2 pt-4">
           <button
             type="button"

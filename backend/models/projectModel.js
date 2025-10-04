@@ -179,10 +179,11 @@ async function getByPmId(pmId) {
 }
 // ==================== AKHIR PERUBAHAN ====================
 
-async function updateFeedback(idProject, feedback) {
+async function updateFeedback(idProject, feedback, attachments) {
+  const attachmentsJson = attachments.length > 0 ? JSON.stringify(attachments) : null;
   const [result] = await db.query(
-    `UPDATE project SET fbProject = ? WHERE idProject = ?`,
-    [feedback, idProject]
+    `UPDATE project SET fbProject = ?, fbAttachments = ? WHERE idProject = ?`,
+    [feedback, attachmentsJson, idProject]
   );
   return result.affectedRows;
 }

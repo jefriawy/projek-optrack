@@ -29,6 +29,21 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Konfigurasi Multer untuk feedback proyek
+const feedbackProjectDir = path.join(__dirname, "..", "uploads", "feedback_project");
+if (!fs.existsSync(feedbackProjectDir)) {
+  fs.mkdirSync(feedbackProjectDir, { recursive: true });
+}
+const feedbackStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, feedbackProjectDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "_feedback_project_" + file.originalname.replace(/\s+/g, "_"));
+  },
+});
+const uploadFeedback = multer({ storage: feedbackStorage });
+
 // Rute baru untuk dokumen
 router.post(
   "/:id/documents",
@@ -80,7 +95,8 @@ router.delete(
 
 router.put(
   "/:id/feedback",
-  authMiddleware(["Admin"]),
+  authMiddleware(["PM"]), // Hanya PM yang bisa submit feedback
+  uploadFeedback.array("attachments", 5), // Middleware untuk upload file
   projectController.submitProjectFeedback
 );
 

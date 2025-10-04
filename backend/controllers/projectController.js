@@ -82,13 +82,22 @@ const getMyProjects = async (req, res) => {
 const submitProjectFeedback = async (req, res) => {
   try {
     const { id } = req.params;
-    const { feedback } = req.body;
-    if (feedback === undefined) {
-      return res.status(400).json({ error: "Feedback content is required." });
+    const { feedback } = req.body; // Teks feedback
+
+    // Proses file lampiran jika ada
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      attachments = req.files.map(file => ({
+        original: file.originalname,
+        stored: file.filename,
+      }));
     }
-    const affectedRows = await Project.updateFeedback(id, feedback);
+
+    // Simpan feedback dan path file ke database
+    const affectedRows = await Project.updateFeedback(id, feedback, attachments);
+
     if (affectedRows === 0)
-      return res.status(404).json({ error: "Project not found" });
+      return res.status(404).json({ error: "Proyek tidak ditemukan" });
     res.json({ message: "Feedback submitted successfully" });
   } catch (err) {
     console.error("Error submitting project feedback:", err);
@@ -248,6 +257,23 @@ const deleteProjectDocument = async (req, res) => {
   }
 };
 
+// Fungsi baru untuk mendapatkan daftar dokumen
+const getProjectFeedbackAttachments = async (req, res) => {
+  const { id: idProject } = req.params;
+  try {
+    const [rows] = await pool.query(
+      "SELECT fbAttachments FROM project WHERE idProject = ?",
+      [idProject]
+    );
+    if (rows.length === 0) return res.json([]);
+    const attachments = rows[0].fbAttachments ? JSON.parse(rows[0].fbAttachments) : [];
+    res.json(attachments);
+  } catch (err) {
+    console.error("Error fetching project feedback attachments:", err);
+    res.status(500).json({ error: "Gagal mengambil lampiran feedback." });
+  }
+};
+
 module.exports = {
   getProjects,
   getProjectById,
@@ -260,4 +286,5 @@ module.exports = {
   uploadProjectDocuments,
   getProjectDocuments,
   deleteProjectDocument,
+  getProjectFeedbackAttachments,
 };

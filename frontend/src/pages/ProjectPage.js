@@ -560,22 +560,37 @@ const ProjectPage = () => {
     setFeedbackTarget(p);
     setOpenFeedback(true);
   };
-  const handleFeedbackSubmit = async (target, feedbackText) => {
-    if (!target) return;
-    const controller = new AbortController();
+  const handleFeedbackSubmit = async (target, feedbackData) => {
+    if (!target || !feedbackData) return;
     try {
       await axios.put(
         `${API_BASE}/api/project/${target.idProject}/feedback`,
-        { feedback: feedbackText },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        feedbackData, // feedbackData is now FormData
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
       setOpenFeedback(false);
-      fetchProjects(controller.signal);
+      // Perbarui state secara lokal agar perubahan langsung terlihat
+      setProjects(prevProjects => 
+        prevProjects.map(p => {
+          if (p.idProject === target.idProject) {
+            // Ambil data dari FormData untuk update lokal
+            const newFeedback = feedbackData.get('feedback');
+            // Karena kita tidak bisa membaca file dari FormData di client,
+            // kita panggil fetchProjects untuk mendapatkan data lampiran yang akurat.
+            fetchProjects(); 
+            return { ...p, fbProject: newFeedback }; // Update feedback text sementara
+          }
+          return p;
+        })
+      );
     } catch (error) {
       console.error("Failed to submit feedback", error);
       alert("Gagal menyimpan feedback.");
-    } finally {
-      controller.abort();
     }
   };
 
@@ -592,7 +607,7 @@ const ProjectPage = () => {
   }
 
   const now = Date.now();
-  const isAdmin = user?.role === "Admin";
+  const isPM = user?.role === "PM";
 
   return (
     <div className="p-6">
@@ -752,7 +767,7 @@ const ProjectPage = () => {
                       onClick={() => openFeedbackModal(p)}
                       disabled={st.key !== "finished"}
                     >
-                      {isAdmin ? "Beri/Edit Feedback" : "Lihat Feedback"}
+                      {isPM ? "Beri/Edit Feedback" : "Lihat Feedback"}
                     </button>
                   </div>
                 </div>
@@ -955,7 +970,7 @@ const ProjectPage = () => {
         isOpen={openFeedback}
         onClose={() => setOpenFeedback(false)}
         targetData={feedbackTarget}
-        canEdit={isAdmin}
+        canEdit={isPM}
         onSubmit={handleFeedbackSubmit}
       />
     </div>
