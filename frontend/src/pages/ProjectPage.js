@@ -1,8 +1,22 @@
 // src/pages/ProjectPage.js
-import React, { useEffect, useMemo, useState, useContext, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useContext,
+  useRef,
+  useCallback,
+} from "react";
 import { AuthContext } from "../context/AuthContext";
 import pdfIcon from "../iconres/pdf.png";
-import { FaSearch } from "react-icons/fa";
+import {
+  FaSearch,
+  FaFilePdf,
+  FaFileImage,
+  FaFileAlt,
+  FaTrashAlt,
+  FaUpload,
+} from "react-icons/fa"; // <-- TAMBAHKAN IKON
 import Select from "react-select";
 import FeedbackModal from "../components/FeedbackModal";
 import AddExpertForm from "../components/AddExpertForm";
@@ -10,53 +24,254 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== User chip helpers (nama & avatar) ====== */
-const getDisplayName = (user) => {
-  if (!user) return "User";
+// --- PERUBAHAN DIMULAI: Komponen baru untuk tab Upload Dokumen ---
+const DocumentUploadTab = ({ projectId }) => {
+  const { user } = useContext(AuthContext);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [existingDocuments, setExistingDocuments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const inputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+      const response = await axios.get(
+        `${API_BASE}/api/project/${projectId}/documents`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setExistingDocuments(response.data);
+    } catch (err) {
+      setError("Gagal memuat daftar dokumen.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, user.token]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  const handleFileSelect = (e) => {
+    setSelectedFiles(Array.from(e.target.files));
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length) setSelectedFiles(files);
+  };
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    selectedFiles.forEach((file) => {
+      formData.append("documents", file);
+    });
+
+    try {
+      setError("");
+      await axios.post(
+        `${API_BASE}/api/project/${projectId}/documents`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${user.token}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+      setSelectedFiles([]);
+      fetchDocuments(); // Refresh list
+    } catch (err) {
+      setError(err.response?.data?.error || "Gagal mengunggah file.");
+    } finally {
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDelete = async (idDocument) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus dokumen ini?"))
+      return;
+    try {
+      setError("");
+      await axios.delete(`${API_BASE}/api/project/documents/${idDocument}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      fetchDocuments(); // Refresh list
+    } catch (err) {
+      setError(err.response?.data?.error || "Gagal menghapus dokumen.");
+    }
+  };
+
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split(".").pop().toLowerCase();
+    if (["pdf"].includes(extension))
+      return <FaFilePdf className="text-red-500 text-xl" />;
+    if (["jpg", "jpeg", "png", "gif"].includes(extension))
+      return <FaFileImage className="text-blue-500 text-xl" />;
+    return <FaFileAlt className="text-gray-500 text-xl" />;
+  };
+
   return (
-    user.name ||
-    user.nmExpert ||
-    user.fullName ||
-    user.username ||
-    (user.email ? user.email.split("@")[0] : "User")
-  );
-};
-const getAvatarUrl = (user) => {
-  if (!user) return null;
-  const candidate = 
-    user.photoURL ||
-    user.photoUrl ||
-    user.photo ||
-    user.avatar ||
-    user.image ||
-    user.photoUser ||
-    null;
-  if (!candidate) return null;
-  if (/^https?:\/\//i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate)
-    .split(/[\\/]/)
-    .pop()}`;
-};
-const Initials = ({ name }) => {
-  const ini = (name || "U")
-    .split(" ")
-    .map((s) => s[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  return (
-    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-      {ini}
+    <div className="space-y-4">
+      {/* Drag & drop besar */}
+      <div
+        className={`rounded-lg border-2 border-dashed p-8 transition-colors ${
+          isDragging ? "bg-gray-50 border-blue-400" : "bg-white border-gray-300"
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => inputRef.current && inputRef.current.click()}
+        role="button"
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <div className="min-h-[160px] flex flex-col items-center justify-center text-center">
+          {selectedFiles.length === 0 ? (
+            <>
+              <div className="text-gray-400 text-sm">
+                <div className="text-lg font-medium mb-2">
+                  Drag & drop file di sini
+                </div>
+                <div className="mb-2">atau klik untuk memilih file</div>
+                <div className="text-xs text-gray-500">
+                  PDF, JPG, PNG, dan dokumen lainnya. Klik area untuk membuka
+                  dialog file.
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center">
+              <div className="text-green-600 font-medium mb-1">
+                File terpilih:
+              </div>
+              <div className="max-h-28 overflow-auto text-sm text-green-700">
+                <ul className="list-none space-y-1">
+                  {selectedFiles.map((f, i) => (
+                    <li key={i} className="truncate px-4">
+                      {f.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Klik area untuk menambah/ubah pilihan file.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tombol di bawah, kanan; Batalkan di kiri Upload */}
+      <div className="flex justify-end items-center gap-3">
+        <button
+          onClick={() => {
+            setSelectedFiles([]);
+            if (inputRef.current) inputRef.current.value = null;
+          }}
+          className="px-4 py-2 rounded-md border text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Batalkan Pilihan
+        </button>
+
+        <button
+          onClick={handleUpload}
+          disabled={selectedFiles.length === 0 || uploadProgress > 0}
+          className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:bg-gray-400 flex items-center justify-center gap-2"
+        >
+          <FaUpload />
+          {uploadProgress > 0
+            ? `Mengunggah... ${uploadProgress}%`
+            : "Unggah File"}
+        </button>
+      </div>
+
+      {/* Error / preview kecil */}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
+      {/* Daftar dokumen tersimpan */}
+      <div>
+        <h4 className="text-lg font-semibold mb-2">Dokumen Tersimpan</h4>
+        {isLoading ? (
+          <p>Memuat...</p>
+        ) : (
+          <div className="space-y-3">
+            {existingDocuments.length > 0 ? (
+              existingDocuments.map((doc) => (
+                <div
+                  key={doc.idDocument}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                >
+                  <div className="flex items-center gap-3">
+                    {getFileIcon(doc.fileNameOriginal)}
+                    <div>
+                      <a
+                        href={`${API_BASE}/uploads/project_documents/${doc.fileNameStored}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {doc.fileNameOriginal}
+                      </a>
+                      <p className="text-xs text-gray-500">
+                        diunggah oleh {doc.uploadedByName || "User"} pada{" "}
+                        {new Date(doc.uploadTimestamp).toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(doc.idDocument)}
+                    className="text-gray-500 hover:text-red-600 p-2 rounded-full"
+                  >
+                    <FaTrashAlt />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm">
+                Belum ada dokumen yang diunggah.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+// --- AKHIR PERUBAHAN ---
 
-/* ===== Helpers tanggal & status (disamakan dengan TrainingPage) ===== */
+/* Helpers tanggal & status, Icons, dan Modal tidak berubah */
+// (Kode di bawah ini tidak diubah dan dibiarkan seperti aslinya)
 const safeTime = (v) => {
   const t = new Date(v).getTime();
   return isNaN(t) ? null : t;
 };
-
 const fmtDateTime = (v) =>
   v
     ? new Date(v).toLocaleString("id-ID", {
@@ -64,7 +279,6 @@ const fmtDateTime = (v) =>
         timeStyle: "short",
       })
     : "-";
-
 const fmtDate = (v) =>
   v
     ? new Date(v).toLocaleDateString("id-ID", {
@@ -73,32 +287,26 @@ const fmtDate = (v) =>
         year: "numeric",
       })
     : "-";
-
 const diffDays = (start, end) => {
   const s = safeTime(start);
   const e = safeTime(end);
   if (!s || !e) return null;
   return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
-
 const formatRemaining = (ms) => {
   if (!ms || ms <= 0) return "0:00:00";
-
   const totalSec = Math.floor(ms / 1000);
   const days = Math.floor(totalSec / (24 * 3600));
-
   if (days > 0) {
     const hours = Math.floor((totalSec % (24 * 3600)) / 3600);
     return `${days} hari ${hours} jam`;
   }
-
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
   const pad = (n) => String(n).padStart(2, "0");
   return `${hours}:${pad(minutes)}:${pad(seconds)}`;
 };
-
 const computeStatus = (start, end, now = Date.now()) => {
   const s = safeTime(start);
   const e = safeTime(end);
@@ -131,8 +339,6 @@ const computeStatus = (start, end, now = Date.now()) => {
     className: "bg-amber-500 text-white",
   };
 };
-
-/* ===== Icons ===== */
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg
     className={className}
@@ -177,8 +383,6 @@ const IconMap = ({ className = "w-4 h-4" }) => (
     <path d="M9 18l6-3 6 3V6l-6-3-6 3-6-3v12l6 3zM9 18V6M15 15V3" />
   </svg>
 );
-
-/* ===== Simple Modal ===== */
 const Modal = ({ open, onClose, title, badge, children }) => {
   if (!open) return null;
   return (
@@ -189,7 +393,11 @@ const Modal = ({ open, onClose, title, badge, children }) => {
           <div className="px-6 py-4 border-b flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">{title}</h3>
-              <p className="text-xs text-gray-500">{badge && badge.customer ? badge.customer : "Detail informasi proyek"}</p>
+              <p className="text-xs text-gray-500">
+                {badge && badge.customer
+                  ? badge.customer
+                  : "Detail informasi proyek"}
+              </p>
             </div>
             <div className="flex items-center gap-4">
               {badge ? (
@@ -213,6 +421,45 @@ const Modal = ({ open, onClose, title, badge, children }) => {
     </div>
   );
 };
+const getDisplayName = (user) => {
+  if (!user) return "User";
+  return (
+    user.name ||
+    user.nmExpert ||
+    user.fullName ||
+    user.username ||
+    (user.email ? user.email.split("@")[0] : "User")
+  );
+};
+const getAvatarUrl = (user) => {
+  if (!user) return null;
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
+    null;
+  if (!candidate) return null;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
+};
+const Initials = ({ name }) => {
+  const ini = (name || "U")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+      {ini}
+    </div>
+  );
+};
 
 /* ===== Page Component ===== */
 const ProjectPage = () => {
@@ -227,7 +474,7 @@ const ProjectPage = () => {
   const [detailErr, setDetailErr] = useState("");
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
-  const [activeTab, setActiveTab] = useState('detail');
+  const [activeTab, setActiveTab] = useState("detail");
 
   const [, forceTick] = useState(0);
   const tickRef = useRef(null);
@@ -235,32 +482,34 @@ const ProjectPage = () => {
     tickRef.current = setInterval(() => forceTick((n) => n + 1), 1000);
     return () => clearInterval(tickRef.current);
   }, []);
-
-  const fetchProjects = useCallback(async (signal) => {
-    const endpoint = user?.role === 'Admin' ? '' : '/mine';
-    try {
-      setLoading(true);
-      setErr("");
-      const res = await fetch(`${API_BASE}/api/project${endpoint}`, {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        signal,
-      });
-      if (!res.ok)
-        throw new Error(await res.text().catch(() => res.statusText));
-      const data = await res.json();
-      setProjects(Array.isArray(data) ? data : []);
-    } catch (e) {
-      if (e.name !== "AbortError") {
-        console.error(e);
-        setErr("Gagal memuat data proyek.");
+  const fetchProjects = useCallback(
+    async (signal) => {
+      const endpoint = user?.role === "Admin" ? "" : "/mine";
+      try {
+        setLoading(true);
+        setErr("");
+        const res = await fetch(`${API_BASE}/api/project${endpoint}`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+          signal,
+        });
+        if (!res.ok)
+          throw new Error(await res.text().catch(() => res.statusText));
+        const data = await res.json();
+        setProjects(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          console.error(e);
+          setErr("Gagal memuat data proyek.");
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.token]);
+    },
+    [user?.token, user?.role]
+  );
 
   useEffect(() => {
     if (!user?.token) {
@@ -285,6 +534,7 @@ const ProjectPage = () => {
   const openDetail = async (id) => {
     if (!user?.token) return;
     setOpen(true);
+    setActiveTab("detail"); // Reset to detail tab when opening
     setDetail(null);
     setDetailErr("");
     setDetailLoading(true);
@@ -306,12 +556,10 @@ const ProjectPage = () => {
       setDetailLoading(false);
     }
   };
-
   const openFeedbackModal = (p) => {
     setFeedbackTarget(p);
     setOpenFeedback(true);
   };
-
   const handleFeedbackSubmit = async (target, feedbackText) => {
     if (!target) return;
     const controller = new AbortController();
@@ -322,7 +570,6 @@ const ProjectPage = () => {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setOpenFeedback(false);
-      // Refresh data automatically after submitting feedback
       fetchProjects(controller.signal);
     } catch (error) {
       console.error("Failed to submit feedback", error);
@@ -345,7 +592,7 @@ const ProjectPage = () => {
   }
 
   const now = Date.now();
-  const isAdmin = user?.role === 'Admin';
+  const isAdmin = user?.role === "Admin";
 
   return (
     <div className="p-6">
@@ -355,9 +602,7 @@ const ProjectPage = () => {
             Project Page
           </h1>
         </div>
-
         <div className="w-full md:w-auto flex flex-col md:flex-row items-center">
-          {/* Search */}
           <div className="relative flex items-center w-full md:w-64 mb-4 md:mb-0 md:mr-4">
             <input
               type="text"
@@ -368,8 +613,6 @@ const ProjectPage = () => {
             />
             <FaSearch className="absolute right-3 text-gray-400" />
           </div>
-
-          {/* User chip (senada) */}
           <div className="flex items-center gap-3 pl-4 border-l">
             {getAvatarUrl(user) ? (
               <img
@@ -409,7 +652,9 @@ const ProjectPage = () => {
               return (
                 <div
                   key={p.idProject || idx}
-                  className={`rounded-xl border p-4 ${idx % 2 === 1 ? "border-blue-300" : "border-gray-300"}`}
+                  className={`rounded-xl border p-4 ${
+                    idx % 2 === 1 ? "border-blue-300" : "border-gray-300"
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -419,12 +664,8 @@ const ProjectPage = () => {
                       <div className="text-xs text-gray-500">
                         {p.corpCustomer || "-"}
                       </div>
-
-                      { /* Kondisional tampilan ringkasan berdasarkan role user */ }
                       {(() => {
                         const role = (user?.role || "").toLowerCase();
-                        const isHeadSales = role.includes("head") && role.includes("sales");
-                        // Expert dan Sales : hanya lihat PM
                         if (role === "expert" || role === "sales") {
                           return (
                             <div className="text-xs text-gray-500">
@@ -435,8 +676,7 @@ const ProjectPage = () => {
                             </div>
                           );
                         }
-                        // Head Sales: lihat PM + Sales (tidak tampilkan Expert)
-                        if (isHeadSales) {
+                        if (role.includes("head") && role.includes("sales")) {
                           return (
                             <>
                               <div className="text-xs text-gray-500">
@@ -454,7 +694,6 @@ const ProjectPage = () => {
                             </>
                           );
                         }
-                        // Default (Admin, PM, dll.): lihat Sales + Expert
                         return (
                           <>
                             <div className="text-xs text-gray-500">
@@ -503,15 +742,17 @@ const ProjectPage = () => {
                       className="px-4 py-2 text-xs font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
                       onClick={() => openDetail(p.idProject)}
                     >
-                      {['PM', 'Expert'].includes(user.role) ? 'Menu' : 'Lihat Detail'}
+                      {["PM", "Expert"].includes(user.role)
+                        ? "Menu"
+                        : "Lihat Detail"}
                     </button>
                     <button
                       type="button"
                       className="px-4 py-2 text-xs font-semibold text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                       onClick={() => openFeedbackModal(p)}
-                      disabled={st.key !== 'finished'}
+                      disabled={st.key !== "finished"}
                     >
-                      {isAdmin ? 'Beri/Edit Feedback' : 'Lihat Feedback'}
+                      {isAdmin ? "Beri/Edit Feedback" : "Lihat Feedback"}
                     </button>
                   </div>
                 </div>
@@ -538,7 +779,7 @@ const ProjectPage = () => {
                 return {
                   text: st.label,
                   cls: st.className,
-                  customer: detail.corpCustomer || ""
+                  customer: detail.corpCustomer || "",
                 };
               })()
             : null
@@ -552,38 +793,38 @@ const ProjectPage = () => {
         )}
         {!detailLoading && !detailErr && detail && (
           <div>
-            {['PM', 'Expert'].includes(user.role) && (
+            {["PM", "Expert"].includes(user.role) && (
               <div className="border-b border-gray-200 mb-4">
                 <div className="flex items-center gap-2 -mb-px">
                   <button
                     className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === 'detail'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      activeTab === "detail"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
-                    onClick={() => setActiveTab('detail')}
+                    onClick={() => setActiveTab("detail")}
                   >
                     Detail
                   </button>
-                  {user.role === 'PM' && (
+                  {user.role === "PM" && (
                     <button
                       className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                        activeTab === 'addExpert'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        activeTab === "addExpert"
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                       }`}
-                      onClick={() => setActiveTab('addExpert')}
+                      onClick={() => setActiveTab("addExpert")}
                     >
                       Tambah Expert
                     </button>
                   )}
                   <button
                     className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === 'uploadDocument'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      activeTab === "uploadDocument"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
-                    onClick={() => setActiveTab('uploadDocument')}
+                    onClick={() => setActiveTab("uploadDocument")}
                   >
                     Upload Dokumen
                   </button>
@@ -591,11 +832,12 @@ const ProjectPage = () => {
               </div>
             )}
 
-            {activeTab === 'detail' && (
+            {activeTab === "detail" && (
               <div className="space-y-6">
-                {/* Jadwal & Lokasi */}
                 <div className="rounded-lg border p-4">
-                  <div className="text-sm text-gray-500 mb-2">Jadwal & Lokasi</div>
+                  <div className="text-sm text-gray-500 mb-2">
+                    Jadwal & Lokasi
+                  </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Mulai</span>
@@ -608,37 +850,56 @@ const ProjectPage = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Durasi</span>
                       <b>
-                        {diffDays(detail.startProject, detail.endProject) ?? "-"} hari
+                        {diffDays(detail.startProject, detail.endProject) ??
+                          "-"}{" "}
+                        hari
                       </b>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-2 text-gray-500">
+                        <IconMap /> Tempat
+                      </span>
+                      <b className="text-right">{detail.placeProject || "-"}</b>
                     </div>
                   </div>
                 </div>
-                {/* Sales, PM & Expert Box */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="rounded-lg border p-4 flex flex-col items-start">
                     <div className="text-sm text-gray-500 mb-2">Sales</div>
-                    <div className="text-sm font-normal text-gray-800">{detail.nmSales || "-"}</div>
+                    <div className="text-sm font-normal text-gray-800">
+                      {detail.nmSales || "-"}
+                    </div>
                   </div>
                   <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
-                    <div className="text-sm text-gray-500 mb-2">Project Manager</div>
-                    <div className="text-sm font-normal text-gray-800">{detail.nmPM || "-"}</div>
-                    <div className="text-sm text-gray-500 mt-4 mb-2">Expert</div>
+                    <div className="text-sm text-gray-500 mb-2">
+                      Project Manager
+                    </div>
                     <div className="text-sm font-normal text-gray-800">
-                      {Array.isArray(detail.experts) && detail.experts.length > 0 ? (
+                      {detail.nmPM || "-"}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-4 mb-2">
+                      Expert
+                    </div>
+                    <div className="text-sm font-normal text-gray-800">
+                      {Array.isArray(detail.experts) &&
+                      detail.experts.length > 0 ? (
                         <div className="space-y-1">
                           {detail.experts.map((e, i) => (
                             <div key={i}>
-                              {e.nmExpert || e.name || e.fullName || e.username || "-"}
+                              {e.nmExpert ||
+                                e.name ||
+                                e.fullName ||
+                                e.username ||
+                                "-"}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        (detail.nmExpert || detail.nmExperts || "-")
+                        detail.nmExpert || detail.nmExperts || "-"
                       )}
                     </div>
                   </div>
                 </div>
-                {/* Deskripsi & Dokumen */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="rounded-lg border p-4">
                     <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
@@ -670,22 +931,23 @@ const ProjectPage = () => {
                 {detail.feedback && (
                   <div className="rounded-lg border p-4">
                     <div className="text-sm text-gray-500 mb-2">Feedback</div>
-                    <p className="text-sm whitespace-pre-wrap">{detail.feedback}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {detail.feedback}
+                    </p>
                   </div>
                 )}
               </div>
             )}
 
-            {activeTab === 'addExpert' && user.role === 'PM' && (
+            {activeTab === "addExpert" && user.role === "PM" && (
               <AddExpertForm projectId={detail.idProject} />
             )}
 
-            {activeTab === 'uploadDocument' && (
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Upload Dokumen</h4>
-                <p>Form untuk mengunggah dokumen akan ditampilkan di sini.</p>
-              </div>
+            {/* --- PERUBAHAN DIMULAI: Tampilkan komponen upload dokumen --- */}
+            {activeTab === "uploadDocument" && (
+              <DocumentUploadTab projectId={detail.idProject} />
             )}
+            {/* --- AKHIR PERUBAHAN --- */}
           </div>
         )}
       </Modal>

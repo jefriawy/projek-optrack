@@ -28,7 +28,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/uploads', express.static('uploads'));
+app.use("/uploads", express.static("uploads"));
+app.use(
+  "/uploads/project_documents",
+  express.static(path.join(__dirname, "uploads/project_documents"))
+);
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

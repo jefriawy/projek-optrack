@@ -11,6 +11,7 @@ const roleToCode = {
   Trainer: "14",
   Akademik: "11",
   PM: "12",
+  Document: "13",
   Customer: "05",
   Opti: "06",
   Training: "07",
@@ -27,7 +28,8 @@ const roleToTableInfo = {
   Trainer: { tableName: "expert", idColumn: "idExpert" },
   Akademik: { tableName: "akademik", idColumn: "idAkademik" },
   PM: { tableName: "pm", idColumn: "idPM" },
-  
+  Document: { tableName: "project_document", idColumn: "idDocument" },
+
   Customer: { tableName: "customer", idColumn: "idCustomer" },
   Opti: { tableName: "opti", idColumn: "idOpti" },
   Training: { tableName: "training", idColumn: "idTraining" },
