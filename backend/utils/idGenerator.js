@@ -40,7 +40,28 @@ const roleToTableInfo = {
 // Mapping dari jenis file ke kode numerik
 const fileTypeToCode = {
   proposalOpti: "10",
+  bastDocument: "55",
 };
+/**
+ * Membuat ID untuk dokumen BAST.
+ * Format: (Tahun2Digit)(Kode55)(NomorUrut3Digit)
+ * @returns {Promise<string>} ID dokumen BAST yang baru.
+ */
+async function generateBastDocumentId() {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const bastCode = fileTypeToCode.bastDocument;
+  const prefix = `${year}${bastCode}`;
+  const query = `SELECT idDocument FROM bast_project_document WHERE CAST(idDocument AS CHAR) LIKE ? ORDER BY CAST(SUBSTRING(CAST(idDocument AS CHAR), 5) AS UNSIGNED) DESC LIMIT 1`;
+  const [rows] = await pool.query(query, [`${prefix}%`]);
+  let increment = 1;
+  if (rows.length > 0 && rows[0].idDocument) {
+    const lastId = rows[0].idDocument.toString();
+    const lastIncrement = parseInt(lastId.slice(-3), 10);
+    increment = lastIncrement + 1;
+  }
+  const paddedIncrement = increment.toString().padStart(3, "0");
+  return `${prefix}${paddedIncrement}`;
+}
 
 /**
  * Membuat ID Pengguna yang terstruktur.
@@ -114,4 +135,4 @@ async function generateFileId(fileType) {
   return `${prefix}${paddedIncrement}`;
 }
 
-module.exports = { generateUserId, generateFileId };
+module.exports = { generateUserId, generateFileId, generateBastDocumentId };

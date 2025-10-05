@@ -20,6 +20,7 @@ import {
 import Select from "react-select";
 import FeedbackModal from "../components/FeedbackModal";
 import AddExpertForm from "../components/AddExpertForm";
+import BastUploadForm from "../components/BastUploadForm";
 import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -313,7 +314,7 @@ const computeStatus = (start, end, now = Date.now()) => {
   if (s && now < s) {
     return {
       key: "pending",
-      label: "Pending",
+      label: "Po Received",
       className: "bg-amber-500 text-white",
     };
   }
@@ -321,7 +322,7 @@ const computeStatus = (start, end, now = Date.now()) => {
     const remaining = e ? e - now : 0;
     return {
       key: "running",
-      label: e ? `Berjalan · ${formatRemaining(remaining)}` : "Berjalan",
+      label: e ? `Project On Progress · ${formatRemaining(remaining)}` : "Project On Progress",
       className: "bg-blue-600 text-white",
       remaining,
     };
@@ -329,13 +330,13 @@ const computeStatus = (start, end, now = Date.now()) => {
   if (e && now > e) {
     return {
       key: "finished",
-      label: "Finished",
+      label: "Project Delivered",
       className: "bg-green-500 text-white",
     };
   }
   return {
     key: "pending",
-    label: "Pending",
+    label: "Po Received",
     className: "bg-amber-500 text-white",
   };
 };
@@ -475,6 +476,7 @@ const ProjectPage = () => {
   const [openFeedback, setOpenFeedback] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
   const [activeTab, setActiveTab] = useState("detail");
+  const [openBast, setOpenBast] = useState(false);
 
   const [, forceTick] = useState(0);
   const tickRef = useRef(null);
@@ -769,6 +771,34 @@ const ProjectPage = () => {
                     >
                       {isPM ? "Beri/Edit Feedback" : "Lihat Feedback"}
                     </button>
+                    {/* Tombol upload dokumen BAST khusus untuk PM saat project finished */}
+                    {isPM && st.key === "finished" && (
+                      <button
+                        type="button"
+                        className="px-4 py-2 text-xs font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                        onClick={() => {
+                          setDetail(p);
+                          setOpenBast(true);
+                        }}
+                      >
+                        Upload Dokumen BAST
+                      </button>
+                    )}
+      {/* Modal Upload BAST */}
+      {openBast && (
+        <Modal
+          open={openBast}
+          onClose={() => setOpenBast(false)}
+          title={detail?.nmProject || "Upload BAST"}
+          badge={{ customer: detail?.corpCustomer || "" }}
+        >
+          <BastUploadForm
+            projectId={detail?.idProject}
+            onUploaded={() => setOpenBast(false)}
+            onClose={() => setOpenBast(false)}
+          />
+        </Modal>
+      )}
                   </div>
                 </div>
               );

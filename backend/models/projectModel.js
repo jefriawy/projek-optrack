@@ -1,3 +1,33 @@
+// ==================== BAST PROJECT DOCUMENT ====================
+async function getBastDocuments(projectId) {
+  const [rows] = await db.query(
+    `SELECT * FROM bast_project_document WHERE idProject = ? ORDER BY uploadTimestamp DESC`,
+    [projectId]
+  );
+  return rows;
+}
+
+const { generateBastDocumentId } = require("../utils/idGenerator");
+
+async function insertBastDocument({ idProject, fileNameOriginal, fileNameStored, uploadedBy }) {
+  const idDocument = await generateBastDocumentId();
+  const [result] = await db.query(
+    `INSERT INTO bast_project_document (idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy, uploadTimestamp) VALUES (?, ?, ?, ?, ?, NOW())`,
+    [idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy]
+  );
+  return idDocument;
+}
+
+async function deleteBastDocument(idDocument) {
+  const [rows] = await db.query(
+    `SELECT fileNameStored FROM bast_project_document WHERE idDocument = ?`,
+    [idDocument]
+  );
+  if (rows.length === 0) return false;
+  const fileNameStored = rows[0].fileNameStored;
+  await db.query(`DELETE FROM bast_project_document WHERE idDocument = ?`, [idDocument]);
+  return fileNameStored;
+}
 // backend/models/projectModel.js
 
 const db = require("../config/database");
@@ -227,4 +257,7 @@ module.exports = {
   getByPmId, // <-- Ekspor fungsi baru
   updateFeedback,
   updateProjectExperts,
+  getBastDocuments,
+  insertBastDocument,
+  deleteBastDocument,
 };

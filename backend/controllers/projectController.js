@@ -1,3 +1,53 @@
+// ==================== BAST PROJECT DOCUMENT ====================
+const getBastDocuments = async (req, res) => {
+  const { id: idProject } = req.params;
+  try {
+    const docs = await Project.getBastDocuments(idProject);
+    res.json(docs);
+  } catch (err) {
+    console.error("Error fetching BAST documents:", err);
+    res.status(500).json({ error: "Gagal memuat daftar dokumen BAST." });
+  }
+};
+
+const uploadBastDocument = async (req, res) => {
+  const { id: idProject } = req.params;
+  const { id: userId } = req.user;
+  if (!req.files || !req.files.length) {
+    return res.status(400).json({ error: "Tidak ada file yang diunggah." });
+  }
+  try {
+    const file = req.files[0];
+    const { filename: fileNameStored, originalname: fileNameOriginal } = file;
+    await Project.insertBastDocument({
+      idProject,
+      fileNameOriginal,
+      fileNameStored,
+      uploadedBy: userId,
+    });
+    res.status(201).json({ message: "Dokumen BAST berhasil diunggah." });
+  } catch (err) {
+    console.error("Error uploading BAST document:", err);
+    res.status(500).json({ error: "Gagal mengunggah dokumen BAST." });
+  }
+};
+
+const deleteBastDocument = async (req, res) => {
+  const { idDocument } = req.params;
+  try {
+    const fileNameStored = await Project.deleteBastDocument(idDocument);
+    if (!fileNameStored) return res.status(404).json({ error: "Dokumen tidak ditemukan." });
+    // Hapus file fisik
+    const filePath = path.join(__dirname, "..", "uploads", "bast_project", fileNameStored);
+    fs.unlink(filePath, (err) => {
+      if (err) console.error("Gagal menghapus file BAST:", err);
+    });
+    res.json({ message: "Dokumen BAST berhasil dihapus." });
+  } catch (err) {
+    console.error("Error deleting BAST document:", err);
+    res.status(500).json({ error: "Gagal menghapus dokumen BAST." });
+  }
+};
 // backend/controllers/projectController.js
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
@@ -287,4 +337,8 @@ module.exports = {
   getProjectDocuments,
   deleteProjectDocument,
   getProjectFeedbackAttachments,
+  // Ekspor handler dokumen BAST
+  getBastDocuments,
+  uploadBastDocument,
+  deleteBastDocument,
 };

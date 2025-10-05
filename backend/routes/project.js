@@ -7,6 +7,41 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+
+// Storage khusus untuk dokumen BAST
+const bastDocsDir = path.join(__dirname, "..", "uploads", "bast_project");
+if (!fs.existsSync(bastDocsDir)) {
+  fs.mkdirSync(bastDocsDir, { recursive: true });
+}
+const bastStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, bastDocsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname.replace(/\s+/g, "_"));
+  },
+});
+const uploadBast = multer({ storage: bastStorage });
+
+// Rute dokumen BAST
+router.post(
+  "/:id/bast",
+  authMiddleware(["PM", "Admin"]),
+  uploadBast.array("bast", 5),
+  projectController.uploadBastDocument
+);
+router.get(
+  "/:id/bast",
+  authMiddleware(["PM", "Admin"]),
+  projectController.getBastDocuments
+);
+router.delete(
+  "/bast/:idDocument",
+  authMiddleware(["PM", "Admin"]),
+  projectController.deleteBastDocument
+);
+
 const projectDocsDir = path.join(
   __dirname,
   "..",
