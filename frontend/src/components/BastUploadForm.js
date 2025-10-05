@@ -6,13 +6,14 @@ import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
+const BastUploadForm = ({ projectId, onUploaded }) => {
   const { user } = useContext(AuthContext);
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingDocuments, setExistingDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [success, setSuccess] = useState(false);
   const inputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -65,6 +66,7 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
     formData.append("bast", selectedFile);
     try {
       setError("");
+      setSuccess(false);
       await axios.post(`${API_BASE}/api/project/${projectId}/bast`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -79,12 +81,13 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
       });
       setSelectedFile(null);
       setUploadProgress(0);
+      setSuccess(true);
       fetchDocuments();
-      if (onUploaded) onUploaded();
       // Jangan tutup otomatis agar user bisa lihat hasilnya
     } catch (err) {
       setError(err.response?.data?.error || "Gagal mengunggah BAST.");
       setUploadProgress(0);
+      setSuccess(false);
     }
   };
 
@@ -124,7 +127,7 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z,.tar,.gz"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -134,7 +137,7 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
               <div className="text-gray-400 text-sm">
                 <div className="text-lg font-medium mb-2">Drag & drop file BAST di sini</div>
                 <div className="mb-2">atau klik untuk memilih file</div>
-                <div className="text-xs text-gray-500">PDF, JPG, PNG. Klik area untuk membuka dialog file.</div>
+                <div className="text-xs text-gray-500">PDF, Word, Excel, gambar, dan dokumen lainnya. Klik area untuk membuka dialog file.</div>
               </div>
             </>
           ) : (
@@ -167,7 +170,8 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
           {uploadProgress > 0 ? `Mengunggah... ${uploadProgress}%` : "Upload BAST"}
         </button>
       </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+  {error && <div className="text-red-500 text-sm">{error}</div>}
+  {success && <div className="text-green-600 text-sm font-semibold">Dokumen berhasil diunggah.</div>}
       <div>
         <h4 className="text-lg font-semibold mb-2">Dokumen BAST Tersimpan</h4>
         {isLoading ? (
@@ -210,14 +214,7 @@ const BastUploadForm = ({ projectId, onUploaded, onClose }) => {
           </div>
         )}
       </div>
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 rounded-md border text-sm text-gray-700 hover:bg-gray-100"
-        >
-          Tutup
-        </button>
-      </div>
+      {/* Button Tutup dihapus, user bisa menutup modal dari tombol X di pojok */}
     </div>
   );
 };
