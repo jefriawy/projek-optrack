@@ -68,10 +68,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   } else if (user && user.role === "Trainer") {
     menuItems = [{ icon: trainerIcon, name: "Training", link: "/training" }];
   } else if (user && user.role === "Akademik") {
-    menuItems = [
-      { icon: homeIcon, name: "Home", link: homeLinkByRole },
-      { icon: trainerIcon, name: "Training", link: "/training" },
-    ];
+    menuItems = [{ icon: trainerIcon, name: "Training", link: "/training" }];
   } else if (user && user.role === "PM") {
     menuItems = [{ icon: projectIcon, name: "Project", link: "/project" }];
   }

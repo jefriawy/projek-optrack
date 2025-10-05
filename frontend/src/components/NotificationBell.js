@@ -1,33 +1,22 @@
 // frontend/src/components/NotificationBell.js
 
-import React, { useContext, useState } from "react";
-import { FaBell, FaCheckCircle, FaTimesCircle, FaInfoCircle, FaHourglassHalf, FaCalendarCheck } from 'react-icons/fa'; 
+import React, { useContext, useState, useEffect } from "react";
+import { FaBell, FaCheckCircle, FaTimesCircle, FaInfoCircle, FaHourglassHalf, FaCalendarCheck, FaChevronDown, FaChevronUp } from 'react-icons/fa'; 
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Untuk navigasi saat notif diklik
 
 const API_BASE = "http://localhost:3000";
-const NOTIFICATION_LIMIT = 15; // Batasan notifikasi terbaru
 
-// Komponen Card Notifikasi Tunggal
-const NotificationItem = ({ notif, onNavigate }) => {
+// Komponen Notifikasi Tunggal (sekarang tidak bisa diklik)
+const NotificationItem = ({ notif }) => {
     
-    // Helper untuk menentukan ikon berdasarkan tipe notifikasi
     const getIcon = (type) => {
-        // Sales -> Head Sales (Added/Updated)
         if (type.includes('added')) return <FaCheckCircle className="text-green-500" />;
         if (type.includes('updated')) return <FaInfoCircle className="text-blue-500" />;
-        
-        // Head Sales -> Sales/Trainer (Status Updated/Scheduled)
-        // Notif update status Customer/Opti ke Sales
         if (type.includes('status_updated')) return <FaInfoCircle className="text-purple-500" />;
-        // Notif PO Receive ke Trainer
         if (type.includes('scheduled_po_receive')) return <FaCalendarCheck className="text-orange-500" />; 
-        
-        // Trainer (Started/Finished)
         if (type.includes('training_started')) return <FaHourglassHalf className="text-teal-500" />;
         if (type.includes('training_finished')) return <FaTimesCircle className="text-red-500" />;
-        
         return <FaBell className="w-4 h-4 text-gray-500" />;
     };
 
@@ -36,33 +25,13 @@ const NotificationItem = ({ notif, onNavigate }) => {
             hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
         });
     };
-
-    // Helper untuk menentukan path navigasi
-    const getPath = (type, id) => {
-        if (!id) return null;
-        if (type.includes('customer')) return `/customer/${id}`;
-        // Opti, Opti status update, dan notif PO Receive Trainer diarahkan ke halaman Opti
-        if (type.includes('opti') || type.includes('scheduled_po_receive')) return `/opti/${id}`;
-        // Training started/finished diarahkan ke halaman training terkait (asumsi training id)
-        if (type.includes('training')) return `/training/${id}`;
-        return null;
-    };
-
-    const targetPath = getPath(notif.type, notif.related_entity_id);
-    const handleClick = () => {
-        if (targetPath) {
-            onNavigate(targetPath);
-        }
-    };
     
     return (
-        <div 
-            onClick={handleClick}
-            className={`p-3 border-b hover:bg-gray-50 flex items-start space-x-3 transition cursor-pointer ${notif.is_read ? 'bg-white' : 'bg-blue-50'}`}
-        >
+        // Mengganti wrapper dari anchor/link ke div biasa
+        <div className={`p-3 border-b hover:bg-gray-50 flex items-start space-x-3 transition ${!notif.isRead ? 'bg-blue-50' : 'bg-white'}`}>
             <div className="mt-1 flex-shrink-0 w-4 h-4">{getIcon(notif.type)}</div>
             <div className="flex-1">
-                <p className={`text-sm ${notif.is_read ? 'text-gray-700' : 'font-semibold text-gray-900'}`}>{notif.message}</p>
+                <p className={`text-sm ${!notif.isRead ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{notif.message}</p>
                 <p className="text-xs text-gray-500 mt-1">{formatDate(notif.created_at)}</p>
             </div>
         </div>
@@ -71,53 +40,62 @@ const NotificationItem = ({ notif, onNavigate }) => {
 
 
 const NotificationBell = () => {
-    const { user, unreadCount, markAllAsRead, fetchUnreadCount } = useContext(AuthContext);
+    const { user, unreadCount, fetchUnreadCount } = useContext(AuthContext);
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState([]);
+    const [unreadNotifications, setUnreadNotifications] = useState([]);
+    const [readNotifications, setReadNotifications] = useState([]);
+    const [showRead, setShowRead] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate();
 
     const fetchNotifications = async () => {
         if (!user?.token) return;
         setIsLoading(true);
         try {
-            // Meminta API dengan batasan 15 notifikasi terbaru
-            const res = await axios.get(`${API_BASE}/api/notifications?limit=${NOTIFICATION_LIMIT}`, {
+            // API sekarang mengambil SEMUA notifikasi
+            const res = await axios.get(`${API_BASE}/api/notifications`, {
                 headers: { Authorization: `Bearer ${user.token}` },
             });
             
-            // Memastikan batasan 15 di sisi frontend (fallback)
-            const limitedData = res.data.slice(0, NOTIFICATION_LIMIT); 
+            // Pisahkan notifikasi menjadi 'read' dan 'unread'
+            const allNotifs = res.data;
+            setUnreadNotifications(allNotifs.filter(n => !n.isRead));
+            setReadNotifications(allNotifs.filter(n => n.isRead));
 
-            setNotifications(limitedData);
-            setIsLoading(false);
         } catch (e) {
             console.error("Failed to fetch notifications:", e);
+        } finally {
             setIsLoading(false);
+        }
+    };
+
+    const markNotificationsAsRead = async () => {
+        if (!user?.token || unreadCount === 0) return;
+        try {
+            // Panggil endpoint baru untuk menandai semua sebagai telah dibaca
+            await axios.put(`${API_BASE}/api/notifications/mark-as-read`, {}, {
+                headers: { Authorization: `Bearer ${user.token}` },
+            });
+            // Refresh unread count di context
+            fetchUnreadCount();
+        } catch (e) {
+            console.error("Failed to mark notifications as read:", e);
         }
     };
 
     const handleBellClick = async () => {
         if (!isOpen) {
+            // Reset state saat membuka kembali
+            setShowRead(false); 
             await fetchNotifications();
-            // Tandai sudah dibaca setelah pop-up terbuka dan notifikasi diambil
-            if (unreadCount > 0) {
-                await markAllAsRead();
-            }
+            // Tandai sudah dibaca setelah pop-up terbuka
+            await markNotificationsAsRead();
         }
         setIsOpen(!isOpen);
     };
-
-    const handleNavigate = (path) => {
-        setIsOpen(false);
-        navigate(path);
-    };
     
-    // Logic untuk menutup pop-up saat klik di luar area notifikasi
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isOpen) return;
         const closeOnOutsideClick = (e) => {
-            // Pastikan kita tidak menutup jika yang diklik adalah lonceng notifikasi itu sendiri
             if (!e.target.closest('.notification-container')) {
                 setIsOpen(false);
             }
@@ -134,7 +112,6 @@ const NotificationBell = () => {
                 aria-label="Notifications"
             >
                 <FaBell className="w-6 h-6 text-gray-700" />
-                {/* Titik merah notifikasi baru */}
                 {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white bg-red-500" />
                 )}
@@ -142,24 +119,56 @@ const NotificationBell = () => {
             
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 origin-top-right animate-scale-in">
-                    <div className="p-3 border-b flex justify-between items-center">
+                    <div className="p-3 border-b">
                         <h3 className="text-md font-bold text-gray-800">Pemberitahuan</h3>
-                        <span className="text-sm text-gray-500">{notifications.length} terbaru</span>
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-96 overflow-y-auto">
                         {isLoading ? (
                             <div className="p-4 text-center text-sm text-gray-500">Memuat...</div>
-                        ) : notifications.length > 0 ? (
-                            notifications.map((notif) => (
-                                <NotificationItem key={notif.id} notif={notif} onNavigate={handleNavigate} />
-                            ))
                         ) : (
-                            <div className="p-4 text-center text-sm text-gray-500">Tidak ada pemberitahuan.</div>
+                            <>
+                                {/* Tampilkan notifikasi yang belum dibaca */}
+                                {unreadNotifications.length > 0 ? (
+                                    unreadNotifications.map((notif) => (
+                                        <NotificationItem key={notif.id} notif={notif} />
+                                    ))
+                                ) : (
+                                    // Pesan jika tidak ada notifikasi baru
+                                    <div className="p-4 text-center text-sm text-gray-400 opacity-75">Tidak ada notifikasi baru.</div>
+                                )}
+                                
+                                {/* Kontainer untuk notifikasi yang sudah dibaca dengan transisi */}
+                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showRead ? "max-h-96" : "max-h-0"}`}>
+                                    {readNotifications.map((notif) => (
+                                        <NotificationItem key={notif.id} notif={notif} />
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
+                    {/* Footer baru dengan tombol buka/tutup dan border-radius */}
+                    <footer className="p-2 border-t bg-gray-50 text-center rounded-b-lg">
+                        {readNotifications.length > 0 && (
+                            <button 
+                                onClick={() => setShowRead(!showRead)}
+                                className="text-sm text-blue-600 focus:outline-none flex flex-col items-center group w-full"
+                            >
+                                {showRead ? (
+                                    <>
+                                        <FaChevronUp className="h-5 w-5 mb-1 animate-bounce-y-up" />
+                                        <span>Tutup notifikasi sebelumnya</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Buka notifikasi sebelumnya</span>
+                                        <FaChevronDown className="h-5 w-5 mt-1 animate-bounce-y" />
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </footer>
                 </div>
             )}
-            {/* Animasi CSS (gunakan di sini atau di CSS global) */}
             <style>{`
                 @keyframes scaleIn {
                     from { opacity: 0; transform: scale(0.95); }
@@ -167,6 +176,28 @@ const NotificationBell = () => {
                 }
                 .animate-scale-in {
                     animation: scaleIn 0.1s ease-out forwards;
+                }
+                @keyframes bounce-y {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(3px);
+                    }
+                }
+                .animate-bounce-y {
+                    animation: bounce-y 1.5s infinite;
+                }
+                @keyframes bounce-y-up {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(-3px);
+                    }
+                }
+                .animate-bounce-y-up {
+                    animation: bounce-y-up 1.5s infinite;
                 }
             `}</style>
         </div>

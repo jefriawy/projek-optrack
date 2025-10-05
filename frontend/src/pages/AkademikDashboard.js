@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { IoIosPeople } from "react-icons/io";
 import TrainingTable from "../components/TrainingTable";
+import NotificationBell from "../components/NotificationBell";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -160,7 +161,10 @@ const AkademikDashboard = () => {
     <div className="p-8 bg-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Akademik Dashboard</h1>
-        <UserChip user={user} />
+        <div className="flex items-center gap-4">
+          <NotificationBell />
+          <UserChip user={user} />
+        </div>
       </div>
 
       {/* Ringkasan Data Training */}

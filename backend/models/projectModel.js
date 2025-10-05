@@ -80,7 +80,8 @@ const getProjectById = async (id) => {
       c.corpCustomer,
       o.kebutuhan,
       o.proposalOpti,
-      pm.nmPM
+      pm.nmPM,
+      o.idPM
     FROM project p
     LEFT JOIN typeproject tp ON tp.idTypeProject = p.idTypeProject
     LEFT JOIN opti o ON o.idOpti = p.idOpti

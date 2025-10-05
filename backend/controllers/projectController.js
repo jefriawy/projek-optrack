@@ -48,6 +48,7 @@ const deleteBastDocument = async (req, res) => {
     res.status(500).json({ error: "Gagal menghapus dokumen BAST." });
   }
 };
+const Notification = require("../models/notificationModel");
 // backend/controllers/projectController.js
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
@@ -86,9 +87,33 @@ const createProject = async (req, res) => {
 };
 const updateProject = async (req, res) => {
   try {
-    const affectedRows = await Project.updateProject(req.params.id, req.body);
-    if (affectedRows === 0)
+    const projectId = req.params.id;
+    const { statusProject: newStatus } = req.body;
+
+    // Ambil data proyek sebelum diupdate
+    const existingProject = await Project.getProjectById(projectId);
+    if (!existingProject) {
       return res.status(404).json({ error: "Project not found" });
+    }
+
+    const affectedRows = await Project.updateProject(projectId, req.body);
+    if (affectedRows === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Jika status proyek berubah, kirim notifikasi ke PM
+    if (newStatus && newStatus !== existingProject.statusProject) {
+      if (existingProject.idPM) {
+        await Notification.createNotification({
+          recipientId: existingProject.idPM,
+          recipientRole: "PM",
+          message: `Status Proyek "${existingProject.nmProject}" telah diubah menjadi ${newStatus}`,
+          type: "status_proyek",
+          relatedEntityId: projectId,
+        });
+      }
+    }
+
     res.json({ message: "Project updated" });
   } catch (err) {
     console.error("Error updating project:", err);
@@ -157,12 +182,50 @@ const submitProjectFeedback = async (req, res) => {
 const updateProjectExperts = async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { expertIds } = req.body;
+    const { expertIds } = req.body; // This is the new list of expert IDs
 
     if (!Array.isArray(expertIds)) {
       return res.status(400).json({ error: "expertIds must be an array." });
     }
+
+    // 1. Get project details, including current experts
+    const project = await Project.getProjectById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found." });
+    }
+    const oldExpertIds = project.experts.map(e => e.idExpert);
+
+    // Update the experts in the database
     await Project.updateProjectExperts(projectId, expertIds);
+
+    // 2. Compare old and new expert lists to find added and removed experts
+    const newExpertIds = expertIds;
+    const addedExperts = newExpertIds.filter(id => !oldExpertIds.includes(id));
+    const removedExperts = oldExpertIds.filter(id => !newExpertIds.includes(id));
+
+    // 3. Send notifications
+    // Notify added experts
+    for (const expertId of addedExperts) {
+      await Notification.createNotification({
+        recipientId: expertId,
+        recipientRole: "Expert",
+        message: `Anda telah ditugaskan ke Proyek "${project.nmProject}"`,
+        type: "penugasan_proyek",
+        relatedEntityId: projectId,
+      });
+    }
+
+    // Notify removed experts
+    for (const expertId of removedExperts) {
+      await Notification.createNotification({
+        recipientId: expertId,
+        recipientRole: "Expert",
+        message: `Anda telah dihapus dari Proyek "${project.nmProject}"`,
+        type: "penghapusan_proyek", // A new type for removal
+        relatedEntityId: projectId,
+      });
+    }
+
     res.json({ message: "Project experts updated successfully." });
   } catch (err) {
     console.error("Error updating project experts:", err);
@@ -198,6 +261,40 @@ const uploadProjectDocuments = async (req, res) => {
 
     await Promise.all(promises);
     await connection.commit();
+
+    // --- Start of Notification Logic ---
+    const project = await Project.getProjectById(idProject);
+    if (project) {
+      const message = `Dokumen baru telah diunggah ke Proyek "${project.nmProject}"`;
+      const notificationPayload = {
+        message,
+        type: "dokumen_proyek_baru",
+        relatedEntityId: idProject,
+        senderId: userId,
+      };
+
+      // Notify PM
+      if (project.idPM) {
+        await Notification.createNotification({
+          ...notificationPayload,
+          recipientId: project.idPM,
+          recipientRole: "PM",
+        });
+      }
+
+      // Notify all assigned experts
+      if (project.experts && project.experts.length > 0) {
+        for (const expert of project.experts) {
+          await Notification.createNotification({
+            ...notificationPayload,
+            recipientId: expert.idExpert,
+            recipientRole: "Expert",
+          });
+        }
+      }
+    }
+    // --- End of Notification Logic ---
+
     res
       .status(201)
       .json({ message: `${req.files.length} file berhasil diunggah.` });

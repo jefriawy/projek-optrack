@@ -17,7 +17,7 @@ const getUnreadCount = async (req, res) => {
 const getNotifications = async (req, res) => {
   try {
     const { id: userId, role } = req.user;
-    const notifications = await Notification.getNotifications(userId, role, 20); // Ambil 20 terbaru
+    const notifications = await Notification.getNotifications(userId, role); // Ambil semua
     res.json(notifications);
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -25,12 +25,12 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// PUT /api/notifications/mark-read
-const markAsRead = async (req, res) => {
+// PUT /api/notifications/mark-as-read
+const markAllAsRead = async (req, res) => {
   try {
     const { id: userId, role } = req.user;
-    await Notification.markAsRead(userId, role);
-    res.json({ message: "Notifications marked as read" });
+    await Notification.markAsRead(userId, role); // The model function is still markAsRead
+    res.json({ message: "All notifications marked as read" });
   } catch (error) {
     console.error("Error marking notifications as read:", error);
     res.status(500).json({ error: "Server error" });
@@ -40,5 +40,5 @@ const markAsRead = async (req, res) => {
 module.exports = {
   getUnreadCount,
   getNotifications,
-  markAsRead,
+  markAllAsRead,
 };

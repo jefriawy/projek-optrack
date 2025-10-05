@@ -21,6 +21,7 @@ import Select from "react-select";
 import FeedbackModal from "../components/FeedbackModal";
 import AddExpertForm from "../components/AddExpertForm";
 import BastUploadForm from "../components/BastUploadForm";
+import NotificationBell from "../components/NotificationBell";
 import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -646,6 +647,7 @@ const ProjectPage = () => {
                 Logged in • {user?.role || "User"}
               </div>
             </div>
+            <NotificationBell />
           </div>
         </div>
       </header>

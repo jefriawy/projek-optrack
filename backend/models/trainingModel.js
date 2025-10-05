@@ -35,7 +35,7 @@ async function getAllTraining() {
        LEFT JOIN expert e ON e.idExpert = tr.idExpert
        LEFT JOIN customer c ON c.idCustomer = tr.idCustomer
      WHERE o.statOpti = 'po received'
-     ORDER BY tr.startTraining DESC`
+     ORDER BY tr.idTraining DESC`
   );
 
   // Lakukan parsing JSON untuk setiap baris data yang diambil

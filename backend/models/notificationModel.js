@@ -44,14 +44,13 @@ const Notification = {
     return rows[0].count;
   },
 
-  async getNotifications(userId, role, limit = 20) {
+  async getNotifications(userId, role) {
     // Ambil notifikasi spesifik user ATAU notifikasi yang ditujukan ke SEMUA ROLE-nya
     const [rows] = await pool.query(
-      `SELECT * FROM notification 
+      `SELECT *, is_read as isRead FROM notification 
        WHERE (recipient_user_id = ? OR (recipient_user_id = 'ALL_ROLE' AND recipient_role = ?)) 
-       ORDER BY created_at DESC 
-       LIMIT ?`,
-      [userId, role, limit]
+       ORDER BY created_at DESC`,
+      [userId, role]
     );
     return rows;
   },

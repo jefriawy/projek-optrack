@@ -1,4 +1,5 @@
 // backend/controllers/trainingController.js
+const Notification = require("../models/notificationModel");
 const Training = require("../models/trainingModel");
 const Activity = { create: async () => {} }; // noop stub to preserve existing calls
 const { generateUserId } = require("../utils/idGenerator");
@@ -39,6 +40,14 @@ const createTraining = async (req, res) => {
       payload.idTraining
     );
 
+    // Buat notifikasi untuk semua Akademik
+    await Notification.createNotification({
+      recipientRole: "Akademik",
+      message: `Training baru "${payload.nmTraining}" telah dibuat`,
+      type: "training_baru",
+      relatedEntityId: payload.idTraining,
+    });
+
     res.status(201).json({ message: "Training created", id });
   } catch (err) {
     console.error("Error creating training:", err);
@@ -68,6 +77,14 @@ const updateTraining = async (req, res) => {
         `Status training "${existingTraining.nmTraining}" diubah menjadi ${newStatus}.`,
         existingTraining.idTraining
       );
+
+      // Buat notifikasi untuk semua Akademik
+      await Notification.createNotification({
+        recipientRole: "Akademik",
+        message: `Status training "${existingTraining.nmTraining}" diubah menjadi ${newStatus}`,
+        type: "status_training",
+        relatedEntityId: existingTraining.idTraining,
+      });
     }
     
     res.json({ message: "Training updated" });

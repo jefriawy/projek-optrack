@@ -9,6 +9,7 @@ const allRoles = ["Sales", "Head Sales", "Trainer", "Expert", "Admin", "Akademik
 
 router.get("/unread-count", authMiddleware(allRoles), notificationController.getUnreadCount);
 router.get("/", authMiddleware(allRoles), notificationController.getNotifications);
-router.put("/mark-read", authMiddleware(allRoles), notificationController.markAsRead);
+router.put("/mark-as-read", authMiddleware(allRoles), notificationController.markAllAsRead);
+
 
 module.exports = router;

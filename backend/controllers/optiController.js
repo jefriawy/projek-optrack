@@ -280,6 +280,15 @@ const updateOpti = async (req, res) => {
               },
               connection
             );
+
+            // NOTIFIKASI BARU UNTUK AKADEMIK
+            await Notification.createNotification({
+              recipientRole: "Akademik",
+              message: `Training baru \"${payload.nm}\" telah dibuat`,
+              type: "training_baru",
+              relatedEntityId: newId,
+            });
+
             // NOTIFIKASI 2.C: Head Sales mengupdate Status OPTI menjadi "PO Receive" -> Kirim ke Trainer (Expert)
             if (payload.idExpert) {
               await Notification.createNotification({
