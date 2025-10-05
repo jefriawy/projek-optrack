@@ -359,14 +359,13 @@ const updateOpti = async (req, res) => {
         await connection.query(
           `UPDATE project SET 
              nmProject = ?, startProject = ?, endProject = ?, placeProject = ?, 
-             idExpert = ?, idTypeProject = ? 
+             idTypeProject = ? 
            WHERE idProject = ?`,
           [
             optiData.nmOpti,
             optiData.startProgram,
             optiData.endProgram,
             optiData.placeProgram,
-            optiData.idExpert,
             optiData.idTypeProject,
             projectId,
           ]
