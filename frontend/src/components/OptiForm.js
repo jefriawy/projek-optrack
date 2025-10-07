@@ -90,7 +90,7 @@ const emptyToNullNumber = (value, originalValue) => {
   return Number.isNaN(n) ? null : n;
 };
 
-const getValidationSchema = (role) =>
+const getValidationSchema = () =>
   Yup.object({
     nmOpti: Yup.string().required("Nama Opti wajib diisi"),
     idCustomer: Yup.number()
@@ -99,41 +99,33 @@ const getValidationSchema = (role) =>
     idSumber: Yup.number()
       .typeError("Pilih sumber")
       .required("Sumber wajib dipilih"),
-    statOpti: Yup.string().when([], (__, schema) => {
-      if (role !== "Sales") {
-        return schema.required("Status Opti wajib diisi");
-      }
-      return schema;
+    statOpti: Yup.string().when("$userRole", {
+      is: (userRole) => userRole !== "Sales",
+      then: (schema) => schema.required("Status Opti wajib diisi"),
     }),
     datePropOpti: Yup.string().required("Tanggal wajib diisi"),
     jenisOpti: Yup.string()
       .oneOf(["Training", "Project", "Outsource"])
       .required("Jenis Opti wajib diisi"),
     idExpert: Yup.number().transform(emptyToNullNumber).nullable(),
-    idPM: Yup.number() // PERUBAHAN
-      .transform(emptyToNullNumber)
-      .nullable(),
+    idPM: Yup.number().transform(emptyToNullNumber).nullable(),
     idTypeTraining: Yup.number()
       .transform(emptyToNullNumber)
       .nullable()
-      .when("jenisOpti", (jenisOpti, schema) => {
-        if (jenisOpti[0] === "Training" || jenisOpti[0] === "Project") {
-          return schema.required("Tipe wajib dipilih untuk jenis ini");
-        }
-        return schema;
+      .when("jenisOpti", {
+        is: (jenisOpti) => jenisOpti === "Training" || jenisOpti === "Project",
+        then: (schema) => schema.required("Tipe wajib dipilih"),
       }),
-    startTraining: Yup.string().nullable(),
-    endTraining: Yup.string().nullable(),
-    placeTraining: Yup.string().nullable(),
     contactOpti: Yup.string().required("Kontak Opti wajib diisi"),
     emailOpti: Yup.string()
       .email("Email tidak valid")
       .required("Email Opti wajib diisi"),
     mobileOpti: Yup.string().required("Mobile Opti wajib diisi"),
-    kebutuhan: Yup.string().nullable(),
     valOpti: Yup.number()
       .typeError("Value harus berupa angka")
       .required("Value Opti wajib diisi"),
+    // terminPembayaran diset sebagai optional (tidak wajib)
+    terminPembayaran: Yup.string().nullable(),
   });
 
 const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
@@ -163,6 +155,7 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
     endTraining: "",
     placeTraining: "",
     valOpti: "",
+    terminPembayaran: "",
   };
 
   const seed = normalizeInitialData(initialData);
@@ -364,8 +357,11 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-      const schema = getValidationSchema(user?.role);
-      await schema.validate(payload, { abortEarly: false });
+      const schema = getValidationSchema();
+      await schema.validate(payload, {
+        abortEarly: false,
+        context: { userRole: user?.role },
+      });
 
       const fd = new FormData();
       Object.entries(payload).forEach(([k, v]) => {
@@ -408,6 +404,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
   const selectedProjectManagerValue = projectManagerOptions.find(
     (option) => option.value === formData.idPM
   ); // PERUBAHAN
+
+  // hanya Head Sales yang boleh mengisi terminPembayaran
+  const isHeadSalesOnly = user?.role === "Head Sales";
 
   const selectStyles = {
     control: (base, state) => ({
@@ -888,6 +887,29 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                         placeholder="Online / alamat / venue"
                         className={inputClass}
                       />
+                    </div>
+                    <div className="md:col-span-2 mt-2">
+                      <label className="block text-sm font-medium mb-1">
+                        Termin Pembayaran {isHeadSalesOnly}
+                      </label>
+                      <textarea
+                        name="terminPembayaran"
+                        value={formData.terminPembayaran || ""}
+                        onChange={handleChange}
+                        placeholder={
+                          isHeadSalesOnly
+                            ? "Contoh: 20% (DP) - 30% - 50%"
+                            : "Termin hanya dapat diisi oleh Head Sales"
+                        }
+                        className={`${inputClass} disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                        rows={3}
+                        disabled={!isHeadSalesOnly}
+                      />
+                      {errors.terminPembayaran && (
+                        <p className="text-red-600 text-sm mt-1">
+                          {errors.terminPembayaran}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

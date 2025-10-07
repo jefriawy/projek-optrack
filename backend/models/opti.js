@@ -25,13 +25,14 @@ const Opti = {
       idTypeTraining,
       idTypeProject,
       dokPendaftaran,
+      terminPembayaran,
     } = optiData;
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
          idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idPM, proposalOpti, valOpti,
-         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran, terminPembayaran)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       idOpti,
@@ -56,6 +57,7 @@ const Opti = {
       idTypeTraining,
       idTypeProject,
       dokPendaftaran,
+      terminPembayaran,
     ];
     await connection.query(query, params);
     return { idOpti };
@@ -241,6 +243,7 @@ const Opti = {
       idTypeTraining,
       idTypeProject,
       dokPendaftaran,
+      terminPembayaran,
     } = optiData;
     const [result] = await connection.query(
       `UPDATE opti SET
@@ -248,7 +251,7 @@ const Opti = {
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
          jenisOpti = ?, idExpert = ?, idPM = ?, proposalOpti = ?, valOpti = ?,
          startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
-         idTypeProject = ?, dokPendaftaran = ?
+         idTypeProject = ?, dokPendaftaran = ? , terminPembayaran = ?
        WHERE idOpti = ?`,
       [
         nmOpti,
@@ -271,6 +274,7 @@ const Opti = {
         idTypeTraining,
         idTypeProject,
         dokPendaftaran,
+        terminPembayaran,
         idOpti,
       ]
     );

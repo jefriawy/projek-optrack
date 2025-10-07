@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 05 Okt 2025 pada 11.06
--- Versi server: 10.4.32-MariaDB
--- Versi PHP: 8.1.25
+-- Generation Time: Oct 07, 2025 at 09:16 AM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `admin`
+-- Table structure for table `admin`
 --
 
 CREATE TABLE `admin` (
@@ -36,7 +36,7 @@ CREATE TABLE `admin` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `admin`
+-- Dumping data for table `admin`
 --
 
 INSERT INTO `admin` (`idAdmin`, `nmAdmin`, `mobileAdmin`, `emailAdmin`, `password`) VALUES
@@ -46,7 +46,7 @@ INSERT INTO `admin` (`idAdmin`, `nmAdmin`, `mobileAdmin`, `emailAdmin`, `passwor
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `akademik`
+-- Table structure for table `akademik`
 --
 
 CREATE TABLE `akademik` (
@@ -58,7 +58,7 @@ CREATE TABLE `akademik` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `akademik`
+-- Dumping data for table `akademik`
 --
 
 INSERT INTO `akademik` (`idAkademik`, `nmAkademik`, `mobileAkademik`, `emailAkademik`, `password`) VALUES
@@ -67,7 +67,7 @@ INSERT INTO `akademik` (`idAkademik`, `nmAkademik`, `mobileAkademik`, `emailAkad
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `bast_project_document`
+-- Table structure for table `bast_project_document`
 --
 
 CREATE TABLE `bast_project_document` (
@@ -80,7 +80,7 @@ CREATE TABLE `bast_project_document` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `bast_project_document`
+-- Dumping data for table `bast_project_document`
 --
 
 INSERT INTO `bast_project_document` (`idDocument`, `idProject`, `fileNameStored`, `fileNameOriginal`, `uploadedBy`, `uploadTimestamp`) VALUES
@@ -89,7 +89,7 @@ INSERT INTO `bast_project_document` (`idDocument`, `idProject`, `fileNameStored`
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `customer`
+-- Table structure for table `customer`
 --
 
 CREATE TABLE `customer` (
@@ -108,7 +108,7 @@ CREATE TABLE `customer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `customer`
+-- Dumping data for table `customer`
 --
 
 INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCustomer`, `addrCustomer`, `corpCustomer`, `idStatCustomer`, `descCustomer`, `idSales`, `tglInput`, `customerCat`, `NPWP`) VALUES
@@ -143,7 +143,7 @@ INSERT INTO `customer` (`idCustomer`, `nmCustomer`, `mobileCustomer`, `emailCust
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `expert`
+-- Table structure for table `expert`
 --
 
 CREATE TABLE `expert` (
@@ -159,7 +159,7 @@ CREATE TABLE `expert` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `expert`
+-- Dumping data for table `expert`
 --
 
 INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`, `role`) VALUES
@@ -174,7 +174,7 @@ INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `pa
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `notification`
+-- Table structure for table `notification`
 --
 
 CREATE TABLE `notification` (
@@ -191,7 +191,7 @@ CREATE TABLE `notification` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `notification`
+-- Dumping data for table `notification`
 --
 
 INSERT INTO `notification` (`id`, `recipient_user_id`, `recipient_role`, `sender_user_id`, `sender_name`, `message`, `type`, `related_entity_id`, `is_read`, `created_at`) VALUES
@@ -233,12 +233,17 @@ INSERT INTO `notification` (`id`, `recipient_user_id`, `recipient_role`, `sender
 (36, 'ALL_ROLE', 'Akademik', NULL, NULL, 'Training baru \"Leadership Workshop - PT Hijau Makmur\" telah dibuat', 'training_baru', '2507006', 1, '2025-10-05 15:07:04'),
 (37, '2514003', 'Expert', '2502003', 'Surya Legowo', 'Jadwal Training Telah ditambahkan oleh Head Sales: Leadership Workshop - PT Hijau Makmur', 'training_scheduled_po_receive', '2506052', 0, '2025-10-05 15:07:04'),
 (38, '2514003', 'Expert', 'SYSTEM', 'System', 'Training (Leadership Workshop - PT Hijau Makmur) telah dimulai', 'training_started', '2507006', 0, '2025-10-05 15:07:06'),
-(39, '2504008', 'Expert', NULL, NULL, 'Anda telah ditugaskan ke Proyek \"Microsoft Azure Cloud Platform\"', 'penugasan_proyek', '2508003', 1, '2025-10-05 16:03:31');
+(39, '2504008', 'Expert', NULL, NULL, 'Anda telah ditugaskan ke Proyek \"Microsoft Azure Cloud Platform\"', 'penugasan_proyek', '2508003', 1, '2025-10-05 16:03:31'),
+(40, '2514003', 'Expert', 'SYSTEM', 'System', 'Training (Leadership Workshop - PT Hijau Makmur) telah Selesai', 'training_finished', '2507006', 0, '2025-10-07 12:18:25'),
+(41, '2502003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status Customer (anton) menjadi Approved', 'customer_status_updated', '2505027', 1, '2025-10-07 12:27:29'),
+(42, '2502003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status Customer (anton) menjadi Review', 'customer_status_updated', '2505027', 1, '2025-10-07 12:28:58'),
+(43, '2502003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status OPTI (asdawsdwadsadwa) menjadi opti on going', 'opti_status_updated', '2506063', 1, '2025-10-07 14:01:53'),
+(44, '2502003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status OPTI (asdawsdwadsadwa) menjadi opti entry', 'opti_status_updated', '2506063', 1, '2025-10-07 14:02:17');
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `opti`
+-- Table structure for table `opti`
 --
 
 CREATE TABLE `opti` (
@@ -263,50 +268,51 @@ CREATE TABLE `opti` (
   `placeProgram` varchar(255) DEFAULT NULL,
   `idTypeTraining` int(11) DEFAULT NULL,
   `idTypeProject` int(11) DEFAULT NULL,
-  `dokPendaftaran` varchar(255) DEFAULT NULL
+  `dokPendaftaran` varchar(255) DEFAULT NULL,
+  `terminPembayaran` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `opti`
+-- Dumping data for table `opti`
 --
 
-INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `idPM`, `proposalOpti`, `valOpti`, `startProgram`, `endProgram`, `placeProgram`, `idTypeTraining`, `idTypeProject`, `dokPendaftaran`) VALUES
-(2506001, 'Pelatihan Manajemen Program CSR', 'Jaka Lesmana', '081623456789', 'jaka.lesmana@gmail.com', 'po received', '2025-09-22', 2505001, 'Pelatihan Leadership via Zoom , info ruang tunggu klien. ', 2, 2503003, 'Training', 2514003, NULL, '1758556287739.pdf', 12000000, '2025-09-22 22:54:00', '2025-09-27 22:54:00', 'Zoom', 2, NULL, '1758556398370_dokumen_pendaftaran_Contoh Bukti Pembayaran (SAMPLE).pdf'),
-(2506002, 'Pelatihan Analisis Data & Strategi Bisnis', 'Jefri Ramadhan', '08351256432', 'jepriguy@gmail.com', 'opti on going', '2025-09-22', 2505003, 'Pak agung meminta untuk mengadakan sebuah training analisis data ', 1, 2503003, 'Training', 2514002, NULL, '1758556386562.pdf', 150000000, NULL, NULL, 'Azana Hotel Jakarta Airport - Jakarta', 2, NULL, NULL),
-(2506032, 'Leadership Workshop - PT Karya Nusantara', 'Ani Santoso', '081881191903', 'ani.santoso1@example.com', 'opti entry', '2025-09-24', 2505001, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 3, 2503003, 'Training', 2514003, NULL, NULL, 18800000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL),
-(2506033, 'Digital Marketing Seminar - PT Vision Teknologi', 'Lina Wijaya', '081993892367', 'lina.wijaya23@example.com', 'opti entry', '2025-09-24', 2505003, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 1, 2503003, 'Training', 2514002, NULL, NULL, 19700000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 4, NULL, NULL),
-(2506034, 'Advanced Excel Training - CV Solusi Inovasi', 'Joko Kusuma', '081633493788', 'joko.kusuma45@example.com', 'opti entry', '2025-09-24', 2505002, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 2, 2503003, 'Training', 2514003, NULL, NULL, 18000000, NULL, NULL, 'Online via Zoom', 2, NULL, NULL),
-(2506035, 'Project Management Certification - PT Cerdas Mandiri', 'Dewi Lestari', '081603325943', 'dewi.lestari67@example.com', 'opti entry', '2025-09-24', 2505004, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 3, 2503003, 'Training', 2514002, NULL, NULL, 22300000, NULL, NULL, 'Kantor Pusat Klien', 3, NULL, NULL),
-(2506036, 'Cybersecurity Awareness - CV Harmoni Jaya', 'Rina Pratama', '081838858556', 'rina.pratama89@example.com', 'opti entry', '2025-09-24', 2505005, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 1, 2503003, 'Training', 2514003, NULL, NULL, 22000000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL),
-(2506037, 'Cloud Computing Basics - PT Solusi Digital', 'Agus Setiawan', '081877903743', 'agus.setiawan11@example.com', 'opti entry', '2025-09-24', 2505008, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 2, 2503004, 'Training', 2514002, NULL, NULL, 19000000, NULL, NULL, 'Hotel Aston, Jakarta', 2, NULL, NULL),
-(2506038, 'Data Analysis with Python - PT Gemilang Teknologi', 'Siti Hidayat', '081911258391', 'siti.hidayat33@example.com', 'opti entry', '2025-09-24', 2505006, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 3, 2503004, 'Training', 2514003, NULL, NULL, 28000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL),
-(2506039, 'Customer Service Excellence - CV Teknologi Cerdas', 'Eko Putri', '081672199393', 'eko.putri55@example.com', 'opti entry', '2025-09-24', 2505010, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 1, 2503004, 'Training', 2514002, NULL, NULL, 16000000, NULL, NULL, 'Ruang Meeting Perusahaan', 4, NULL, NULL),
-(2506040, 'Agile & Scrum Fundamentals - PT Harmoni Solusi', 'Budi Nugroho', '081782833586', 'budi.nugroho77@example.com', 'opti entry', '2025-09-24', 2505009, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 2, 2503004, 'Training', 2514003, NULL, NULL, 21000000, NULL, NULL, 'Yogyakarta Expo Center', 2, NULL, NULL),
-(2506041, 'Public Speaking Masterclass - CV Inovasi Kreatif', 'Adi Wati', '081613398889', 'adi.wati99@example.com', 'opti entry', '2025-09-24', 2505007, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 3, 2503004, 'Training', 2514002, NULL, NULL, 17500000, NULL, NULL, 'Hotel Aston, Jakarta', 3, NULL, NULL),
-(2506042, 'Leadership Workshop - PT Bintang Terang', 'Lina Santoso', '081195118248', 'lina.santoso12@example.com', 'opti entry', '2025-09-24', 2505014, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 1, 2503005, 'Training', 2514003, NULL, NULL, 26000000, NULL, NULL, 'Online via Zoom', 4, NULL, NULL),
-(2506043, 'Digital Marketing Seminar - CV Sentosa Jaya', 'Joko Wijaya', '081884986899', 'joko.wijaya34@example.com', 'opti entry', '2025-09-24', 2505012, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 2, 2503005, 'Training', 2514002, NULL, NULL, 14000000, NULL, NULL, 'Kantor Pusat Klien', 2, NULL, NULL),
-(2506044, 'Advanced Excel Training - PT Nusantara Inovasi', 'Dewi Kusuma', '081438862153', 'dewi.kusuma56@example.com', 'opti entry', '2025-09-24', 2505013, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 3, 2503005, 'Training', 2514003, NULL, NULL, 19500000, NULL, NULL, 'Bandung Convention Center', 3, NULL, NULL),
-(2506045, 'Project Management Certification - CV Harmoni Bali', 'Rina Lestari', '081222583943', 'rina.lestari78@example.com', 'opti entry', '2025-09-24', 2505015, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 1, 2503005, 'Training', 2514002, NULL, NULL, 32000000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL),
-(2506046, 'Cybersecurity Awareness - PT Cahaya Abadi', 'Agus Pratama', '081628933940', 'agus.pratama90@example.com', 'opti entry', '2025-09-24', 2505011, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 2, 2503005, 'Training', 2514003, NULL, NULL, 23000000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 2, NULL, NULL),
-(2506047, 'Cloud Computing Basics - PT Gemilang Nusantara', 'Siti Setiawan', '081881858468', 'siti.setiawan13@example.com', 'opti entry', '2025-09-24', 2505018, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 3, 2503006, 'Training', 2514002, NULL, NULL, 20000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL),
-(2506048, 'Data Analysis with Python - CV Bintang Timur', 'Eko Hidayat', '081283600956', 'eko.hidayat24@example.com', 'opti entry', '2025-09-24', 2505020, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 1, 2503006, 'Training', 2514003, NULL, NULL, 29000000, NULL, NULL, 'Ruang Meeting Perusahaan', 4, NULL, NULL),
-(2506049, 'Customer Service Excellence', 'Budi Putri', '081683865339', 'budi.putri46@example.com', 'opti entry', '2025-09-24', 2505026, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 2, 2503006, 'Training', 2514002, NULL, NULL, 17000000, NULL, NULL, 'Yogyakarta Expo Center', 2, NULL, NULL),
-(2506050, 'Agile & Scrum Fundamentals - PT Sinar Jaya', 'Adi Nugroho', '081251848589', 'adi.nugroho68@example.com', 'opti entry', '2025-09-24', 2505016, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 3, 2503006, 'Training', 2514003, NULL, NULL, 22500000, NULL, NULL, 'Hotel Aston, Jakarta', 3, NULL, NULL),
-(2506051, 'Public Speaking Masterclass - PT Cakra Teknologi', 'Lina Wati', '081226891332', 'lina.wati80@example.com', 'opti entry', '2025-09-24', 2505019, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 1, 2503006, 'Training', 2514002, NULL, NULL, 18500000, NULL, NULL, 'Online via Zoom', 4, NULL, NULL),
-(2506052, 'Leadership Workshop - PT Hijau Makmur', 'Joko Santoso', '081618538268', 'joko.santoso21@example.com', 'po received', '2025-09-24', 2505023, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 2, 2503007, 'Training', 2514003, NULL, NULL, 27000000, '2025-10-05 15:07:00', '2025-10-06 15:07:00', 'Kantor Pusat Klien', 2, NULL, NULL),
-(2506053, 'Digital Marketing Seminar - CV Nusantara Laut', 'Dewi Wijaya', '081835931129', 'dewi.wijaya43@example.com', 'po received', '2025-09-24', 2505025, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 3, 2503007, 'Training', 2514002, NULL, NULL, 15500000, NULL, NULL, 'Bandung Convention Center', 3, NULL, NULL),
-(2506054, 'Advanced Excel Training - PT Samudra Jaya', 'Rina Kusuma', '081258398488', 'rina.kusuma65@example.com', 'po received', '2025-09-24', 2505021, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 1, 2503007, 'Training', 2514003, NULL, NULL, 20500000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL),
-(2506055, 'Project Management Certification - CV Alam Lestari', 'Agus Lestari', '081228499019', 'agus.lestari87@example.com', 'po received', '2025-09-24', 2505022, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 2, 2503007, 'Training', 2514002, NULL, NULL, 33000000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 2, NULL, NULL),
-(2506056, 'Cybersecurity Awareness - PT Papua Cerdas', 'Siti Pratama', '081339831379', 'siti.pratama99@example.com', 'po received', '2025-09-24', 2505024, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 3, 2503007, 'Training', 2514003, NULL, NULL, 24000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL),
-(2506057, 'project 1', 'samuel', '0899887766', 'samuel@gmail.com', 'po received', '2025-10-03', 2505015, 'sdawsddaw', 2, 2503005, 'Project', NULL, 2512001, 'Contoh Bukti Pembayaran (SAMPLE).pdf', 12000000, '2025-10-03 14:56:00', '2025-10-03 14:59:00', 'gedung a', NULL, 3, 'Contoh Bukti Pembayaran (SAMPLE).pdf'),
-(2506058, 'Projek MBG', 'Sahroni', '08117843111', 'sahronimoet@gmail.com', 'po received', '2025-10-05', 2505007, NULL, 2, 2503004, 'Project', NULL, 2512001, NULL, 35000000, '2025-10-05 08:37:00', '2025-10-31 08:38:00', 'Azana Hotel Jakarta Airport - Jakarta', NULL, 3, NULL),
-(2506059, 'Microsoft Azure Cloud Platform', 'Jindan bachri', '087411223121', 'jindanbach@gmail.com', 'po received', '2025-10-05', 2505003, NULL, 2, 2503003, 'Project', NULL, 2512001, NULL, 500000000, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', NULL, 3, NULL),
-(2506060, 'Project Management Certification - PT Karya Nusantara', 'samuel', '08125555732', 'samuel@gmail.com', 'po received', '2025-10-05', 2505001, NULL, 3, 2503003, 'Project', NULL, 2512001, NULL, 12000000, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', NULL, 3, NULL);
+INSERT INTO `opti` (`idOpti`, `nmOpti`, `contactOpti`, `mobileOpti`, `emailOpti`, `statOpti`, `datePropOpti`, `idCustomer`, `kebutuhan`, `idSumber`, `idSales`, `jenisOpti`, `idExpert`, `idPM`, `proposalOpti`, `valOpti`, `startProgram`, `endProgram`, `placeProgram`, `idTypeTraining`, `idTypeProject`, `dokPendaftaran`, `terminPembayaran`) VALUES
+(2506001, 'Pelatihan Manajemen Program CSR', 'Jaka Lesmana', '081623456789', 'jaka.lesmana@gmail.com', 'po received', '2025-09-22', 2505001, 'Pelatihan Leadership via Zoom , info ruang tunggu klien. ', 2, 2503003, 'Training', 2514003, NULL, '1758556287739.pdf', 12000000, '2025-09-22 22:54:00', '2025-09-27 22:54:00', 'Zoom', 2, NULL, '1758556398370_dokumen_pendaftaran_Contoh Bukti Pembayaran (SAMPLE).pdf', NULL),
+(2506002, 'Pelatihan Analisis Data & Strategi Bisnis', 'Jefri Ramadhan', '08351256432', 'jepriguy@gmail.com', 'opti on going', '2025-09-22', 2505003, 'Pak agung meminta untuk mengadakan sebuah training analisis data ', 1, 2503003, 'Training', 2514002, NULL, '1758556386562.pdf', 150000000, NULL, NULL, 'Azana Hotel Jakarta Airport - Jakarta', 2, NULL, NULL, NULL),
+(2506032, 'Leadership Workshop - PT Karya Nusantara', 'Ani Santoso', '081881191903', 'ani.santoso1@example.com', 'opti entry', '2025-09-24', 2505001, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 3, 2503003, 'Training', 2514003, NULL, NULL, 18800000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL, NULL),
+(2506033, 'Digital Marketing Seminar - PT Vision Teknologi', 'Lina Wijaya', '081993892367', 'lina.wijaya23@example.com', 'opti entry', '2025-09-24', 2505003, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 1, 2503003, 'Training', 2514002, NULL, NULL, 19700000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 4, NULL, NULL, NULL),
+(2506034, 'Advanced Excel Training - CV Solusi Inovasi', 'Joko Kusuma', '081633493788', 'joko.kusuma45@example.com', 'opti entry', '2025-09-24', 2505002, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 2, 2503003, 'Training', 2514003, NULL, NULL, 18000000, NULL, NULL, 'Online via Zoom', 2, NULL, NULL, NULL),
+(2506035, 'Project Management Certification - PT Cerdas Mandiri', 'Dewi Lestari', '081603325943', 'dewi.lestari67@example.com', 'opti entry', '2025-09-24', 2505004, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 3, 2503003, 'Training', 2514002, NULL, NULL, 22300000, NULL, NULL, 'Kantor Pusat Klien', 3, NULL, NULL, NULL),
+(2506036, 'Cybersecurity Awareness - CV Harmoni Jaya', 'Rina Pratama', '081838858556', 'rina.pratama89@example.com', 'opti entry', '2025-09-24', 2505005, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 1, 2503003, 'Training', 2514003, NULL, NULL, 22000000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL, NULL),
+(2506037, 'Cloud Computing Basics - PT Solusi Digital', 'Agus Setiawan', '081877903743', 'agus.setiawan11@example.com', 'opti entry', '2025-09-24', 2505008, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 2, 2503004, 'Training', 2514002, NULL, NULL, 19000000, NULL, NULL, 'Hotel Aston, Jakarta', 2, NULL, NULL, NULL),
+(2506038, 'Data Analysis with Python - PT Gemilang Teknologi', 'Siti Hidayat', '081911258391', 'siti.hidayat33@example.com', 'opti entry', '2025-09-24', 2505006, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 3, 2503004, 'Training', 2514003, NULL, NULL, 28000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL, NULL),
+(2506039, 'Customer Service Excellence - CV Teknologi Cerdas', 'Eko Putri', '081672199393', 'eko.putri55@example.com', 'opti entry', '2025-09-24', 2505010, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 1, 2503004, 'Training', 2514002, NULL, NULL, 16000000, NULL, NULL, 'Ruang Meeting Perusahaan', 4, NULL, NULL, NULL),
+(2506040, 'Agile & Scrum Fundamentals - PT Harmoni Solusi', 'Budi Nugroho', '081782833586', 'budi.nugroho77@example.com', 'opti entry', '2025-09-24', 2505009, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 2, 2503004, 'Training', 2514003, NULL, NULL, 21000000, NULL, NULL, 'Yogyakarta Expo Center', 2, NULL, NULL, NULL),
+(2506041, 'Public Speaking Masterclass - CV Inovasi Kreatif', 'Adi Wati', '081613398889', 'adi.wati99@example.com', 'opti entry', '2025-09-24', 2505007, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 3, 2503004, 'Training', 2514002, NULL, NULL, 17500000, NULL, NULL, 'Hotel Aston, Jakarta', 3, NULL, NULL, NULL),
+(2506042, 'Leadership Workshop - PT Bintang Terang', 'Lina Santoso', '081195118248', 'lina.santoso12@example.com', 'opti entry', '2025-09-24', 2505014, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 1, 2503005, 'Training', 2514003, NULL, NULL, 26000000, NULL, NULL, 'Online via Zoom', 4, NULL, NULL, NULL),
+(2506043, 'Digital Marketing Seminar - CV Sentosa Jaya', 'Joko Wijaya', '081884986899', 'joko.wijaya34@example.com', 'opti entry', '2025-09-24', 2505012, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 2, 2503005, 'Training', 2514002, NULL, NULL, 14000000, NULL, NULL, 'Kantor Pusat Klien', 2, NULL, NULL, NULL),
+(2506044, 'Advanced Excel Training - PT Nusantara Inovasi', 'Dewi Kusuma', '081438862153', 'dewi.kusuma56@example.com', 'opti entry', '2025-09-24', 2505013, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 3, 2503005, 'Training', 2514003, NULL, NULL, 19500000, NULL, NULL, 'Bandung Convention Center', 3, NULL, NULL, NULL),
+(2506045, 'Project Management Certification - CV Harmoni Bali', 'Rina Lestari', '081222583943', 'rina.lestari78@example.com', 'opti entry', '2025-09-24', 2505015, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 1, 2503005, 'Training', 2514002, NULL, NULL, 32000000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL, NULL),
+(2506046, 'Cybersecurity Awareness - PT Cahaya Abadi', 'Agus Pratama', '081628933940', 'agus.pratama90@example.com', 'opti entry', '2025-09-24', 2505011, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 2, 2503005, 'Training', 2514003, NULL, NULL, 23000000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 2, NULL, NULL, NULL),
+(2506047, 'Cloud Computing Basics - PT Gemilang Nusantara', 'Siti Setiawan', '081881858468', 'siti.setiawan13@example.com', 'opti entry', '2025-09-24', 2505018, 'Kebutuhan mendesak untuk pelatihan cloud computing basics bagi tim.', 3, 2503006, 'Training', 2514002, NULL, NULL, 20000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL, NULL),
+(2506048, 'Data Analysis with Python - CV Bintang Timur', 'Eko Hidayat', '081283600956', 'eko.hidayat24@example.com', 'opti entry', '2025-09-24', 2505020, 'Kebutuhan mendesak untuk pelatihan data analysis with python bagi tim.', 1, 2503006, 'Training', 2514003, NULL, NULL, 29000000, NULL, NULL, 'Ruang Meeting Perusahaan', 4, NULL, NULL, NULL),
+(2506049, 'Customer Service Excellence', 'Budi Putri', '081683865339', 'budi.putri46@example.com', 'opti entry', '2025-09-24', 2505026, 'Kebutuhan mendesak untuk pelatihan customer service excellence bagi tim.', 2, 2503006, 'Training', 2514002, NULL, NULL, 17000000, NULL, NULL, 'Yogyakarta Expo Center', 2, NULL, NULL, NULL),
+(2506050, 'Agile & Scrum Fundamentals - PT Sinar Jaya', 'Adi Nugroho', '081251848589', 'adi.nugroho68@example.com', 'opti entry', '2025-09-24', 2505016, 'Kebutuhan mendesak untuk pelatihan agile & scrum fundamentals bagi tim.', 3, 2503006, 'Training', 2514003, NULL, NULL, 22500000, NULL, NULL, 'Hotel Aston, Jakarta', 3, NULL, NULL, NULL),
+(2506051, 'Public Speaking Masterclass - PT Cakra Teknologi', 'Lina Wati', '081226891332', 'lina.wati80@example.com', 'opti entry', '2025-09-24', 2505019, 'Kebutuhan mendesak untuk pelatihan public speaking masterclass bagi tim.', 1, 2503006, 'Training', 2514002, NULL, NULL, 18500000, NULL, NULL, 'Online via Zoom', 4, NULL, NULL, NULL),
+(2506052, 'Leadership Workshop - PT Hijau Makmur', 'Joko Santoso', '081618538268', 'joko.santoso21@example.com', 'po received', '2025-09-24', 2505023, 'Kebutuhan mendesak untuk pelatihan leadership workshop bagi tim.', 2, 2503007, 'Training', 2514003, NULL, NULL, 27000000, '2025-10-05 15:07:00', '2025-10-06 15:07:00', 'Kantor Pusat Klien', 2, NULL, NULL, NULL),
+(2506053, 'Digital Marketing Seminar - CV Nusantara Laut', 'Dewi Wijaya', '081835931129', 'dewi.wijaya43@example.com', 'po received', '2025-09-24', 2505025, 'Kebutuhan mendesak untuk pelatihan digital marketing seminar bagi tim.', 3, 2503007, 'Training', 2514002, NULL, NULL, 15500000, NULL, NULL, 'Bandung Convention Center', 3, NULL, NULL, NULL),
+(2506054, 'Advanced Excel Training - PT Samudra Jaya', 'Rina Kusuma', '081258398488', 'rina.kusuma65@example.com', 'po received', '2025-09-24', 2505021, 'Kebutuhan mendesak untuk pelatihan advanced excel training bagi tim.', 1, 2503007, 'Training', 2514003, NULL, NULL, 20500000, NULL, NULL, 'Surabaya Co-working Space', 4, NULL, NULL, NULL),
+(2506055, 'Project Management Certification - CV Alam Lestari', 'Agus Lestari', '081228499019', 'agus.lestari87@example.com', 'po received', '2025-09-24', 2505022, 'Kebutuhan mendesak untuk pelatihan project management certification bagi tim.', 2, 2503007, 'Training', 2514002, NULL, NULL, 33000000, NULL, NULL, 'Hotel Grand Hyatt, Bali', 2, NULL, NULL, NULL),
+(2506056, 'Cybersecurity Awareness - PT Papua Cerdas', 'Siti Pratama', '081339831379', 'siti.pratama99@example.com', 'po received', '2025-09-24', 2505024, 'Kebutuhan mendesak untuk pelatihan cybersecurity awareness bagi tim.', 3, 2503007, 'Training', 2514003, NULL, NULL, 24000000, NULL, NULL, 'Online via Microsoft Teams', 3, NULL, NULL, NULL),
+(2506057, 'project 1', 'samuel', '0899887766', 'samuel@gmail.com', 'po received', '2025-10-03', 2505015, 'sdawsddaw', 2, 2503005, 'Project', NULL, 2512001, 'Contoh Bukti Pembayaran (SAMPLE).pdf', 12000000, '2025-10-03 14:56:00', '2025-10-03 14:59:00', 'gedung a', NULL, 3, 'Contoh Bukti Pembayaran (SAMPLE).pdf', NULL),
+(2506058, 'Projek MBG', 'Sahroni', '08117843111', 'sahronimoet@gmail.com', 'po received', '2025-10-05', 2505007, NULL, 2, 2503004, 'Project', NULL, 2512001, NULL, 35000000, '2025-10-05 08:37:00', '2025-10-31 08:38:00', 'Azana Hotel Jakarta Airport - Jakarta', NULL, 3, NULL, '20%'),
+(2506059, 'Microsoft Azure Cloud Platform', 'Jindan bachri', '087411223121', 'jindanbach@gmail.com', 'po received', '2025-10-05', 2505003, NULL, 2, 2503003, 'Project', NULL, 2512001, NULL, 500000000, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', NULL, 3, NULL, NULL),
+(2506060, 'Project Management Certification - PT Karya Nusantara', 'samuel', '08125555732', 'samuel@gmail.com', 'po received', '2025-10-05', 2505001, NULL, 3, 2503003, 'Project', NULL, 2512001, NULL, 12000000, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', NULL, 3, NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `outsource`
+-- Table structure for table `outsource`
 --
 
 CREATE TABLE `outsource` (
@@ -324,7 +330,7 @@ CREATE TABLE `outsource` (
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `pm`
+-- Table structure for table `pm`
 --
 
 CREATE TABLE `pm` (
@@ -336,7 +342,7 @@ CREATE TABLE `pm` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `pm`
+-- Dumping data for table `pm`
 --
 
 INSERT INTO `pm` (`idPM`, `nmPM`, `mobilePM`, `emailPM`, `password`) VALUES
@@ -345,7 +351,7 @@ INSERT INTO `pm` (`idPM`, `nmPM`, `mobilePM`, `emailPM`, `password`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `project`
+-- Table structure for table `project`
 --
 
 CREATE TABLE `project` (
@@ -363,19 +369,19 @@ CREATE TABLE `project` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `project`
+-- Dumping data for table `project`
 --
 
 INSERT INTO `project` (`idProject`, `nmProject`, `idTypeProject`, `startProject`, `endProject`, `placeProject`, `idCustomer`, `idOpti`, `statusProject`, `fbProject`, `fbAttachments`) VALUES
 (2508001, 'project 1', 3, '2025-10-03 14:56:00', '2025-10-03 14:59:00', 'gedung a', 2505015, 2506057, 'Finished', NULL, ''),
 (2508002, 'Projek MBG', 3, '2025-10-05 08:37:00', '2025-10-31 08:38:00', 'Azana Hotel Jakarta Airport - Jakarta', 2505007, 2506058, 'On Progress', NULL, ''),
 (2508003, 'Microsoft Azure Cloud Platform', 3, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', 2505003, 2506059, 'Pending', NULL, ''),
-(2508004, 'Project Management Certification - PT Karya Nusantara', 3, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', 2505001, 2506060, 'On Progress', NULL, '');
+(2508004, 'Project Management Certification - PT Karya Nusantara', 3, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', 2505001, 2506060, 'Finished', NULL, '');
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `project_document`
+-- Table structure for table `project_document`
 --
 
 CREATE TABLE `project_document` (
@@ -388,7 +394,7 @@ CREATE TABLE `project_document` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `project_document`
+-- Dumping data for table `project_document`
 --
 
 INSERT INTO `project_document` (`idDocument`, `idProject`, `fileNameStored`, `fileNameOriginal`, `uploadedBy`, `uploadTimestamp`) VALUES
@@ -399,7 +405,7 @@ INSERT INTO `project_document` (`idDocument`, `idProject`, `fileNameStored`, `fi
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `project_expert`
+-- Table structure for table `project_expert`
 --
 
 CREATE TABLE `project_expert` (
@@ -408,7 +414,7 @@ CREATE TABLE `project_expert` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `project_expert`
+-- Dumping data for table `project_expert`
 --
 
 INSERT INTO `project_expert` (`idProject`, `idExpert`) VALUES
@@ -422,7 +428,7 @@ INSERT INTO `project_expert` (`idProject`, `idExpert`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `sales`
+-- Table structure for table `sales`
 --
 
 CREATE TABLE `sales` (
@@ -436,7 +442,7 @@ CREATE TABLE `sales` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `sales`
+-- Dumping data for table `sales`
 --
 
 INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `password`, `descSales`, `role`) VALUES
@@ -450,7 +456,7 @@ INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `passwor
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `skill`
+-- Table structure for table `skill`
 --
 
 CREATE TABLE `skill` (
@@ -461,7 +467,7 @@ CREATE TABLE `skill` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `skill`
+-- Dumping data for table `skill`
 --
 
 INSERT INTO `skill` (`idSkill`, `nmSkill`, `statSkill`, `descSkill`) VALUES
@@ -479,7 +485,7 @@ INSERT INTO `skill` (`idSkill`, `nmSkill`, `statSkill`, `descSkill`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `statcustomer`
+-- Table structure for table `statcustomer`
 --
 
 CREATE TABLE `statcustomer` (
@@ -489,7 +495,7 @@ CREATE TABLE `statcustomer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `statcustomer`
+-- Dumping data for table `statcustomer`
 --
 
 INSERT INTO `statcustomer` (`idStatCustomer`, `nmStatCustomer`, `descStatCustomer`) VALUES
@@ -500,7 +506,7 @@ INSERT INTO `statcustomer` (`idStatCustomer`, `nmStatCustomer`, `descStatCustome
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `sumber`
+-- Table structure for table `sumber`
 --
 
 CREATE TABLE `sumber` (
@@ -510,7 +516,7 @@ CREATE TABLE `sumber` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `sumber`
+-- Dumping data for table `sumber`
 --
 
 INSERT INTO `sumber` (`idSumber`, `nmSumber`, `descSumber`) VALUES
@@ -521,7 +527,7 @@ INSERT INTO `sumber` (`idSumber`, `nmSumber`, `descSumber`) VALUES
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `training`
+-- Table structure for table `training`
 --
 
 CREATE TABLE `training` (
@@ -540,7 +546,7 @@ CREATE TABLE `training` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `training`
+-- Dumping data for table `training`
 --
 
 INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTraining`, `endTraining`, `idExpert`, `placeTraining`, `idCustomer`, `idOpti`, `statusTraining`, `fbTraining`, `fbAttachments`) VALUES
@@ -549,12 +555,12 @@ INSERT INTO `training` (`idTraining`, `nmTraining`, `idTypeTraining`, `startTrai
 (2507003, 'Project Management Certification - CV Alam Lestari', 2, NULL, NULL, 2514002, 'Hotel Grand Hyatt, Bali', 2505022, 2506055, 'Po Received', NULL, NULL),
 (2507004, 'Advanced Excel Training - PT Samudra Jaya', 4, NULL, NULL, 2514003, 'Surabaya Co-working Space', 2505021, 2506054, 'Po Received', NULL, NULL),
 (2507005, 'Digital Marketing Seminar - CV Nusantara Laut', 3, NULL, NULL, 2514002, 'Bandung Convention Center', 2505025, 2506053, 'Po Received', NULL, NULL),
-(2507006, 'Leadership Workshop - PT Hijau Makmur', 2, '2025-10-05 15:07:00', '2025-10-06 15:07:00', 2514003, 'Kantor Pusat Klien', 2505023, 2506052, 'Training On Progress', NULL, NULL);
+(2507006, 'Leadership Workshop - PT Hijau Makmur', 2, '2025-10-05 15:07:00', '2025-10-06 15:07:00', 2514003, 'Kantor Pusat Klien', 2505023, 2506052, 'Training Delivered', NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `typeproject`
+-- Table structure for table `typeproject`
 --
 
 CREATE TABLE `typeproject` (
@@ -565,7 +571,7 @@ CREATE TABLE `typeproject` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `typeproject`
+-- Dumping data for table `typeproject`
 --
 
 INSERT INTO `typeproject` (`idTypeProject`, `nmTypeProject`, `statTypeProject`, `descTypeProject`) VALUES
@@ -577,7 +583,7 @@ INSERT INTO `typeproject` (`idTypeProject`, `nmTypeProject`, `statTypeProject`, 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `typetraining`
+-- Table structure for table `typetraining`
 --
 
 CREATE TABLE `typetraining` (
@@ -588,7 +594,7 @@ CREATE TABLE `typetraining` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data untuk tabel `typetraining`
+-- Dumping data for table `typetraining`
 --
 
 INSERT INTO `typetraining` (`idTypeTraining`, `nmTypeTraining`, `statTypeTraining`, `descTypeTraining`) VALUES
@@ -602,28 +608,28 @@ INSERT INTO `typetraining` (`idTypeTraining`, `nmTypeTraining`, `statTypeTrainin
 --
 
 --
--- Indeks untuk tabel `admin`
+-- Indexes for table `admin`
 --
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`idAdmin`),
   ADD UNIQUE KEY `emailAdmin` (`emailAdmin`);
 
 --
--- Indeks untuk tabel `akademik`
+-- Indexes for table `akademik`
 --
 ALTER TABLE `akademik`
   ADD PRIMARY KEY (`idAkademik`),
   ADD UNIQUE KEY `emailAkademik` (`emailAkademik`);
 
 --
--- Indeks untuk tabel `bast_project_document`
+-- Indexes for table `bast_project_document`
 --
 ALTER TABLE `bast_project_document`
   ADD PRIMARY KEY (`idDocument`),
   ADD KEY `idProject` (`idProject`);
 
 --
--- Indeks untuk tabel `customer`
+-- Indexes for table `customer`
 --
 ALTER TABLE `customer`
   ADD PRIMARY KEY (`idCustomer`),
@@ -631,21 +637,21 @@ ALTER TABLE `customer`
   ADD KEY `idSales` (`idSales`);
 
 --
--- Indeks untuk tabel `expert`
+-- Indexes for table `expert`
 --
 ALTER TABLE `expert`
   ADD PRIMARY KEY (`idExpert`),
   ADD KEY `idSkill` (`idSkill`);
 
 --
--- Indeks untuk tabel `notification`
+-- Indexes for table `notification`
 --
 ALTER TABLE `notification`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_recipient` (`recipient_user_id`,`is_read`);
 
 --
--- Indeks untuk tabel `opti`
+-- Indexes for table `opti`
 --
 ALTER TABLE `opti`
   ADD PRIMARY KEY (`idOpti`),
@@ -658,7 +664,7 @@ ALTER TABLE `opti`
   ADD KEY `fk_opti_pm` (`idPM`);
 
 --
--- Indeks untuk tabel `outsource`
+-- Indexes for table `outsource`
 --
 ALTER TABLE `outsource`
   ADD PRIMARY KEY (`idOutsource`),
@@ -667,14 +673,14 @@ ALTER TABLE `outsource`
   ADD KEY `fk_outsource_opti_idx` (`idOpti`);
 
 --
--- Indeks untuk tabel `pm`
+-- Indexes for table `pm`
 --
 ALTER TABLE `pm`
   ADD PRIMARY KEY (`idPM`),
   ADD UNIQUE KEY `emailPM` (`emailPM`);
 
 --
--- Indeks untuk tabel `project`
+-- Indexes for table `project`
 --
 ALTER TABLE `project`
   ADD PRIMARY KEY (`idProject`),
@@ -683,45 +689,45 @@ ALTER TABLE `project`
   ADD KEY `fk_project_type` (`idTypeProject`);
 
 --
--- Indeks untuk tabel `project_document`
+-- Indexes for table `project_document`
 --
 ALTER TABLE `project_document`
   ADD PRIMARY KEY (`idDocument`),
   ADD KEY `fk_document_project` (`idProject`);
 
 --
--- Indeks untuk tabel `project_expert`
+-- Indexes for table `project_expert`
 --
 ALTER TABLE `project_expert`
   ADD PRIMARY KEY (`idProject`,`idExpert`),
   ADD KEY `idExpert` (`idExpert`);
 
 --
--- Indeks untuk tabel `sales`
+-- Indexes for table `sales`
 --
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`idSales`);
 
 --
--- Indeks untuk tabel `skill`
+-- Indexes for table `skill`
 --
 ALTER TABLE `skill`
   ADD PRIMARY KEY (`idSkill`);
 
 --
--- Indeks untuk tabel `statcustomer`
+-- Indexes for table `statcustomer`
 --
 ALTER TABLE `statcustomer`
   ADD PRIMARY KEY (`idStatCustomer`);
 
 --
--- Indeks untuk tabel `sumber`
+-- Indexes for table `sumber`
 --
 ALTER TABLE `sumber`
   ADD PRIMARY KEY (`idSumber`);
 
 --
--- Indeks untuk tabel `training`
+-- Indexes for table `training`
 --
 ALTER TABLE `training`
   ADD PRIMARY KEY (`idTraining`),
@@ -731,148 +737,148 @@ ALTER TABLE `training`
   ADD KEY `fk_training_opti_idx` (`idOpti`);
 
 --
--- Indeks untuk tabel `typeproject`
+-- Indexes for table `typeproject`
 --
 ALTER TABLE `typeproject`
   ADD PRIMARY KEY (`idTypeProject`);
 
 --
--- Indeks untuk tabel `typetraining`
+-- Indexes for table `typetraining`
 --
 ALTER TABLE `typetraining`
   ADD PRIMARY KEY (`idTypeTraining`);
 
 --
--- AUTO_INCREMENT untuk tabel yang dibuang
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT untuk tabel `admin`
+-- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
   MODIFY `idAdmin` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2501006;
 
 --
--- AUTO_INCREMENT untuk tabel `akademik`
+-- AUTO_INCREMENT for table `akademik`
 --
 ALTER TABLE `akademik`
   MODIFY `idAkademik` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2511004;
 
 --
--- AUTO_INCREMENT untuk tabel `customer`
+-- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
   MODIFY `idCustomer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2505031;
 
 --
--- AUTO_INCREMENT untuk tabel `expert`
+-- AUTO_INCREMENT for table `expert`
 --
 ALTER TABLE `expert`
   MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2514004;
 
 --
--- AUTO_INCREMENT untuk tabel `notification`
+-- AUTO_INCREMENT for table `notification`
 --
 ALTER TABLE `notification`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
--- AUTO_INCREMENT untuk tabel `opti`
+-- AUTO_INCREMENT for table `opti`
 --
 ALTER TABLE `opti`
-  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2506061;
+  MODIFY `idOpti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2506064;
 
 --
--- AUTO_INCREMENT untuk tabel `outsource`
+-- AUTO_INCREMENT for table `outsource`
 --
 ALTER TABLE `outsource`
   MODIFY `idOutsource` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT untuk tabel `pm`
+-- AUTO_INCREMENT for table `pm`
 --
 ALTER TABLE `pm`
   MODIFY `idPM` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2512003;
 
 --
--- AUTO_INCREMENT untuk tabel `project`
+-- AUTO_INCREMENT for table `project`
 --
 ALTER TABLE `project`
   MODIFY `idProject` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2508008;
 
 --
--- AUTO_INCREMENT untuk tabel `project_document`
+-- AUTO_INCREMENT for table `project_document`
 --
 ALTER TABLE `project_document`
   MODIFY `idDocument` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2513005;
 
 --
--- AUTO_INCREMENT untuk tabel `sales`
+-- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
   MODIFY `idSales` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2503009;
 
 --
--- AUTO_INCREMENT untuk tabel `skill`
+-- AUTO_INCREMENT for table `skill`
 --
 ALTER TABLE `skill`
   MODIFY `idSkill` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT untuk tabel `statcustomer`
+-- AUTO_INCREMENT for table `statcustomer`
 --
 ALTER TABLE `statcustomer`
   MODIFY `idStatCustomer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT untuk tabel `sumber`
+-- AUTO_INCREMENT for table `sumber`
 --
 ALTER TABLE `sumber`
   MODIFY `idSumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT untuk tabel `training`
+-- AUTO_INCREMENT for table `training`
 --
 ALTER TABLE `training`
   MODIFY `idTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2507014;
 
 --
--- AUTO_INCREMENT untuk tabel `typeproject`
+-- AUTO_INCREMENT for table `typeproject`
 --
 ALTER TABLE `typeproject`
   MODIFY `idTypeProject` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT untuk tabel `typetraining`
+-- AUTO_INCREMENT for table `typetraining`
 --
 ALTER TABLE `typetraining`
   MODIFY `idTypeTraining` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
+-- Constraints for dumped tables
 --
 
 --
--- Ketidakleluasaan untuk tabel `bast_project_document`
+-- Constraints for table `bast_project_document`
 --
 ALTER TABLE `bast_project_document`
   ADD CONSTRAINT `bast_project_document_ibfk_1` FOREIGN KEY (`idProject`) REFERENCES `project` (`idProject`);
 
 --
--- Ketidakleluasaan untuk tabel `customer`
+-- Constraints for table `customer`
 --
 ALTER TABLE `customer`
   ADD CONSTRAINT `customer_ibfk_1` FOREIGN KEY (`idStatCustomer`) REFERENCES `statcustomer` (`idStatCustomer`),
   ADD CONSTRAINT `customer_ibfk_2` FOREIGN KEY (`idSales`) REFERENCES `sales` (`idSales`);
 
 --
--- Ketidakleluasaan untuk tabel `expert`
+-- Constraints for table `expert`
 --
 ALTER TABLE `expert`
   ADD CONSTRAINT `expert_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill` (`idSkill`);
 
 --
--- Ketidakleluasaan untuk tabel `opti`
+-- Constraints for table `opti`
 --
 ALTER TABLE `opti`
   ADD CONSTRAINT `fk_opti_pm` FOREIGN KEY (`idPM`) REFERENCES `pm` (`idPM`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -884,7 +890,7 @@ ALTER TABLE `opti`
   ADD CONSTRAINT `opti_ibfk_6` FOREIGN KEY (`idTypeProject`) REFERENCES `typeproject` (`idTypeProject`);
 
 --
--- Ketidakleluasaan untuk tabel `outsource`
+-- Constraints for table `outsource`
 --
 ALTER TABLE `outsource`
   ADD CONSTRAINT `fk_outsource_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -892,27 +898,27 @@ ALTER TABLE `outsource`
   ADD CONSTRAINT `outsource_ibfk_2` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);
 
 --
--- Ketidakleluasaan untuk tabel `project`
+-- Constraints for table `project`
 --
 ALTER TABLE `project`
   ADD CONSTRAINT `fk_project_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_project_type` FOREIGN KEY (`idTypeProject`) REFERENCES `typeproject` (`idTypeProject`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
--- Ketidakleluasaan untuk tabel `project_document`
+-- Constraints for table `project_document`
 --
 ALTER TABLE `project_document`
   ADD CONSTRAINT `fk_document_project` FOREIGN KEY (`idProject`) REFERENCES `project` (`idProject`) ON DELETE CASCADE;
 
 --
--- Ketidakleluasaan untuk tabel `project_expert`
+-- Constraints for table `project_expert`
 --
 ALTER TABLE `project_expert`
   ADD CONSTRAINT `project_expert_ibfk_1` FOREIGN KEY (`idProject`) REFERENCES `project` (`idProject`) ON DELETE CASCADE,
   ADD CONSTRAINT `project_expert_ibfk_2` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`) ON DELETE CASCADE;
 
 --
--- Ketidakleluasaan untuk tabel `training`
+-- Constraints for table `training`
 --
 ALTER TABLE `training`
   ADD CONSTRAINT `fk_training_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,

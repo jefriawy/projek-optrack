@@ -49,7 +49,7 @@ const createOpti = async (req, res) => {
     const userName = req.user.name || req.user.username || "Sales"; // Ambil nama Sales
 
     let idSalesForOpti;
-    if (user.role === "Sales") {
+    if (user.role === "Sales" || user.role === "Head Sales") {
       idSalesForOpti = user.id;
     } else {
       const customer = await Customer.findById(Number(b.idCustomer));
@@ -99,6 +99,7 @@ const createOpti = async (req, res) => {
           : null,
 
       proposalOpti: null,
+      terminPembayaran: toNull(b.terminPembayaran),
     };
     if (req.file) {
       optiData.proposalOpti = path.basename(req.file.filename);
@@ -191,6 +192,8 @@ const updateOpti = async (req, res) => {
           : existingOpti.idTypeProject,
       proposalOpti: existingOpti.proposalOpti,
       dokPendaftaran: toNull(b.dokPendaftaran) ?? existingOpti.dokPendaftaran,
+      terminPembayaran:
+        toNull(b.terminPembayaran) ?? existingOpti.terminPembayaran,
     };
 
     if (req.file) {

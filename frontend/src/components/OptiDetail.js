@@ -115,7 +115,7 @@ const OptiDetail = ({ opti }) => {
 
     if (opti.jenisOpti === "Project") {
       const typeName =
-        TYPE_PROJECTS.find((p) => Number(p.id) === Number(opti.idTypeTraining))
+        TYPE_PROJECTS.find((p) => Number(p.id) === Number(opti.idTypeProject))
           ?.name || "-";
       return (
         <div className="mt-6 p-4 border rounded-lg bg-gray-50">
@@ -134,6 +134,12 @@ const OptiDetail = ({ opti }) => {
             </p>
             <p>
               <strong>Lokasi:</strong> {lokasi}
+            </p>
+            <p className="sm:col-span-2">
+              <strong>Termin Pembayaran:</strong>{" "}
+              <span className="whitespace-pre-wrap">
+                {opti.terminPembayaran || "-"}
+              </span>
             </p>
           </div>
         </div>
