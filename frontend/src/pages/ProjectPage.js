@@ -269,8 +269,6 @@ const DocumentUploadTab = ({ projectId }) => {
 };
 // --- AKHIR PERUBAHAN ---
 
-/* Helpers tanggal & status, Icons, dan Modal tidak berubah */
-// (Kode di bawah ini tidak diubah dan dibiarkan seperti aslinya)
 const safeTime = (v) => {
   const t = new Date(v).getTime();
   return isNaN(t) ? null : t;
@@ -296,23 +294,41 @@ const diffDays = (start, end) => {
   if (!s || !e) return null;
   return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)));
 };
+
+// --- PERUBAHAN ---
+// Memodifikasi formatRemaining untuk menangani nilai negatif
 const formatRemaining = (ms) => {
-  if (!ms || ms <= 0) return "0:00:00";
-  const totalSec = Math.floor(ms / 1000);
+  if (ms === null || ms === undefined) return "0:00:00";
+  const prefix = ms < 0 ? "-" : "";
+  const totalSec = Math.floor(Math.abs(ms) / 1000);
   const days = Math.floor(totalSec / (24 * 3600));
   if (days > 0) {
     const hours = Math.floor((totalSec % (24 * 3600)) / 3600);
-    return `${days} hari ${hours} jam`;
+    return `${prefix}${days} hari ${hours} jam`;
   }
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
   const pad = (n) => String(n).padStart(2, "0");
-  return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+  return `${prefix}${hours}:${pad(minutes)}:${pad(seconds)}`;
 };
-const computeStatus = (start, end, now = Date.now()) => {
-  const s = safeTime(start);
-  const e = safeTime(end);
+
+// --- PERUBAHAN ---
+// Memodifikasi computeStatus untuk menangani status 'overdue' (terlambat)
+const computeStatus = (project, now = Date.now()) => {
+  const s = safeTime(project.startProject);
+  const e = safeTime(project.endProject);
+
+  // Jika status dari DB sudah 'Finished', langsung tampilkan
+  if (project.statusProject === "Finished") {
+    return {
+      key: "finished",
+      label: "Project Delivered",
+      className: "bg-green-500 text-white",
+    };
+  }
+
+  // Jika waktu sekarang sebelum waktu mulai
   if (s && now < s) {
     return {
       key: "pending",
@@ -320,28 +336,39 @@ const computeStatus = (start, end, now = Date.now()) => {
       className: "bg-amber-500 text-white",
     };
   }
+
+  // Jika sedang berjalan (di antara waktu mulai dan selesai)
   if (s && (!e || now <= e) && now >= s) {
     const remaining = e ? e - now : 0;
     return {
       key: "running",
-      label: e ? `Project On Progress · ${formatRemaining(remaining)}` : "Project On Progress",
+      label: e
+        ? `Project On Progress · ${formatRemaining(remaining)}`
+        : "Project On Progress",
       className: "bg-blue-600 text-white",
       remaining,
     };
   }
-  if (e && now > e) {
+
+  // Jika sudah melewati waktu selesai TAPI status di DB masih 'On Progress'
+  if (e && now > e && project.statusProject === "On Progress") {
+    const overdue = now - e;
     return {
-      key: "finished",
-      label: "Project Delivered",
-      className: "bg-green-500 text-white",
+      key: "overdue",
+      label: `Project On Progress · ${formatRemaining(-overdue)}`,
+      className: "bg-red-600 text-white animate-pulse",
+      remaining: -overdue,
     };
   }
+
+  // Fallback default
   return {
     key: "pending",
     label: "Po Received",
     className: "bg-amber-500 text-white",
   };
 };
+
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg
     className={className}
@@ -489,12 +516,12 @@ const ProjectPage = () => {
 
   useEffect(() => {
     if (open || openBast) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     }
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [open, openBast]);
 
@@ -591,14 +618,14 @@ const ProjectPage = () => {
       );
       setOpenFeedback(false);
       // Perbarui state secara lokal agar perubahan langsung terlihat
-      setProjects(prevProjects => 
-        prevProjects.map(p => {
+      setProjects((prevProjects) =>
+        prevProjects.map((p) => {
           if (p.idProject === target.idProject) {
             // Ambil data dari FormData untuk update lokal
-            const newFeedback = feedbackData.get('feedback');
+            const newFeedback = feedbackData.get("feedback");
             // Karena kita tidak bisa membaca file dari FormData di client,
             // kita panggil fetchProjects untuk mendapatkan data lampiran yang akurat.
-            fetchProjects(); 
+            fetchProjects();
             return { ...p, fbProject: newFeedback }; // Update feedback text sementara
           }
           return p;
@@ -679,7 +706,7 @@ const ProjectPage = () => {
           {!loading &&
             !err &&
             filtered.map((p, idx) => {
-              const st = computeStatus(p.startProject, p.endProject, now);
+              const st = computeStatus(p, now); // Pass the whole project object
               const badge = { text: st.label, cls: st.className };
               return (
                 <div
@@ -764,6 +791,8 @@ const ProjectPage = () => {
                           ? `Sisa: ${formatRemaining(st.remaining)}`
                           : st.key === "pending"
                           ? "Belum mulai"
+                          : st.key === "overdue"
+                          ? `PM Upload BAST : ${formatRemaining(st.remaining)}`
                           : "Selesai"}
                       </span>
                     </div>
@@ -786,34 +815,39 @@ const ProjectPage = () => {
                     >
                       {isPM ? "Beri/Edit Feedback" : "Lihat Feedback"}
                     </button>
-                    {/* Tombol upload dokumen BAST khusus untuk PM saat project finished */}
-                    {isPM && st.key === "finished" && (
-                      <button
-                        type="button"
-                        className="px-4 py-2 text-xs font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
-                        onClick={() => {
-                          setDetail(p);
-                          setOpenBast(true);
-                        }}
+                    {/* --- PERUBAHAN --- */}
+                    {/* Tampilkan tombol BAST jika PM dan status 'finished' ATAU 'overdue' */}
+                    {isPM &&
+                      (st.key === "finished" || st.key === "overdue") && (
+                        <button
+                          type="button"
+                          className="px-4 py-2 text-xs font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                          onClick={() => {
+                            setDetail(p);
+                            setOpenBast(true);
+                          }}
+                        >
+                          Upload Dokumen BAST
+                        </button>
+                      )}
+                    {/* Modal Upload BAST */}
+                    {openBast && (
+                      <Modal
+                        open={openBast}
+                        onClose={() => setOpenBast(false)}
+                        title={detail?.nmProject || "Upload BAST"}
+                        badge={{ customer: detail?.corpCustomer || "" }}
                       >
-                        Upload Dokumen BAST
-                      </button>
+                        <BastUploadForm
+                          projectId={detail?.idProject}
+                          onUploaded={() => {
+                            setOpenBast(false);
+                            fetchProjects(); // Re-fetch data setelah upload sukses
+                          }}
+                          onClose={() => setOpenBast(false)}
+                        />
+                      </Modal>
                     )}
-      {/* Modal Upload BAST */}
-      {openBast && (
-        <Modal
-          open={openBast}
-          onClose={() => setOpenBast(false)}
-          title={detail?.nmProject || "Upload BAST"}
-          badge={{ customer: detail?.corpCustomer || "" }}
-        >
-          <BastUploadForm
-            projectId={detail?.idProject}
-            onUploaded={() => setOpenBast(false)}
-            onClose={() => setOpenBast(false)}
-          />
-        </Modal>
-      )}
                   </div>
                 </div>
               );
@@ -832,10 +866,7 @@ const ProjectPage = () => {
         badge={
           detail
             ? (() => {
-                const st = computeStatus(
-                  detail.startProject,
-                  detail.endProject
-                );
+                const st = computeStatus(detail); // Pass the whole object
                 return {
                   text: st.label,
                   cls: st.className,
@@ -855,9 +886,7 @@ const ProjectPage = () => {
           !detailErr &&
           detail &&
           (() => {
-            const isDelivered =
-              computeStatus(detail.startProject, detail.endProject).key ===
-              "finished";
+            const isDelivered = computeStatus(detail).key === "finished";
 
             return (
               <div>
@@ -902,7 +931,9 @@ const ProjectPage = () => {
                   </div>
                 )}
 
-                {activeTab === "detail" && <ProjectDetailTab project={detail} />}
+                {activeTab === "detail" && (
+                  <ProjectDetailTab project={detail} />
+                )}
 
                 {activeTab === "addExpert" && user.role === "PM" && (
                   <AddExpertForm projectId={detail.idProject} />

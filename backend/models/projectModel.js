@@ -1,36 +1,16 @@
-// ==================== BAST PROJECT DOCUMENT ====================
-async function getBastDocuments(projectId) {
-  const [rows] = await db.query(
-    `SELECT * FROM bast_project_document WHERE idProject = ? ORDER BY uploadTimestamp DESC`,
-    [projectId]
-  );
-  return rows;
-}
-
-const { generateBastDocumentId } = require("../utils/idGenerator");
-
-async function insertBastDocument({ idProject, fileNameOriginal, fileNameStored, uploadedBy }) {
-  const idDocument = await generateBastDocumentId();
-  const [result] = await db.query(
-    `INSERT INTO bast_project_document (idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy, uploadTimestamp) VALUES (?, ?, ?, ?, ?, NOW())`,
-    [idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy]
-  );
-  return idDocument;
-}
-
-async function deleteBastDocument(idDocument) {
-  const [rows] = await db.query(
-    `SELECT fileNameStored FROM bast_project_document WHERE idDocument = ?`,
-    [idDocument]
-  );
-  if (rows.length === 0) return false;
-  const fileNameStored = rows[0].fileNameStored;
-  await db.query(`DELETE FROM bast_project_document WHERE idDocument = ?`, [idDocument]);
-  return fileNameStored;
-}
 // backend/models/projectModel.js
 
 const db = require("../config/database");
+
+// --- PERUBAHAN: Fungsi baru untuk update status ---
+async function updateProjectStatus(projectId, newStatus) {
+  const [result] = await db.query(
+    `UPDATE project SET statusProject = ? WHERE idProject = ?`,
+    [newStatus, projectId]
+  );
+  return result.affectedRows;
+}
+// --- AKHIR PERUBAHAN ---
 
 const BASE_QUERY = `
   SELECT 
@@ -69,7 +49,8 @@ const getAllProjects = async () => {
 
 // Get project by ID (sekarang menggunakan BASE_QUERY)
 const getProjectById = async (id) => {
-  const [projectRows] = await db.query(`
+  const [projectRows] = await db.query(
+    `
     SELECT 
       p.*, 
       tp.nmTypeProject,
@@ -89,7 +70,9 @@ const getProjectById = async (id) => {
     LEFT JOIN customer c ON p.idCustomer = c.idCustomer
     LEFT JOIN pm pm ON pm.idPM = o.idPM
     WHERE p.idProject = ?
-  `, [id]);
+  `,
+    [id]
+  );
 
   if (projectRows.length === 0) {
     return null;
@@ -97,12 +80,15 @@ const getProjectById = async (id) => {
 
   const project = projectRows[0];
 
-  const [expertRows] = await db.query(`
+  const [expertRows] = await db.query(
+    `
     SELECT e.idExpert, e.nmExpert
     FROM expert e
     JOIN project_expert pe ON e.idExpert = pe.idExpert
     WHERE pe.idProject = ?
-  `, [id]);
+  `,
+    [id]
+  );
 
   project.experts = expertRows;
 
@@ -211,7 +197,8 @@ async function getByPmId(pmId) {
 // ==================== AKHIR PERUBAHAN ====================
 
 async function updateFeedback(idProject, feedback, attachments) {
-  const attachmentsJson = attachments.length > 0 ? JSON.stringify(attachments) : null;
+  const attachmentsJson =
+    attachments.length > 0 ? JSON.stringify(attachments) : null;
   const [result] = await db.query(
     `UPDATE project SET fbProject = ?, fbAttachments = ? WHERE idProject = ?`,
     [feedback, attachmentsJson, idProject]
@@ -247,6 +234,44 @@ async function updateProjectExperts(projectId, expertIds) {
   }
 }
 
+// ==================== BAST PROJECT DOCUMENT ====================
+async function getBastDocuments(projectId) {
+  const [rows] = await db.query(
+    `SELECT * FROM bast_project_document WHERE idProject = ? ORDER BY uploadTimestamp DESC`,
+    [projectId]
+  );
+  return rows;
+}
+
+const { generateBastDocumentId } = require("../utils/idGenerator");
+
+async function insertBastDocument({
+  idProject,
+  fileNameOriginal,
+  fileNameStored,
+  uploadedBy,
+}) {
+  const idDocument = await generateBastDocumentId();
+  const [result] = await db.query(
+    `INSERT INTO bast_project_document (idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy, uploadTimestamp) VALUES (?, ?, ?, ?, ?, NOW())`,
+    [idDocument, idProject, fileNameOriginal, fileNameStored, uploadedBy]
+  );
+  return idDocument;
+}
+
+async function deleteBastDocument(idDocument) {
+  const [rows] = await db.query(
+    `SELECT fileNameStored FROM bast_project_document WHERE idDocument = ?`,
+    [idDocument]
+  );
+  if (rows.length === 0) return false;
+  const fileNameStored = rows[0].fileNameStored;
+  await db.query(`DELETE FROM bast_project_document WHERE idDocument = ?`, [
+    idDocument,
+  ]);
+  return fileNameStored;
+}
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -261,4 +286,5 @@ module.exports = {
   getBastDocuments,
   insertBastDocument,
   deleteBastDocument,
+  updateProjectStatus, // <-- PERUBAHAN: Ekspor fungsi baru
 };

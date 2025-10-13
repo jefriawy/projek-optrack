@@ -1,60 +1,10 @@
-// ==================== BAST PROJECT DOCUMENT ====================
-const getBastDocuments = async (req, res) => {
-  const { id: idProject } = req.params;
-  try {
-    const docs = await Project.getBastDocuments(idProject);
-    res.json(docs);
-  } catch (err) {
-    console.error("Error fetching BAST documents:", err);
-    res.status(500).json({ error: "Gagal memuat daftar dokumen BAST." });
-  }
-};
-
-const uploadBastDocument = async (req, res) => {
-  const { id: idProject } = req.params;
-  const { id: userId } = req.user;
-  if (!req.files || !req.files.length) {
-    return res.status(400).json({ error: "Tidak ada file yang diunggah." });
-  }
-  try {
-    const file = req.files[0];
-    const { filename: fileNameStored, originalname: fileNameOriginal } = file;
-    await Project.insertBastDocument({
-      idProject,
-      fileNameOriginal,
-      fileNameStored,
-      uploadedBy: userId,
-    });
-    res.status(201).json({ message: "Dokumen BAST berhasil diunggah." });
-  } catch (err) {
-    console.error("Error uploading BAST document:", err);
-    res.status(500).json({ error: "Gagal mengunggah dokumen BAST." });
-  }
-};
-
-const deleteBastDocument = async (req, res) => {
-  const { idDocument } = req.params;
-  try {
-    const fileNameStored = await Project.deleteBastDocument(idDocument);
-    if (!fileNameStored) return res.status(404).json({ error: "Dokumen tidak ditemukan." });
-    // Hapus file fisik
-    const filePath = path.join(__dirname, "..", "uploads", "bast_project", fileNameStored);
-    fs.unlink(filePath, (err) => {
-      if (err) console.error("Gagal menghapus file BAST:", err);
-    });
-    res.json({ message: "Dokumen BAST berhasil dihapus." });
-  } catch (err) {
-    console.error("Error deleting BAST document:", err);
-    res.status(500).json({ error: "Gagal menghapus dokumen BAST." });
-  }
-};
-const Notification = require("../models/notificationModel");
 // backend/controllers/projectController.js
 const Project = require("../models/projectModel");
 const { generateUserId } = require("../utils/idGenerator");
 const pool = require("../config/database");
 const fs = require("fs");
 const path = require("path");
+const Notification = require("../models/notificationModel");
 
 const getProjects = async (req, res) => {
   try {
@@ -182,14 +132,18 @@ const submitProjectFeedback = async (req, res) => {
     // Proses file lampiran jika ada
     let attachments = [];
     if (req.files && req.files.length > 0) {
-      attachments = req.files.map(file => ({
+      attachments = req.files.map((file) => ({
         original: file.originalname,
         stored: file.filename,
       }));
     }
 
     // Simpan feedback dan path file ke database
-    const affectedRows = await Project.updateFeedback(id, feedback, attachments);
+    const affectedRows = await Project.updateFeedback(
+      id,
+      feedback,
+      attachments
+    );
 
     if (affectedRows === 0)
       return res.status(404).json({ error: "Proyek tidak ditemukan" });
@@ -213,15 +167,19 @@ const updateProjectExperts = async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: "Project not found." });
     }
-    const oldExpertIds = project.experts.map(e => e.idExpert);
+    const oldExpertIds = project.experts.map((e) => e.idExpert);
 
     // Update the experts in the database
     await Project.updateProjectExperts(projectId, expertIds);
 
     // 2. Compare old and new expert lists to find added and removed experts
     const newExpertIds = expertIds;
-    const addedExperts = newExpertIds.filter(id => !oldExpertIds.includes(id));
-    const removedExperts = oldExpertIds.filter(id => !newExpertIds.includes(id));
+    const addedExperts = newExpertIds.filter(
+      (id) => !oldExpertIds.includes(id)
+    );
+    const removedExperts = oldExpertIds.filter(
+      (id) => !newExpertIds.includes(id)
+    );
 
     // 3. Send notifications
     // Notify added experts
@@ -252,7 +210,6 @@ const updateProjectExperts = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 const uploadProjectDocuments = async (req, res) => {
   const { id: idProject } = req.params;
   const { id: userId } = req.user;
@@ -292,7 +249,6 @@ const uploadProjectDocuments = async (req, res) => {
         relatedEntityId: idProject,
         senderId: userId,
       };
-
       // Notify PM
       if (project.idPM) {
         await Notification.createNotification({
@@ -332,8 +288,6 @@ const uploadProjectDocuments = async (req, res) => {
     connection.release();
   }
 };
-
-// Fungsi baru untuk mendapatkan daftar dokumen
 const getProjectDocuments = async (req, res) => {
   const { id: idProject } = req.params;
   try {
@@ -355,8 +309,6 @@ const getProjectDocuments = async (req, res) => {
     res.status(500).json({ error: "Gagal mengambil daftar dokumen." });
   }
 };
-
-// Fungsi baru untuk menghapus dokumen
 const deleteProjectDocument = async (req, res) => {
   const { idDocument } = req.params;
   const { id: userId, role } = req.user;
@@ -423,8 +375,6 @@ const deleteProjectDocument = async (req, res) => {
     connection.release();
   }
 };
-
-// Fungsi baru untuk mendapatkan daftar dokumen
 const getProjectFeedbackAttachments = async (req, res) => {
   const { id: idProject } = req.params;
   try {
@@ -433,11 +383,88 @@ const getProjectFeedbackAttachments = async (req, res) => {
       [idProject]
     );
     if (rows.length === 0) return res.json([]);
-    const attachments = rows[0].fbAttachments ? JSON.parse(rows[0].fbAttachments) : [];
+    const attachments = rows[0].fbAttachments
+      ? JSON.parse(rows[0].fbAttachments)
+      : [];
     res.json(attachments);
   } catch (err) {
     console.error("Error fetching project feedback attachments:", err);
     res.status(500).json({ error: "Gagal mengambil lampiran feedback." });
+  }
+};
+
+// ==================== BAST PROJECT DOCUMENT ====================
+const getBastDocuments = async (req, res) => {
+  const { id: idProject } = req.params;
+  try {
+    const docs = await Project.getBastDocuments(idProject);
+    res.json(docs);
+  } catch (err) {
+    console.error("Error fetching BAST documents:", err);
+    res.status(500).json({ error: "Gagal memuat daftar dokumen BAST." });
+  }
+};
+
+const uploadBastDocument = async (req, res) => {
+  const { id: idProject } = req.params;
+  const { id: userId } = req.user;
+  if (!req.files || !req.files.length) {
+    return res.status(400).json({ error: "Tidak ada file yang diunggah." });
+  }
+  try {
+    const file = req.files[0];
+    const { filename: fileNameStored, originalname: fileNameOriginal } = file;
+
+    // Simpan dokumen BAST ke database
+    await Project.insertBastDocument({
+      idProject,
+      fileNameOriginal,
+      fileNameStored,
+      uploadedBy: userId,
+    });
+
+    // --- PERUBAHAN DIMULAI ---
+    const project = await Project.getProjectById(idProject);
+    if (
+      project &&
+      project.statusProject === "On Progress" &&
+      new Date() > new Date(project.endProject)
+    ) {
+      await Project.updateProjectStatus(idProject, "Finished");
+      console.log(
+        `Project ${idProject} status updated to Finished after BAST upload.`
+      );
+    }
+    // --- AKHIR PERUBAHAN ---
+
+    res.status(201).json({ message: "Dokumen BAST berhasil diunggah." });
+  } catch (err) {
+    console.error("Error uploading BAST document:", err);
+    res.status(500).json({ error: "Gagal mengunggah dokumen BAST." });
+  }
+};
+
+const deleteBastDocument = async (req, res) => {
+  const { idDocument } = req.params;
+  try {
+    const fileNameStored = await Project.deleteBastDocument(idDocument);
+    if (!fileNameStored)
+      return res.status(404).json({ error: "Dokumen tidak ditemukan." });
+    // Hapus file fisik
+    const filePath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "bast_project",
+      fileNameStored
+    );
+    fs.unlink(filePath, (err) => {
+      if (err) console.error("Gagal menghapus file BAST:", err);
+    });
+    res.json({ message: "Dokumen BAST berhasil dihapus." });
+  } catch (err) {
+    console.error("Error deleting BAST document:", err);
+    res.status(500).json({ error: "Gagal menghapus dokumen BAST." });
   }
 };
 
@@ -454,7 +481,6 @@ module.exports = {
   getProjectDocuments,
   deleteProjectDocument,
   getProjectFeedbackAttachments,
-  // Ekspor handler dokumen BAST
   getBastDocuments,
   uploadBastDocument,
   deleteBastDocument,

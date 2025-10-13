@@ -9,7 +9,7 @@ async function updateTrainingStatuses(conn) {
   await conn.query("SET time_zone = ?", [APP_TZ]); // ⬅️ penting!
 
   // --- LOGIKA NOTIFIKASI DAN UPDATE STATUS TRAINING FINISHED (DELIVERED) ---
-  
+
   // 1. Ambil training yang akan diselesaikan DAN belum berstatus 'Training Delivered'
   const [finishedTrainings] = await conn.query(
     `SELECT tr.idTraining, tr.nmTraining, tr.idExpert
@@ -18,7 +18,7 @@ async function updateTrainingStatuses(conn) {
        AND NOW() > endTraining
        AND statusTraining <> 'Training Delivered'`
   );
-  
+
   // 2. Update status training menjadi 'Training Delivered'
   await conn.query(
     `UPDATE training
@@ -30,17 +30,17 @@ async function updateTrainingStatuses(conn) {
 
   // 3. NOTIFIKASI 3.B: Training Selesai -> Kirim ke Trainer (Expert)
   for (const tr of finishedTrainings) {
-      if (tr.idExpert) {
-          await Notification.createNotification({
-              recipientId: tr.idExpert, 
-              recipientRole: "Expert", // Asumsi Trainer/Expert memiliki role 'Expert'
-              message: `Training (${tr.nmTraining}) telah Selesai`,
-              type: "training_finished",
-              senderId: "SYSTEM", // Sender sistem
-              senderName: "System",
-              relatedEntityId: tr.idTraining, 
-          });
-      }
+    if (tr.idExpert) {
+      await Notification.createNotification({
+        recipientId: tr.idExpert,
+        recipientRole: "Expert", // Asumsi Trainer/Expert memiliki role 'Expert'
+        message: `Training (${tr.nmTraining}) telah Selesai`,
+        type: "training_finished",
+        senderId: "SYSTEM", // Sender sistem
+        senderName: "System",
+        relatedEntityId: tr.idTraining,
+      });
+    }
   }
 
   // --- LOGIKA NOTIFIKASI DAN UPDATE STATUS TRAINING STARTED (ON PROGRESS) ---
@@ -67,17 +67,17 @@ async function updateTrainingStatuses(conn) {
 
   // 6. NOTIFIKASI 3.A: Training Dimulai -> Kirim ke Trainer (Expert)
   for (const tr of startedTrainings) {
-      if (tr.idExpert) {
-          await Notification.createNotification({
-              recipientId: tr.idExpert, 
-              recipientRole: "Expert",
-              message: `Training (${tr.nmTraining}) telah dimulai`,
-              type: "training_started",
-              senderId: "SYSTEM", // Sender sistem
-              senderName: "System",
-              relatedEntityId: tr.idTraining, 
-          });
-      }
+    if (tr.idExpert) {
+      await Notification.createNotification({
+        recipientId: tr.idExpert,
+        recipientRole: "Expert",
+        message: `Training (${tr.nmTraining}) telah dimulai`,
+        type: "training_started",
+        senderId: "SYSTEM", // Sender sistem
+        senderName: "System",
+        relatedEntityId: tr.idTraining,
+      });
+    }
   }
 
   // --- LOGIKA UPDATE STATUS TRAINING PENDING (PO RECEIVED) ---
@@ -93,6 +93,9 @@ async function updateTrainingStatuses(conn) {
 
 async function updateProjectStatuses(conn) {
   await conn.query("SET time_zone = ?", [APP_TZ]); // ⬅️ penting!
+
+  // --- PERUBAHAN: Hapus atau nonaktifkan blok ini ---
+  /*
   await conn.query(
     `UPDATE project
        SET statusProject = 'Finished'
@@ -100,6 +103,8 @@ async function updateProjectStatuses(conn) {
        AND NOW() > endProject
        AND statusProject <> 'Finished'`
   );
+  */
+
   await conn.query(
     `UPDATE project
        SET statusProject = 'On Progress'
@@ -129,7 +134,7 @@ async function tick() {
 function startStatusScheduler() {
   tick().catch(console.error);
   // Interval 3 detik seperti yang sudah ada
-  setInterval(tick, 3 * 1000); 
+  setInterval(tick, 3 * 1000);
 }
 
 module.exports = { startStatusScheduler };
