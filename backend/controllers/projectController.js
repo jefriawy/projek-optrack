@@ -66,12 +66,32 @@ const getProjects = async (req, res) => {
   }
 };
 const getProjectById = async (req, res) => {
+  const projectId = req.params.id;
   try {
-    const project = await Project.getProjectById(req.params.id);
-    if (!project) return res.status(404).json({ error: "Project not found" });
+    // 1. Ambil detail proyek utama (termasuk expert)
+    const project = await Project.getProjectById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // 2. Ambil dokumen proyek dan dokumen BAST secara paralel
+    const [projectDocs, bastDocs] = await Promise.all([
+      pool.query("SELECT * FROM project_document WHERE idProject = ?", [
+        projectId,
+      ]),
+      pool.query("SELECT * FROM bast_project_document WHERE idProject = ?", [
+        projectId,
+      ]),
+    ]);
+
+    // 3. Gabungkan hasil ke dalam objek proyek
+    project.project_documents = projectDocs[0];
+    project.bast_documents = bastDocs[0];
+
+    // 4. Kirim respons gabungan
     res.json(project);
   } catch (err) {
-    console.error("Error fetching project:", err);
+    console.error(`Error fetching details for project ${projectId}:`, err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
