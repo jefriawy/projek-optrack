@@ -170,6 +170,7 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
     formatRupiah(seed.valOpti)
   );
   const [errors, setErrors] = useState({});
+  const [dateError, setDateError] = useState("");
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
   const [experts, setExperts] = useState([]);
@@ -287,6 +288,17 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
       setFormData((s) => ({ ...s, [name]: value }));
     }
     if (errors[name]) setErrors((err) => ({ ...err, [name]: "" }));
+
+    // Validasi tanggal selesai
+    if (name === "endTraining" || name === "startTraining") {
+      let start = name === "startTraining" ? value : formData.startTraining;
+      let end = name === "endTraining" ? value : formData.endTraining;
+      if (start && end && new Date(end) < new Date(start)) {
+        setDateError("Tanggal selesai tidak valid");
+      } else {
+        setDateError("");
+      }
+    }
   };
 
   const handleSelectChange = (name) => (selectedOption) => {
@@ -355,6 +367,16 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validasi tanggal selesai
+    if (
+      (formData.jenisOpti === "Training" || formData.jenisOpti === "Project") &&
+      formData.startTraining &&
+      formData.endTraining &&
+      new Date(formData.endTraining) < new Date(formData.startTraining)
+    ) {
+      setDateError("Tanggal selesai tidak valid");
+      return;
+    }
     try {
       const payload = { ...formData };
       const schema = getValidationSchema();
@@ -789,6 +811,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                           onChange={handleChange}
                           className={inputClass}
                         />
+                        {dateError && (
+                          <p className="text-red-600 text-sm">{dateError}</p>
+                        )}
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
@@ -873,6 +898,9 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                           onChange={handleChange}
                           className={inputClass}
                         />
+                        {dateError && (
+                          <p className="text-red-600 text-sm">{dateError}</p>
+                        )}
                       </div>
                     </div>
                     <div className="md:col-span-2 mt-2">
