@@ -851,60 +851,71 @@ const ProjectPage = () => {
         {!detailLoading && detailErr && (
           <div className="text-center text-red-600 py-6">{detailErr}</div>
         )}
-        {!detailLoading && !detailErr && detail && (
-          <div>
-            {["PM", "Expert"].includes(user.role) && (
-              <div className="border-b border-gray-200 mb-4">
-                <div className="flex items-center gap-2 -mb-px">
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === "detail"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                    onClick={() => setActiveTab("detail")}
-                  >
-                    Detail
-                  </button>
-                  {user.role === "PM" && (
-                    <button
-                      className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                        activeTab === "addExpert"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                      onClick={() => setActiveTab("addExpert")}
-                    >
-                      Tambah Expert
-                    </button>
-                  )}
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === "uploadDocument"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                    onClick={() => setActiveTab("uploadDocument")}
-                  >
-                    Upload Dokumen
-                  </button>
-                </div>
+        {!detailLoading &&
+          !detailErr &&
+          detail &&
+          (() => {
+            const isDelivered =
+              computeStatus(detail.startProject, detail.endProject).key ===
+              "finished";
+
+            return (
+              <div>
+                {["PM", "Expert"].includes(user.role) && (
+                  <div className="border-b border-gray-200 mb-4">
+                    <div className="flex items-center gap-2 -mb-px">
+                      <button
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                          activeTab === "detail"
+                            ? "border-blue-500 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                        onClick={() => setActiveTab("detail")}
+                      >
+                        Detail
+                      </button>
+                      {user.role === "PM" && (
+                        <button
+                          className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                            activeTab === "addExpert"
+                              ? "border-blue-500 text-blue-600"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          onClick={() => setActiveTab("addExpert")}
+                          disabled={isDelivered}
+                        >
+                          Tambah Expert
+                        </button>
+                      )}
+                      <button
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                          activeTab === "uploadDocument"
+                            ? "border-blue-500 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        onClick={() => setActiveTab("uploadDocument")}
+                        disabled={isDelivered}
+                      >
+                        Upload Dokumen
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "detail" && <ProjectDetailTab project={detail} />}
+
+                {activeTab === "addExpert" && user.role === "PM" && (
+                  <AddExpertForm projectId={detail.idProject} />
+                )}
+
+                {/* --- PERUBAHAN DIMULAI: Tampilkan komponen upload dokumen --- */}
+                {activeTab === "uploadDocument" && (
+                  <DocumentUploadTab projectId={detail.idProject} />
+                )}
+                {/* --- AKHIR PERUBAHAN --- */}
               </div>
-            )}
-
-            {activeTab === "detail" && <ProjectDetailTab project={detail} />}
-
-            {activeTab === "addExpert" && user.role === "PM" && (
-              <AddExpertForm projectId={detail.idProject} />
-            )}
-
-            {/* --- PERUBAHAN DIMULAI: Tampilkan komponen upload dokumen --- */}
-            {activeTab === "uploadDocument" && (
-              <DocumentUploadTab projectId={detail.idProject} />
-            )}
-            {/* --- AKHIR PERUBAHAN --- */}
-          </div>
-        )}
+            );
+          })()}
       </Modal>
       <FeedbackModal
         isOpen={openFeedback}
