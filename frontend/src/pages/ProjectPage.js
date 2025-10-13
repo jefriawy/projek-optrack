@@ -22,6 +22,7 @@ import FeedbackModal from "../components/FeedbackModal";
 import AddExpertForm from "../components/AddExpertForm";
 import BastUploadForm from "../components/BastUploadForm";
 import NotificationBell from "../components/NotificationBell";
+import ProjectDetailTab from "../components/ProjectDetailTab";
 import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
@@ -485,6 +486,18 @@ const ProjectPage = () => {
     tickRef.current = setInterval(() => forceTick((n) => n + 1), 1000);
     return () => clearInterval(tickRef.current);
   }, []);
+
+  useEffect(() => {
+    if (open || openBast) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [open, openBast]);
+
   const fetchProjects = useCallback(
     async (signal) => {
       const endpoint = user?.role === "Admin" ? "" : "/mine";
@@ -838,165 +851,71 @@ const ProjectPage = () => {
         {!detailLoading && detailErr && (
           <div className="text-center text-red-600 py-6">{detailErr}</div>
         )}
-        {!detailLoading && !detailErr && detail && (
-          <div>
-            {["PM", "Expert"].includes(user.role) && (
-              <div className="border-b border-gray-200 mb-4">
-                <div className="flex items-center gap-2 -mb-px">
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === "detail"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                    onClick={() => setActiveTab("detail")}
-                  >
-                    Detail
-                  </button>
-                  {user.role === "PM" && (
-                    <button
-                      className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                        activeTab === "addExpert"
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                      onClick={() => setActiveTab("addExpert")}
-                    >
-                      Tambah Expert
-                    </button>
-                  )}
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 ${
-                      activeTab === "uploadDocument"
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                    onClick={() => setActiveTab("uploadDocument")}
-                  >
-                    Upload Dokumen
-                  </button>
-                </div>
-              </div>
-            )}
+        {!detailLoading &&
+          !detailErr &&
+          detail &&
+          (() => {
+            const isDelivered =
+              computeStatus(detail.startProject, detail.endProject).key ===
+              "finished";
 
-            {activeTab === "detail" && (
-              <div className="space-y-6">
-                <div className="rounded-lg border p-4">
-                  <div className="text-sm text-gray-500 mb-2">
-                    Jadwal & Lokasi
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Mulai</span>
-                      <b>{fmtDateTime(detail.startProject)}</b>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Selesai</span>
-                      <b>{fmtDateTime(detail.endProject)}</b>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Durasi</span>
-                      <b>
-                        {diffDays(detail.startProject, detail.endProject) ??
-                          "-"}{" "}
-                        hari
-                      </b>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-2 text-gray-500">
-                        <IconMap /> Tempat
-                      </span>
-                      <b className="text-right">{detail.placeProject || "-"}</b>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="rounded-lg border p-4 flex flex-col items-start">
-                    <div className="text-sm text-gray-500 mb-2">Sales</div>
-                    <div className="text-sm font-normal text-gray-800">
-                      {detail.nmSales || "-"}
-                    </div>
-                  </div>
-                  <div className="rounded-lg border p-4 flex flex-col justify-center items-start">
-                    <div className="text-sm text-gray-500 mb-2">
-                      Project Manager
-                    </div>
-                    <div className="text-sm font-normal text-gray-800">
-                      {detail.nmPM || "-"}
-                    </div>
-                    <div className="text-sm text-gray-500 mt-4 mb-2">
-                      Expert
-                    </div>
-                    <div className="text-sm font-normal text-gray-800">
-                      {Array.isArray(detail.experts) &&
-                      detail.experts.length > 0 ? (
-                        <div className="space-y-1">
-                          {detail.experts.map((e, i) => (
-                            <div key={i}>
-                              {e.nmExpert ||
-                                e.name ||
-                                e.fullName ||
-                                e.username ||
-                                "-"}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        detail.nmExpert || detail.nmExperts || "-"
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="rounded-lg border p-4">
-                    <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
-                    <div className="text-sm text-gray-700 leading-6">
-                      {detail.kebutuhan || "Belum ada deskripsi."}
-                    </div>
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <div className="text-sm text-gray-500 mb-2">Dokumen</div>
-                    {detail.proposalOpti ? (
-                      <a
-                        href={`${API_BASE}/uploads/proposals/${detail.proposalOpti
-                          .split(/[\\/]/)
-                          .pop()}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-black hover:underline flex items-center gap-2"
+            return (
+              <div>
+                {["PM", "Expert"].includes(user.role) && (
+                  <div className="border-b border-gray-200 mb-4">
+                    <div className="flex items-center gap-2 -mb-px">
+                      <button
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                          activeTab === "detail"
+                            ? "border-blue-500 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                        onClick={() => setActiveTab("detail")}
                       >
-                        <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-                        <span>{detail.proposalOpti.split(/[\\/]/).pop()}</span>
-                      </a>
-                    ) : (
-                      <div className="text-sm text-gray-700">
-                        Belum ada dokumen.
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {detail.feedback && (
-                  <div className="rounded-lg border p-4">
-                    <div className="text-sm text-gray-500 mb-2">Feedback</div>
-                    <p className="text-sm whitespace-pre-wrap">
-                      {detail.feedback}
-                    </p>
+                        Detail
+                      </button>
+                      {user.role === "PM" && (
+                        <button
+                          className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                            activeTab === "addExpert"
+                              ? "border-blue-500 text-blue-600"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          onClick={() => setActiveTab("addExpert")}
+                          disabled={isDelivered}
+                        >
+                          Tambah Expert
+                        </button>
+                      )}
+                      <button
+                        className={`px-4 py-2 text-sm font-semibold border-b-2 ${
+                          activeTab === "uploadDocument"
+                            ? "border-blue-500 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        onClick={() => setActiveTab("uploadDocument")}
+                        disabled={isDelivered}
+                      >
+                        Upload Dokumen
+                      </button>
+                    </div>
                   </div>
                 )}
+
+                {activeTab === "detail" && <ProjectDetailTab project={detail} />}
+
+                {activeTab === "addExpert" && user.role === "PM" && (
+                  <AddExpertForm projectId={detail.idProject} />
+                )}
+
+                {/* --- PERUBAHAN DIMULAI: Tampilkan komponen upload dokumen --- */}
+                {activeTab === "uploadDocument" && (
+                  <DocumentUploadTab projectId={detail.idProject} />
+                )}
+                {/* --- AKHIR PERUBAHAN --- */}
               </div>
-            )}
-
-            {activeTab === "addExpert" && user.role === "PM" && (
-              <AddExpertForm projectId={detail.idProject} />
-            )}
-
-            {/* --- PERUBAHAN DIMULAI: Tampilkan komponen upload dokumen --- */}
-            {activeTab === "uploadDocument" && (
-              <DocumentUploadTab projectId={detail.idProject} />
-            )}
-            {/* --- AKHIR PERUBAHAN --- */}
-          </div>
-        )}
+            );
+          })()}
       </Modal>
       <FeedbackModal
         isOpen={openFeedback}

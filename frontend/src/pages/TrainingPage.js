@@ -222,6 +222,17 @@ const TrainingPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [open]);
+
   const fetchTrainings = useCallback(
     async (signal) => {
       const endpoint =
