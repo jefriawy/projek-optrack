@@ -14,7 +14,7 @@ const salesRoutes = require("./routes/sales");
 const trainingRoutes = require("./routes/training");
 const projectRoutes = require("./routes/project");
 const outsourceRoutes = require("./routes/outsource");
-const skillRoutes = require("./routes/skill");
+const skillCategoryRoutes = require("./routes/skillCategory");
 const adminRoutes = require("./routes/admin");
 const expertRoutes = require("./routes/expert");
 const notificationRoutes = require("./routes/notification"); // Import rute aktivitas yang baru
@@ -50,7 +50,7 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/training", trainingRoutes);
 app.use("/api/project", projectRoutes);
 app.use("/api/outsource", outsourceRoutes);
-app.use("/api/skills", skillRoutes);
+app.use("/api/skill-categories", skillCategoryRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/expert", expertRoutes);

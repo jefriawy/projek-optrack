@@ -1,22 +1,24 @@
 // frontend/src/components/UserManagement.js
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import axios from "axios";
-
 import { AuthContext } from "../context/AuthContext";
 import Modal from "./Modal";
 import AddUserForm from "./AddUserForm";
 import EditUserForm from "./EditUserForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
+import { FaEdit, FaTrashAlt } from "react-icons/fa";
 
-/* ===== Base URL (untuk avatar jika path relatif) ===== */
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-/* ===== User chip helpers (nama & avatar) ===== */
 const getDisplayName = (user) => {
   if (!user) return "User";
   return (
     user.name ||
     user.nmExpert ||
+    user.nmSales ||
+    user.nmAdmin ||
+    user.nmAkademik ||
+    user.nmPM ||
     user.fullName ||
     user.username ||
     (user.email ? user.email.split("@")[0] : "User")
@@ -24,17 +26,19 @@ const getDisplayName = (user) => {
 };
 const getAvatarUrl = (user) => {
   if (!user) return null;
-  const candidate = 
-    user.photoURL || 
-    user.photoUrl || 
-    user.photo || 
-    user.avatar || 
-    user.image || 
-    user.photoUser || 
+  const candidate =
+    user.photoURL ||
+    user.photoUrl ||
+    user.photo ||
+    user.avatar ||
+    user.image ||
+    user.photoUser ||
     null;
   if (!candidate) return null;
-  if (/^https?:\\\\]/i.test(candidate)) return candidate;
-  return `${API_BASE}/uploads/avatars/${String(candidate).split(/[\\/]/).pop()}`;
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return `${API_BASE}/uploads/avatars/${String(candidate)
+    .split(/[\\/]/)
+    .pop()}`;
 };
 const Initials = ({ name }) => {
   const ini = (name || "U")
@@ -50,70 +54,90 @@ const Initials = ({ name }) => {
   );
 };
 
-
-
-
 const UserManagement = () => {
   const { user } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [success, setSuccess] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addUserType, setAddUserType] = useState(null); // 'Admin', 'Sales', 'Expert', Akademik, PM
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null); // Will store { id, role, name }
+  const [loading, setLoading] = useState(true);
+
+  // Modals State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addUserType, setAddUserType] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
-  const handleEditClick = (user) => {
-    setUserToEdit(user);
-    setIsEditModalOpen(true);
-  };
+  // background detail loading (non-blocking)
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setUserToEdit(null);
-  };
-
-  const handleEditUserSubmit = async (formData) => {
-    if (!userToEdit) return;
+  const fetchUsers = useCallback(async () => {
+    if (!user || !user.token) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      await axios.put(`http://localhost:3000/api/user/${userToEdit.role}/${userToEdit.id}`,
-        formData,
-        { headers: { Authorization: `Bearer ${user.token}` } }
+      const response = await axios.get(`${API_BASE}/api/user/all`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setUsers(
+        response.data.map((u) => ({
+          ...u,
+          id:
+            u.id ||
+            u.idAdmin ||
+            u.idSales ||
+            u.idExpert ||
+            u.idAkademik ||
+            u.idPM,
+          name:
+            u.name ||
+            u.nmAdmin ||
+            u.nmSales ||
+            u.nmExpert ||
+            u.nmAkademik ||
+            u.nmPM,
+          email:
+            u.email ||
+            u.emailAdmin ||
+            u.emailSales ||
+            u.emailExpert ||
+            u.emailAkademik ||
+            u.emailPM,
+          mobile:
+            u.mobile ||
+            u.mobileAdmin ||
+            u.mobileSales ||
+            u.mobileExpert ||
+            u.mobileAkademik ||
+            u.mobilePM,
+          skills: u.skills,
+        }))
       );
-      setSuccess("✅ User updated successfully");
-      fetchUsers();
-      handleCloseEditModal();
-      setTimeout(() => setSuccess(""), 3000);
+      setErrorMessage("");
     } catch (error) {
-      setErrorMessage(error.response?.data?.error || "❌ Failed to update user");
-      setTimeout(() => setErrorMessage(""), 3000);
+      console.error("Error fetching users:", error);
+      setErrorMessage("❌ Failed to fetch users.");
+      setUsers([]);
+      setTimeout(() => setErrorMessage(""), 5000);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const fetchUsers = () => {
-    if (user && user.token) {
-      axios
-        .get("http://localhost:3000/api/user/all", { // <-- Updated endpoint
-          headers: { Authorization: `Bearer ${user.token}` },
-        })
-        .then((response) => setUsers(response.data))
-        .catch((error) => console.error("Error fetching users:", error));
-    }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchUsers();
-  }, [user]);
+  }, [fetchUsers]);
 
-  const handleOpenModal = (type) => {
+  // --- Add User ---
+  const handleOpenAddModal = (type) => {
     setAddUserType(type);
-    setIsModalOpen(true);
+    setIsAddModalOpen(true);
   };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
     setAddUserType(null);
   };
 
@@ -121,10 +145,9 @@ const UserManagement = () => {
     let url = "";
     let payload = {};
 
-    // Determine the endpoint and payload based on the user type
     switch (addUserType) {
-      case 'Admin':
-        url = "http://localhost:3000/api/admin";
+      case "Admin":
+        url = `${API_BASE}/api/admin`;
         payload = {
           nmAdmin: formData.name,
           emailAdmin: formData.email,
@@ -132,32 +155,32 @@ const UserManagement = () => {
           mobileAdmin: formData.mobile,
         };
         break;
-      case 'Sales':
-        url = "http://localhost:3000/api/sales";
+      case "Sales":
+        url = `${API_BASE}/api/sales`;
         payload = {
           nmSales: formData.name,
           emailSales: formData.email,
           password: formData.password,
           mobileSales: formData.mobile,
+          role: formData.role,
           descSales: formData.descSales,
-          role: formData.role, // 'Sales' or 'Head Sales'
         };
         break;
-      case 'Expert':
-        url = "http://localhost:3000/api/expert";
+      case "Expert":
+        url = `${API_BASE}/api/expert`;
         payload = {
           nmExpert: formData.name,
           emailExpert: formData.email,
           password: formData.password,
           mobileExpert: formData.mobile,
-          idSkill: formData.idSkill,
+          role: formData.role,
+          skillCtgIds: formData.skillCtgIds,
           statExpert: formData.statExpert,
           Row: formData.Row,
-          role: formData.role, // Kirim role ke backend
         };
         break;
-      case 'Akademik':
-        url = "http://localhost:3000/api/admin/akademik";
+      case "Akademik":
+        url = `${API_BASE}/api/admin/akademik`;
         payload = {
           nmAkademik: formData.name,
           emailAkademik: formData.email,
@@ -165,8 +188,8 @@ const UserManagement = () => {
           mobileAkademik: formData.mobile,
         };
         break;
-      case 'PM':
-        url = "http://localhost:3000/api/admin/pm";
+      case "PM":
+        url = `${API_BASE}/api/admin/pm`;
         payload = {
           nmPM: formData.name,
           emailPM: formData.email,
@@ -175,7 +198,8 @@ const UserManagement = () => {
         };
         break;
       default:
-        setErrorMessage("Invalid user type to add.");
+        setErrorMessage("Invalid user type.");
+        setTimeout(() => setErrorMessage(""), 3000);
         return;
     }
 
@@ -185,159 +209,408 @@ const UserManagement = () => {
       });
       setSuccess(`✅ ${addUserType} user added successfully`);
       fetchUsers();
-      handleCloseModal();
+      handleCloseAddModal();
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
-      setErrorMessage(error.response?.data?.error || `❌ Failed to add ${addUserType} user`);
-      setTimeout(() => setErrorMessage(""), 3000);
+      console.error(
+        `Error adding ${addUserType} user:`,
+        error.response?.data || error.message
+      );
+      const backendError =
+        error.response?.data?.error || `❌ Failed to add ${addUserType} user`;
+      setErrorMessage(backendError);
+      setTimeout(() => setErrorMessage(""), 5000);
     }
   };
 
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user); // Store the whole user object
-    setIsDeleteConfirmOpen(true);
+  // --- Edit User ---
+  // open modal immediately with row data to avoid UI glitch; fetch extra details in background
+  const handleEditClick = async (userToEditData) => {
+    const isExpertRole = ["Expert", "Trainer"].includes(userToEditData.role);
+
+    setUserToEdit(userToEditData);
+    setIsEditModalOpen(true);
+
+    if (isExpertRole && user?.token) {
+      setDetailLoading(true);
+      try {
+        const response = await axios.get(
+          `${API_BASE}/api/expert/${userToEditData.id}`,
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+        setUserToEdit((prev) => ({
+          ...prev,
+          ...response.data,
+          id: prev.id,
+          name: response.data.nmExpert || prev.name,
+          email: response.data.emailExpert || prev.email,
+          mobile: response.data.mobileExpert || prev.mobile,
+        }));
+      } catch (err) {
+        console.warn(
+          "Expert detail fetch failed (non-blocking):",
+          err?.response?.status || err.message
+        );
+        // non-blocking: show small info if desired
+        setErrorMessage(
+          "Info: detail expert tidak ditemukan, menggunakan data baris."
+        );
+        setTimeout(() => setErrorMessage(""), 3000);
+      } finally {
+        setDetailLoading(false);
+      }
+    }
   };
 
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setUserToEdit(null);
+  };
+
+  // add helper near top of file
+  const buildPayloadForRole = (role, formData) => {
+    const clean = (v) => (v === "" ? undefined : v);
+    const p = {};
+    if (["Expert", "Trainer"].includes(role)) {
+      p.nmExpert = clean(formData.name);
+      p.emailExpert = clean(formData.email);
+      if (clean(formData.password)) p.password = formData.password;
+      p.mobileExpert = clean(formData.mobile);
+      p.role = clean(formData.role);
+      if (formData.skillCtgIds) {
+        p.skillCtgIds = Array.isArray(formData.skillCtgIds)
+          ? formData.skillCtgIds
+          : String(formData.skillCtgIds)
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+      }
+      if (clean(formData.statExpert)) p.statExpert = formData.statExpert;
+      return p;
+    }
+    // fallback generic mapping
+    p.name = clean(formData.name);
+    p.email = clean(formData.email);
+    if (clean(formData.password)) p.password = formData.password;
+    p.mobile = clean(formData.mobile);
+    p.role = clean(formData.role);
+    return p;
+  };
+
+  const handleEditUserSubmit = async (id, originalRole, formData) => {
+    const targetRole = formData.role || originalRole;
+    let endpoint = "";
+    switch (targetRole) {
+      case "Admin":
+        endpoint = `${API_BASE}/api/user/Admin/${id}`;
+        break;
+      case "Sales":
+      case "Head Sales":
+        endpoint = `${API_BASE}/api/user/${targetRole}/${id}`;
+        break;
+      case "Expert":
+      case "Trainer":
+        endpoint = `${API_BASE}/api/expert/${id}`;
+        break;
+      case "Akademik":
+        endpoint = `${API_BASE}/api/user/Akademik/${id}`;
+        break;
+      case "PM":
+        endpoint = `${API_BASE}/api/user/PM/${id}`;
+        break;
+      default:
+        setErrorMessage("❌ Invalid role for update.");
+        setTimeout(() => setErrorMessage(""), 3000);
+        return;
+    }
+
+    const payload = buildPayloadForRole(targetRole, formData);
+    // remove undefined
+    Object.keys(payload).forEach(
+      (k) => payload[k] === undefined && delete payload[k]
+    );
+
+    console.log("[UserManagement] PUT", endpoint, payload);
+    try {
+      const res = await axios.put(endpoint, payload, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setSuccess("✅ User updated successfully");
+      fetchUsers();
+      handleCloseEditModal();
+      setTimeout(() => setSuccess(""), 3000);
+      return res;
+    } catch (error) {
+      console.error(
+        "Error updating user:",
+        error.response?.data || error.message
+      );
+      const resp = error.response?.data;
+      let msg = "❌ Failed to update user";
+      if (resp) {
+        if (Array.isArray(resp.errors) && resp.errors.length) {
+          msg = resp.errors
+            .map((e) => e.msg || e.message || JSON.stringify(e))
+            .join("; ");
+        } else if (resp.error) {
+          msg = resp.error;
+        } else {
+          msg = JSON.stringify(resp);
+        }
+      }
+      setErrorMessage(msg);
+      setTimeout(() => setErrorMessage(""), 6000);
+      // do not rethrow
+    }
+  };
+
+  // --- Delete User ---
+  const handleDeleteClick = (userToDeleteData) => {
+    setUserToDelete({
+      id: userToDeleteData.id,
+      role: userToDeleteData.role,
+      name: userToDeleteData.name,
+    });
+    setIsDeleteConfirmOpen(true);
+  };
   const handleCancelDelete = () => {
     setIsDeleteConfirmOpen(false);
     setUserToDelete(null);
   };
-
   const handleConfirmDelete = async () => {
-    if (userToDelete) {
-      try {
-        // <-- Updated endpoint with role
-        await axios.delete(`http://localhost:3000/api/user/${userToDelete.role}/${userToDelete.id}`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        setSuccess("✅ User deleted successfully");
-        fetchUsers();
-        handleCancelDelete();
-        setTimeout(() => setSuccess(""), 3000);
-      } catch (error) {
-        setErrorMessage(error.response?.data?.error || "❌ Failed to delete user");
+    if (!userToDelete) return;
+
+    let urlSuffix = "";
+    switch (userToDelete.role) {
+      case "Admin":
+        urlSuffix = `Admin/${userToDelete.id}`;
+        break;
+      case "Sales":
+      case "Head Sales":
+        urlSuffix = `${userToDelete.role}/${userToDelete.id}`;
+        break;
+      case "Expert":
+      case "Trainer":
+        urlSuffix = `${userToDelete.role}/${userToDelete.id}`;
+        break;
+      case "Akademik":
+        urlSuffix = `Akademik/${userToDelete.id}`;
+        break;
+      case "PM":
+        urlSuffix = `PM/${userToDelete.id}`;
+        break;
+      default:
+        setErrorMessage("❌ Invalid role for delete.");
         setTimeout(() => setErrorMessage(""), 3000);
-      }
+        handleCancelDelete();
+        return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE}/api/user/${urlSuffix}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setSuccess("✅ User deleted successfully");
+      fetchUsers();
+      handleCancelDelete();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      console.error(
+        "Error deleting user:",
+        error.response?.data || error.message
+      );
+      setErrorMessage(
+        error.response?.data?.error || "❌ Failed to delete user"
+      );
+      setTimeout(() => setErrorMessage(""), 5000);
+      handleCancelDelete();
     }
   };
 
   const getRoleClass = (role) => {
     switch (role) {
-      case 'Sales':
-        return 'bg-green-100 text-green-800';
-      case 'Head Sales':
-        return 'bg-blue-100 text-blue-800';
-      case 'Admin':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Expert':
-        return 'bg-purple-100 text-purple-800';
-      case 'Trainer':
-        return 'bg-pink-100 text-pink-700';
-      case 'Akademik':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'PM':
-        return 'bg-red-100 text-red-800';
+      case "Sales":
+        return "bg-green-100 text-green-800";
+      case "Head Sales":
+        return "bg-blue-100 text-blue-800";
+      case "Admin":
+        return "bg-yellow-100 text-yellow-800";
+      case "Expert":
+        return "bg-purple-100 text-purple-800";
+      case "Trainer":
+        return "bg-pink-100 text-pink-700";
+      case "Akademik":
+        return "bg-indigo-100 text-indigo-800";
+      case "PM":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   return (
     <>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">All Users</h2>
-      <div className="flex space-x-2 mb-6">
+
+      <div className="flex flex-wrap gap-2 mb-6">
         <button
-          onClick={() => handleOpenModal('Admin')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          onClick={() => handleOpenAddModal("Admin")}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm"
         >
-          + Tambah Admin
+          + Admin
         </button>
         <button
-          onClick={() => handleOpenModal('Sales')}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+          onClick={() => handleOpenAddModal("Sales")}
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm"
         >
-          + Tambah Sales
+          + Sales
         </button>
         <button
-          onClick={() => handleOpenModal('Expert')}
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
+          onClick={() => handleOpenAddModal("Expert")}
+          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition text-sm"
         >
-          + Tambah Expert
+          + Expert/Trainer
         </button>
         <button
-          onClick={() => handleOpenModal('Akademik')}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+          onClick={() => handleOpenAddModal("Akademik")}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition text-sm"
         >
-          + Tambah Akademik
+          + Akademik
         </button>
         <button
-          onClick={() => handleOpenModal('PM')}
-          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+          onClick={() => handleOpenAddModal("PM")}
+          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition text-sm"
         >
-          + Tambah Project Manager
+          + Project Manager
         </button>
       </div>
 
-      {success && <p className="mb-4 p-2 bg-green-100 text-green-700 rounded">{success}</p>}
-      {errorMessage && <p className="mb-4 p-2 bg-red-100 text-red-700 rounded">{errorMessage}</p>}
+      {success && (
+        <p className="mb-4 p-3 bg-green-100 text-green-700 rounded-md text-sm">
+          {success}
+        </p>
+      )}
+      {errorMessage && (
+        <p className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+          {errorMessage}
+        </p>
+      )}
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.length > 0 ? (
-              users.map((u) => (
-                <tr key={`${u.id}-${u.role}`}>
-                  <td className="px-6 py-4 whitespace-nowrap">{u.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{u.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleClass(u.role)}`}>
-                      {u.role && u.role.charAt(0).toUpperCase() + u.role.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center flex gap-2 justify-center">
-                    <button
-                      onClick={() => handleEditClick(u)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm font-medium px-3 py-1 rounded shadow-md transition"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(u)}
-                      className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1 rounded shadow-md transition"
-                    >
-                      Delete
-                    </button>
+      {loading && (
+        <p className="text-center text-gray-500 py-4">Loading users...</p>
+      )}
+
+      {!loading && (
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Mobile
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.length > 0 ? (
+                users.map((u) => (
+                  <tr key={`${u.id}-${u.role}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {u.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {u.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {u.mobile || "-"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleClass(
+                          u.role
+                        )}`}
+                      >
+                        {u.role || "N/A"}
+                      </span>
+                    </td>
+                    {/* Actions: friendly buttons with icons */}
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <button
+                        onClick={() => handleEditClick(u)}
+                        title={`Edit ${u.name}`}
+                        aria-label={`Edit ${u.name}`}
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 px-2 py-1 mr-2 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 transition"
+                      >
+                        <FaEdit className="w-4 h-4" />
+                        <span className="hidden md:inline text-sm">Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteClick(u)}
+                        title={`Delete ${u.name}`}
+                        aria-label={`Delete ${u.name}`}
+                        className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900 transition"
+                      >
+                        <FaTrashAlt className="w-4 h-4" />
+                        <span className="hidden md:inline text-sm">Delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
+                    No users found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">No users found</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-
-      {/* Modal Edit User, render di luar table agar tidak nested di <tr> */}
-      {isEditModalOpen && (
-        <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title={"Edit User"}>
-          <EditUserForm user={userToEdit} onClose={handleCloseEditModal} onSubmit={handleEditUserSubmit} />
+      {isAddModalOpen && (
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={handleCloseAddModal}
+          title={`Tambah Pengguna ${addUserType}`}
+        >
+          <AddUserForm
+            userType={addUserType}
+            onClose={handleCloseAddModal}
+            onSubmit={handleAddUserSubmit}
+          />
         </Modal>
       )}
 
-      {isModalOpen && (
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={`Tambah Pengguna ${addUserType}`}>
-          <AddUserForm userType={addUserType} onClose={handleCloseModal} onSubmit={handleAddUserSubmit} />
+      {isEditModalOpen && userToEdit && (
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          title={`Edit User: ${userToEdit.name}`}
+        >
+          <EditUserForm
+            user={userToEdit}
+            onSubmit={handleEditUserSubmit}
+            onClose={handleCloseEditModal}
+          />
         </Modal>
       )}
 
@@ -345,7 +618,9 @@ const UserManagement = () => {
         isOpen={isDeleteConfirmOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        itemName={userToDelete ? userToDelete.name : ''}
+        itemName={
+          userToDelete ? `${userToDelete.name} (${userToDelete.role})` : "User"
+        }
       />
     </>
   );

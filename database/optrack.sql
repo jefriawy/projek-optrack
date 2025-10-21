@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 07, 2025 at 09:16 AM
+-- Generation Time: Oct 21, 2025 at 01:59 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.3.14
 
@@ -152,7 +152,6 @@ CREATE TABLE `expert` (
   `mobileExpert` varchar(20) DEFAULT NULL,
   `emailExpert` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL COMMENT 'Hashed password for expert user',
-  `idSkill` int(11) DEFAULT NULL,
   `statExpert` varchar(100) DEFAULT NULL,
   `Row` text DEFAULT NULL,
   `role` enum('Expert','Head of Expert','Trainer') DEFAULT 'Expert'
@@ -162,14 +161,14 @@ CREATE TABLE `expert` (
 -- Dumping data for table `expert`
 --
 
-INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `idSkill`, `statExpert`, `Row`, `role`) VALUES
-(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', 6, NULL, NULL, 'Expert'),
-(2504005, 'Kresna Saraswati', '08129421087', 'saraswatikresna@gmail.com', '$2b$10$KhCOIL/QsPmMmwRV6nfQSurqBXx2Tpnf3piyd2hHZe8MsIhQkvrdi', 10, NULL, NULL, 'Expert'),
-(2504006, 'Yudha Pratama', '08128321592', 'yudhapratamaass18@gmail.com', '$2b$10$HUAJLd9Y3wQjcAtJ9jb8ueEklJfA1l8ND5XzZucHjFKbOxrx5QZni', 9, NULL, NULL, 'Expert'),
-(2504007, 'Restu Ardianto', '08126754402', 'ardianto812@gmail.com', '$2b$10$Fk0bv7JQf.SMbyPpaoMzguPpmNMTDMed7x9gNsCk15ZRs0m1oaGSa', 2, NULL, NULL, 'Expert'),
-(2504008, 'Kania Rahmawati', '08126932444', 'rahmakaniawati@gmail.com', '$2b$10$ckga.EmM0P1K7NCOyfYYSed8zPLM5QdVPDZlGN7NPau.rsReSyXu.', 5, NULL, NULL, 'Expert'),
-(2514002, 'Bowo Sujatmiko', '081341126767', 'sujimatmokobowo@gmail.com', '$2b$10$CvXXzejPiHLV4VkLmN834ecc2SBeXK9aiXURaUdLDBwN6nJODWEMe', 9, NULL, NULL, 'Trainer'),
-(2514003, 'Khairul Lecher', '084416160155', 'khairullecher@gmail.com', '$2b$10$YJsiuItq81lkei1di5vVxOXCqZeAPKoEDzwnvNQRJ/GRmGrAzjNE2', 10, NULL, NULL, 'Trainer');
+INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `statExpert`, `Row`, `role`) VALUES
+(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', NULL, NULL, 'Expert'),
+(2504005, 'Kresna Saraswati', '08129421087', 'saraswatikresna@gmail.com', '$2b$10$KhCOIL/QsPmMmwRV6nfQSurqBXx2Tpnf3piyd2hHZe8MsIhQkvrdi', NULL, NULL, 'Expert'),
+(2504006, 'Yudha Pratama', '08128321592', 'yudhapratamaass18@gmail.com', '$2b$10$HUAJLd9Y3wQjcAtJ9jb8ueEklJfA1l8ND5XzZucHjFKbOxrx5QZni', NULL, NULL, 'Expert'),
+(2504007, 'Restu Ardianto', '08126754402', 'ardianto812@gmail.com', '$2b$10$Fk0bv7JQf.SMbyPpaoMzguPpmNMTDMed7x9gNsCk15ZRs0m1oaGSa', NULL, NULL, 'Expert'),
+(2504008, 'Kania Rahmawati', '08126932444', 'rahmakaniawati@gmail.com', '$2b$10$ckga.EmM0P1K7NCOyfYYSed8zPLM5QdVPDZlGN7NPau.rsReSyXu.', NULL, NULL, 'Expert'),
+(2514002, 'Bowo Sujatmiko', '081341126767', 'sujimatmokobowo@gmail.com', '$2b$10$CvXXzejPiHLV4VkLmN834ecc2SBeXK9aiXURaUdLDBwN6nJODWEMe', NULL, NULL, 'Trainer'),
+(2514003, 'Khairul Lecher', '084416160155', 'khairullecher@gmail.com', '$2b$10$YJsiuItq81lkei1di5vVxOXCqZeAPKoEDzwnvNQRJ/GRmGrAzjNE2', NULL, NULL, 'Trainer');
 
 -- --------------------------------------------------------
 
@@ -375,7 +374,7 @@ CREATE TABLE `project` (
 INSERT INTO `project` (`idProject`, `nmProject`, `idTypeProject`, `startProject`, `endProject`, `placeProject`, `idCustomer`, `idOpti`, `statusProject`, `fbProject`, `fbAttachments`) VALUES
 (2508001, 'project 1', 3, '2025-10-03 14:56:00', '2025-10-03 14:59:00', 'gedung a', 2505015, 2506057, 'Finished', NULL, ''),
 (2508002, 'Projek MBG', 3, '2025-10-05 08:37:00', '2025-10-31 08:38:00', 'Azana Hotel Jakarta Airport - Jakarta', 2505007, 2506058, 'On Progress', NULL, ''),
-(2508003, 'Microsoft Azure Cloud Platform', 3, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', 2505003, 2506059, 'Pending', NULL, ''),
+(2508003, 'Microsoft Azure Cloud Platform', 3, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', 2505003, 2506059, 'On Progress', NULL, ''),
 (2508004, 'Project Management Certification - PT Karya Nusantara', 3, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', 2505001, 2506060, 'Finished', NULL, '');
 
 -- --------------------------------------------------------
@@ -460,17 +459,38 @@ INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `passwor
 --
 
 CREATE TABLE `skill` (
-  `idSkill` int(11) NOT NULL,
-  `nmSkill` varchar(255) DEFAULT NULL,
-  `statSkill` varchar(100) DEFAULT NULL,
-  `descSkill` text DEFAULT NULL
+  `idExpert` int(11) NOT NULL,
+  `idSkillCtg` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `skill`
 --
 
-INSERT INTO `skill` (`idSkill`, `nmSkill`, `statSkill`, `descSkill`) VALUES
+INSERT INTO `skill` (`idExpert`, `idSkillCtg`) VALUES
+(2504005, 1),
+(2504005, 4),
+(2504005, 5),
+(2514002, 10);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `skill_category`
+--
+
+CREATE TABLE `skill_category` (
+  `idSkillCtg` int(11) NOT NULL,
+  `nmSkillCtg` varchar(255) DEFAULT NULL,
+  `statSkillCtg` varchar(100) DEFAULT NULL,
+  `descSkillCtg` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `skill_category`
+--
+
+INSERT INTO `skill_category` (`idSkillCtg`, `nmSkillCtg`, `statSkillCtg`, `descSkillCtg`) VALUES
 (1, 'JavaScript Development', 'Active', 'Keahlian dalam pengembangan aplikasi menggunakan JavaScript, termasuk ES6ுடன்.'),
 (2, 'React.js Frontend', 'Active', 'Pengembangan antarmuka pengguna (UI) modern dan interaktif menggunakan React.js.'),
 (3, 'Node.js & Express.js Backend', 'Active', 'Membangun sisi server (backend) dan API menggunakan Node.js dan Express.js.'),
@@ -640,8 +660,7 @@ ALTER TABLE `customer`
 -- Indexes for table `expert`
 --
 ALTER TABLE `expert`
-  ADD PRIMARY KEY (`idExpert`),
-  ADD KEY `idSkill` (`idSkill`);
+  ADD PRIMARY KEY (`idExpert`);
 
 --
 -- Indexes for table `notification`
@@ -712,7 +731,14 @@ ALTER TABLE `sales`
 -- Indexes for table `skill`
 --
 ALTER TABLE `skill`
-  ADD PRIMARY KEY (`idSkill`);
+  ADD PRIMARY KEY (`idExpert`,`idSkillCtg`),
+  ADD KEY `fk_skill_category` (`idSkillCtg`);
+
+--
+-- Indexes for table `skill_category`
+--
+ALTER TABLE `skill_category`
+  ADD PRIMARY KEY (`idSkillCtg`);
 
 --
 -- Indexes for table `statcustomer`
@@ -774,7 +800,7 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `expert`
 --
 ALTER TABLE `expert`
-  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2514004;
+  MODIFY `idExpert` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2514005;
 
 --
 -- AUTO_INCREMENT for table `notification`
@@ -819,10 +845,10 @@ ALTER TABLE `sales`
   MODIFY `idSales` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2503009;
 
 --
--- AUTO_INCREMENT for table `skill`
+-- AUTO_INCREMENT for table `skill_category`
 --
-ALTER TABLE `skill`
-  MODIFY `idSkill` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `skill_category`
+  MODIFY `idSkillCtg` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `statcustomer`
@@ -872,12 +898,6 @@ ALTER TABLE `customer`
   ADD CONSTRAINT `customer_ibfk_2` FOREIGN KEY (`idSales`) REFERENCES `sales` (`idSales`);
 
 --
--- Constraints for table `expert`
---
-ALTER TABLE `expert`
-  ADD CONSTRAINT `expert_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill` (`idSkill`);
-
---
 -- Constraints for table `opti`
 --
 ALTER TABLE `opti`
@@ -894,7 +914,7 @@ ALTER TABLE `opti`
 --
 ALTER TABLE `outsource`
   ADD CONSTRAINT `fk_outsource_opti` FOREIGN KEY (`idOpti`) REFERENCES `opti` (`idOpti`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `outsource_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill` (`idSkill`),
+  ADD CONSTRAINT `outsource_ibfk_1` FOREIGN KEY (`idSkill`) REFERENCES `skill_category` (`idSkillCtg`),
   ADD CONSTRAINT `outsource_ibfk_2` FOREIGN KEY (`idCustomer`) REFERENCES `customer` (`idCustomer`);
 
 --
@@ -916,6 +936,13 @@ ALTER TABLE `project_document`
 ALTER TABLE `project_expert`
   ADD CONSTRAINT `project_expert_ibfk_1` FOREIGN KEY (`idProject`) REFERENCES `project` (`idProject`) ON DELETE CASCADE,
   ADD CONSTRAINT `project_expert_ibfk_2` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `skill`
+--
+ALTER TABLE `skill`
+  ADD CONSTRAINT `fk_skill_category` FOREIGN KEY (`idSkillCtg`) REFERENCES `skill_category` (`idSkillCtg`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_skill_expert` FOREIGN KEY (`idExpert`) REFERENCES `expert` (`idExpert`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `training`
