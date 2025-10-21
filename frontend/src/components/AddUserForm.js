@@ -6,7 +6,6 @@ import axios from "axios";
 import Select from "react-select"; // Import react-select
 
 // Define separate validation schemas for each user type for clarity
-// ... (adminSchema, salesSchema, akademikSchema, pmSchema remain the same) ...
 const adminSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string()
@@ -15,7 +14,7 @@ const adminSchema = Yup.object({
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
-  mobile: Yup.string().optional(), // Make mobile optional if needed, or keep required
+  mobile: Yup.string().optional(),
 });
 
 const salesSchema = Yup.object({
@@ -26,14 +25,14 @@ const salesSchema = Yup.object({
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
-  mobile: Yup.string().optional(), // Make mobile optional if needed
+  mobile: Yup.string().optional(),
   role: Yup.string()
     .oneOf(["Sales", "Head Sales"])
     .required("Role is required"),
   descSales: Yup.string().optional(),
 });
 
-// Update expertSchema for multi-skill
+// Expert schema for multi-skill
 const expertSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string()
@@ -42,15 +41,14 @@ const expertSchema = Yup.object({
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
-  mobile: Yup.string().optional(), // Make mobile optional
-  // Change idSkill to skillCtgIds: an array, can be empty, but items must be numbers
+  mobile: Yup.string().optional(),
   skillCtgIds: Yup.array()
     .of(Yup.number().integer().positive("Skill ID must be positive"))
-    .nullable() // Allow empty selection initially
-    .default([]), // Default to empty array
+    .nullable()
+    .default([]),
   role: Yup.string()
     .oneOf(["Expert", "Trainer", "Head of Expert"])
-    .required("Role is required"), // Added Head of Expert
+    .required("Role is required"),
   statExpert: Yup.string().optional(),
   Row: Yup.string().optional(),
 });
@@ -108,11 +106,10 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         ? "PM"
         : userType === "Admin"
         ? "Admin"
-        : "", // Add default for Admin
+        : "",
     // Sales specific
     descSales: "",
-    // Expert specific (keep state simple, derive skillCtgIds on submit)
-    // No idSkill or skillCtgIds here initially
+    // Expert specific
     statExpert: "",
     Row: "",
   });
@@ -121,6 +118,10 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
 
   // Fetch Skill Categories when userType is Expert
   useEffect(() => {
+    // Reset skills when switching user type
+    setSelectedSkills([]);
+    setSkillCategories([]);
+    
     if (userType === "Expert") {
       const fetchSkillCategories = async () => {
         if (user.token) {
@@ -146,9 +147,6 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
       };
       fetchSkillCategories();
     }
-    // Reset skills when switching user type
-    setSelectedSkills([]);
-    setSkillCategories([]);
   }, [userType, user.token]);
 
   const handleChange = (e) => {

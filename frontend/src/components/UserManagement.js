@@ -1,4 +1,4 @@
-// frontend/src/components/UserManagement.js
+// frontend/src/components/UserManagement.js (MODIFIKASI)
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -7,7 +7,12 @@ import AddUserForm from "./AddUserForm";
 import EditUserForm from "./EditUserForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
+// Import komponen tombol user baru
+import CreateUserButton from "./CreateUserButton"; 
+// Import modal skill category baru
+import SkillCategoryModal from "./SkillCategoryModal"; 
 
+// ... (Constants, getDisplayName, getAvatarUrl, Initials tetap sama) ...
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const getDisplayName = (user) => {
@@ -71,6 +76,10 @@ const UserManagement = () => {
 
   // background detail loading (non-blocking)
   const [detailLoading, setDetailLoading] = useState(false);
+  
+  // STATE BARU UNTUK MODAL KATEGORI SKILL
+  const [isCategorySkillsModalOpen, setIsCategorySkillsModalOpen] = useState(false);
+
 
   const fetchUsers = useCallback(async () => {
     if (!user || !user.token) {
@@ -131,7 +140,7 @@ const UserManagement = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // --- Add User ---
+  // --- Add User Handlers ---
   const handleOpenAddModal = (type) => {
     setAddUserType(type);
     setIsAddModalOpen(true);
@@ -140,7 +149,17 @@ const UserManagement = () => {
     setIsAddModalOpen(false);
     setAddUserType(null);
   };
-
+  
+  // --- Category Skills Handlers (BARU) ---
+  const handleOpenCategorySkillsModal = () => {
+    setIsCategorySkillsModalOpen(true);
+  };
+  
+  const handleCloseCategorySkillsModal = () => {
+    setIsCategorySkillsModalOpen(false);
+  };
+  
+  // --- Add User Submit (tetap sama) ---
   const handleAddUserSubmit = async (formData) => {
     let url = "";
     let payload = {};
@@ -223,8 +242,7 @@ const UserManagement = () => {
     }
   };
 
-  // --- Edit User ---
-  // open modal immediately with row data to avoid UI glitch; fetch extra details in background
+  // --- Edit & Delete Handlers (tetap sama) ---
   const handleEditClick = async (userToEditData) => {
     const isExpertRole = ["Expert", "Trainer"].includes(userToEditData.role);
 
@@ -253,7 +271,6 @@ const UserManagement = () => {
           "Expert detail fetch failed (non-blocking):",
           err?.response?.status || err.message
         );
-        // non-blocking: show small info if desired
         setErrorMessage(
           "Info: detail expert tidak ditemukan, menggunakan data baris."
         );
@@ -268,8 +285,7 @@ const UserManagement = () => {
     setIsEditModalOpen(false);
     setUserToEdit(null);
   };
-
-  // add helper near top of file
+  
   const buildPayloadForRole = (role, formData) => {
     const clean = (v) => (v === "" ? undefined : v);
     const p = {};
@@ -290,7 +306,6 @@ const UserManagement = () => {
       if (clean(formData.statExpert)) p.statExpert = formData.statExpert;
       return p;
     }
-    // fallback generic mapping
     p.name = clean(formData.name);
     p.email = clean(formData.email);
     if (clean(formData.password)) p.password = formData.password;
@@ -327,12 +342,10 @@ const UserManagement = () => {
     }
 
     const payload = buildPayloadForRole(targetRole, formData);
-    // remove undefined
     Object.keys(payload).forEach(
       (k) => payload[k] === undefined && delete payload[k]
     );
 
-    console.log("[UserManagement] PUT", endpoint, payload);
     try {
       const res = await axios.put(endpoint, payload, {
         headers: { Authorization: `Bearer ${user.token}` },
@@ -343,10 +356,6 @@ const UserManagement = () => {
       setTimeout(() => setSuccess(""), 3000);
       return res;
     } catch (error) {
-      console.error(
-        "Error updating user:",
-        error.response?.data || error.message
-      );
       const resp = error.response?.data;
       let msg = "❌ Failed to update user";
       if (resp) {
@@ -362,11 +371,9 @@ const UserManagement = () => {
       }
       setErrorMessage(msg);
       setTimeout(() => setErrorMessage(""), 6000);
-      // do not rethrow
     }
   };
 
-  // --- Delete User ---
   const handleDeleteClick = (userToDeleteData) => {
     setUserToDelete({
       id: userToDeleteData.id,
@@ -417,10 +424,6 @@ const UserManagement = () => {
       handleCancelDelete();
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
-      console.error(
-        "Error deleting user:",
-        error.response?.data || error.message
-      );
       setErrorMessage(
         error.response?.data?.error || "❌ Failed to delete user"
       );
@@ -428,6 +431,7 @@ const UserManagement = () => {
       handleCancelDelete();
     }
   };
+
 
   const getRoleClass = (role) => {
     switch (role) {
@@ -454,36 +458,18 @@ const UserManagement = () => {
     <>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">All Users</h2>
 
+      {/* BLOK TOMBOL BARU */}
       <div className="flex flex-wrap gap-2 mb-6">
+        
+        {/* Tombol 1: + User dengan Dropdown */}
+        <CreateUserButton onRoleSelect={handleOpenAddModal} />
+
+        {/* Tombol 2: + Category Skills */}
         <button
-          onClick={() => handleOpenAddModal("Admin")}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+          onClick={handleOpenCategorySkillsModal}
+          className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition text-sm"
         >
-          + Admin
-        </button>
-        <button
-          onClick={() => handleOpenAddModal("Sales")}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm"
-        >
-          + Sales
-        </button>
-        <button
-          onClick={() => handleOpenAddModal("Expert")}
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition text-sm"
-        >
-          + Expert/Trainer
-        </button>
-        <button
-          onClick={() => handleOpenAddModal("Akademik")}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition text-sm"
-        >
-          + Akademik
-        </button>
-        <button
-          onClick={() => handleOpenAddModal("PM")}
-          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition text-sm"
-        >
-          + Project Manager
+          + Category Skills
         </button>
       </div>
 
@@ -502,6 +488,7 @@ const UserManagement = () => {
         <p className="text-center text-gray-500 py-4">Loading users...</p>
       )}
 
+      {/* Tabel Users (tetap sama) */}
       {!loading && (
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="w-full">
@@ -546,7 +533,6 @@ const UserManagement = () => {
                         {u.role || "N/A"}
                       </span>
                     </td>
-                    {/* Actions: friendly buttons with icons */}
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <button
                         onClick={() => handleEditClick(u)}
@@ -586,6 +572,7 @@ const UserManagement = () => {
         </div>
       )}
 
+      {/* Modals: Add User */}
       {isAddModalOpen && (
         <Modal
           isOpen={isAddModalOpen}
@@ -600,6 +587,7 @@ const UserManagement = () => {
         </Modal>
       )}
 
+      {/* Modals: Edit User */}
       {isEditModalOpen && userToEdit && (
         <Modal
           isOpen={isEditModalOpen}
@@ -614,6 +602,7 @@ const UserManagement = () => {
         </Modal>
       )}
 
+      {/* Modals: Delete Confirmation */}
       <DeleteConfirmationModal
         isOpen={isDeleteConfirmOpen}
         onClose={handleCancelDelete}
@@ -622,6 +611,18 @@ const UserManagement = () => {
           userToDelete ? `${userToDelete.name} (${userToDelete.role})` : "User"
         }
       />
+      
+      {/* MODAL BARU: Category Skills */}
+      {isCategorySkillsModalOpen && (
+        <Modal
+          isOpen={isCategorySkillsModalOpen}
+          onClose={handleCloseCategorySkillsModal}
+          title="Kelola Kategori Skills"
+          fullWidth={true}
+        >
+          <SkillCategoryModal onClose={handleCloseCategorySkillsModal} />
+        </Modal>
+      )}
     </>
   );
 };

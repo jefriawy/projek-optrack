@@ -1,17 +1,31 @@
-// backend/routes/skillCategory.js
+// backend/routes/skillCategory.js (MODIFIKASI)
 const express = require("express");
 const router = express.Router();
-// Import controller with new name
+const { body } = require("express-validator");
 const {
   getSkillCategories,
+  createSkillCategory, 
 } = require("../controllers/skillCategoryController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Allow relevant roles to fetch categories (e.g., Admin for management, PM/Head Sales for assignment)
-const allowedRoles = ["Admin", "PM", "Head Sales", "Expert"]; // Adjust roles as needed
+const getAllowedRoles = ["Admin", "PM", "Head Sales", "Expert", "Head of Expert"]; 
 
-router.get("/", authMiddleware(allowedRoles), getSkillCategories);
+const validateCreateCategory = [
+    body("nmSkillCtg", "Nama kategori wajib diisi").notEmpty(),
+    body("statSkillCtg", "Status harus 'Active' atau 'Inactive'").optional().isIn(['Active', 'Inactive']),
+];
 
-// Add routes for create/update/delete categories if implemented in controller/model
+// @route   GET /api/skill-categories
+// @desc    Mendapatkan semua kategori skill
+router.get("/", authMiddleware(getAllowedRoles), getSkillCategories);
+
+// @route   POST /api/skill-categories (BARU)
+// @desc    Menambahkan kategori skill baru (Hanya Admin)
+router.post(
+    "/", 
+    authMiddleware(["Admin"]), 
+    validateCreateCategory, 
+    createSkillCategory
+);
 
 module.exports = router;

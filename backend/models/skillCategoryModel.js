@@ -17,7 +17,14 @@ const SkillCategory = {
     return rows[0];
   },
 
-  // Add create, update, delete functions if needed for managing categories
+  async create(data) {
+    const { nmSkillCtg, descSkillCtg, statSkillCtg = 'Active' } = data;
+    const [result] = await pool.query(
+      "INSERT INTO skill_category (nmSkillCtg, descSkillCtg, statSkillCtg) VALUES (?, ?, ?)",
+      [nmSkillCtg, descSkillCtg || null, statSkillCtg]
+    );
+    return result; // Mengembalikan hasil query INSERT (termasuk insertId jika auto-increment)
+  },
 };
 
 module.exports = SkillCategory;
