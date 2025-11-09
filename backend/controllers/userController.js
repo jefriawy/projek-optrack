@@ -1,3 +1,26 @@
+const HR = require("../models/hr");
+const { generateUserId } = require("../utils/idGenerator");
+// Tambah user HR
+const createHRUser = async (req, res) => {
+  try {
+    const { name, email, password, mobile } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email, and password are required." });
+    }
+    // Cek email unik
+    const existing = await HR.findByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const idHR = await generateUserId("HR");
+  await HR.create({ idHR, nmHR: name, emailHR: email, password: hashedPassword, mobileHR: mobile });
+  res.status(201).json({ message: "HR user created successfully." });
+  } catch (error) {
+    console.error("Error creating HR user:", error);
+    res.status(500).json({ error: "Server error while creating HR user." });
+  }
+};
 // backend/controllers/userController.js
 const pool = require("../config/database");
 const bcrypt = require("bcrypt"); // Pastikan bcrypt di-import di atas
@@ -11,6 +34,7 @@ const getAllUsers = async (req, res) => {
       expertPromise,
       akademikPromise,
       pmPromise,
+      hrPromise,
     ] = [
       pool.query(
         "SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"
@@ -25,14 +49,16 @@ const getAllUsers = async (req, res) => {
         "SELECT idAkademik, nmAkademik, emailAkademik, 'Akademik' as role, mobileAkademik FROM akademik"
       ),
       pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
+      pool.query("SELECT idHR, nmHR, emailHR, 'HR' as role, mobileHR FROM hr"),
     ];
-    const [[admins], [sales], [experts], [akademiks], [pms]] =
+    const [[admins], [sales], [experts], [akademiks], [pms], [hrs]] =
       await Promise.all([
         adminPromise,
         salesPromise,
         expertPromise,
         akademikPromise,
         pmPromise,
+        hrPromise,
       ]);
     const allUsers = [
       ...admins.map((u) => ({
@@ -60,6 +86,7 @@ const getAllUsers = async (req, res) => {
         email: u.emailAkademik,
       })),
       ...pms.map((u) => ({ ...u, id: u.idPM, name: u.nmPM, email: u.emailPM })),
+      ...hrs.map((u) => ({ ...u, id: u.idHR, name: u.nmHR, email: u.emailHR })),
     ];
     res.json(allUsers);
   } catch (error) {
@@ -98,6 +125,10 @@ const deleteUserByRole = async (req, res) => {
     case "PM":
       tableName = "pm";
       idColumn = "idPM";
+      break;
+    case "HR":
+      tableName = "hr";
+      idColumn = "idHR";
       break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
@@ -230,6 +261,22 @@ const updateUserByRole = async (req, res) => {
         params.push(data.mobile);
       }
       break;
+    case "HR":
+      tableName = "hr";
+      idColumn = "idHR";
+      if (data.name) {
+        setClauses.push("nmHR = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailHR = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileHR = ?");
+        params.push(data.mobile);
+      }
+      break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
   }
@@ -267,4 +314,4 @@ const getPMs = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, deleteUserByRole, updateUserByRole, getPMs };
+module.exports = { getAllUsers, deleteUserByRole, updateUserByRole, getPMs, createHRUser };

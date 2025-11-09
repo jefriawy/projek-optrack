@@ -7,6 +7,7 @@ const roles = [
     { name: 'Expert/Trainer', type: 'Expert' },
     { name: 'Akademik', type: 'Akademik' },
     { name: 'Project Manager', type: 'PM' },
+    { name: 'Human Resource', type: 'HR' },
 ];
 
 const CreateUserButton = ({ onRoleSelect }) => {

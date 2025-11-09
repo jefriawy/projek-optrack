@@ -75,12 +75,24 @@ const pmSchema = Yup.object({
   mobile: Yup.string().optional(),
 });
 
+const hrSchema = Yup.object({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string()
+    .email("Invalid email format")
+    .required("Email is required"),
+  password: Yup.string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+  mobile: Yup.string().optional(),
+});
+
 const validationSchemaMap = {
   Admin: adminSchema,
   Sales: salesSchema,
   Expert: expertSchema,
   Akademik: akademikSchema,
   PM: pmSchema,
+  HR: hrSchema,
 };
 
 const AddUserForm = ({ userType, onClose, onSubmit }) => {
@@ -106,6 +118,8 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         ? "PM"
         : userType === "Admin"
         ? "Admin"
+        : userType === "HR"
+        ? "HR"
         : "",
     // Sales specific
     descSales: "",
@@ -113,6 +127,15 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
     statExpert: "",
     Row: "",
   });
+      {/* HR */}
+      {userType === "HR" && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Human Resource Details</h3>
+          {/* Role is fixed */}
+          <input type="hidden" name="role" value="HR" />
+          {/* Add other HR-specific fields if needed */}
+        </div>
+      )}
 
   const [errors, setErrors] = useState({});
 

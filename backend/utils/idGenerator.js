@@ -2,7 +2,6 @@
 
 const pool = require("../config/database");
 
-// Mapping dari role ke kode numerik (HC dan Trainer dihapus)
 const roleToCode = {
   Admin: "01",
   "Head Sales": "02",
@@ -17,6 +16,7 @@ const roleToCode = {
   Training: "07",
   Project: "08",
   Outsource: "09",
+  HR: "67",
 };
 
 // Mapping dari role ke informasi tabel
@@ -35,6 +35,7 @@ const roleToTableInfo = {
   Training: { tableName: "training", idColumn: "idTraining" },
   Project: { tableName: "project", idColumn: "idProject" },
   Outsource: { tableName: "outsource", idColumn: "idOutsource" },
+  HR: { tableName: "hr", idColumn: "idHR" },
 };
 
 // Mapping dari jenis file ke kode numerik

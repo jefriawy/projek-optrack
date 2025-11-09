@@ -100,28 +100,32 @@ const UserManagement = () => {
             u.idSales ||
             u.idExpert ||
             u.idAkademik ||
-            u.idPM,
+            u.idPM ||
+            u.idHR,
           name:
             u.name ||
             u.nmAdmin ||
             u.nmSales ||
             u.nmExpert ||
             u.nmAkademik ||
-            u.nmPM,
+            u.nmPM ||
+            u.nmHR,
           email:
             u.email ||
             u.emailAdmin ||
             u.emailSales ||
             u.emailExpert ||
             u.emailAkademik ||
-            u.emailPM,
+            u.emailPM ||
+            u.emailHR,
           mobile:
             u.mobile ||
             u.mobileAdmin ||
             u.mobileSales ||
             u.mobileExpert ||
             u.mobileAkademik ||
-            u.mobilePM,
+            u.mobilePM ||
+            u.mobileHR,
           skills: u.skills,
         }))
       );
@@ -214,6 +218,15 @@ const UserManagement = () => {
           emailPM: formData.email,
           password: formData.password,
           mobilePM: formData.mobile,
+        };
+        break;
+      case "HR":
+        url = `${API_BASE}/api/user/hr`;
+        payload = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          mobile: formData.mobile,
         };
         break;
       default:
@@ -335,6 +348,9 @@ const UserManagement = () => {
       case "PM":
         endpoint = `${API_BASE}/api/user/PM/${id}`;
         break;
+      case "HR":
+        endpoint = `${API_BASE}/api/user/HR/${id}`;
+        break;
       default:
         setErrorMessage("❌ Invalid role for update.");
         setTimeout(() => setErrorMessage(""), 3000);
@@ -408,6 +424,9 @@ const UserManagement = () => {
       case "PM":
         urlSuffix = `PM/${userToDelete.id}`;
         break;
+      case "HR":
+        urlSuffix = `HR/${userToDelete.id}`;
+        break;
       default:
         setErrorMessage("❌ Invalid role for delete.");
         setTimeout(() => setErrorMessage(""), 3000);
@@ -449,6 +468,8 @@ const UserManagement = () => {
         return "bg-indigo-100 text-indigo-800";
       case "PM":
         return "bg-red-100 text-red-800";
+      case "HR":
+        return "bg-teal-100 text-teal-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

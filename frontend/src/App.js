@@ -53,6 +53,8 @@ const pathByRole = (role) => {
       return "/dashboard/pm";
     case "Akademik":
       return "/training"; // Akademik diarahkan ke halaman Training
+    case "HR":
+      return "/outsource";
     default:
       return "/login";
   }
@@ -260,7 +262,7 @@ const AppRoutes = () => {
         path="/outsource"
         element={
           <Protected
-            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin"]}
+            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "HR"]}
           >
             <Layout>
               <OutsourcePage />

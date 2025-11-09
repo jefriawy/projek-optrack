@@ -1,8 +1,11 @@
 // backend/routes/user.js 
 const express = require("express");
 const router = express.Router();
-const { getAllUsers, deleteUserByRole, updateUserByRole, getPMs } = require("../controllers/userController");
+
 const authMiddleware = require("../middleware/authMiddleware");
+const { getAllUsers, deleteUserByRole, updateUserByRole, getPMs, createHRUser } = require("../controllers/userController");
+// Tambah user HR
+router.post("/hr", authMiddleware(["Admin"]), createHRUser);
 
 // Get all users from all tables
 router.get("/all", authMiddleware(["Admin"]), getAllUsers);

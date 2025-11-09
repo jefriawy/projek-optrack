@@ -37,7 +37,6 @@ const Customer = {
       tglInput,
     ];
     const [result] = await pool.query(query, params);
-    // kembalikan id yang kita set (jika ingin konsisten)
     return idCustomer;
   },
 

@@ -69,25 +69,25 @@ export const AuthProvider = ({ children }) => {
   }, [user]); 
 
   // Login function
-  const login = async (email, password, remember) => {
-    try {
-      const response = await axios.post("http://localhost:3000/api/auth/login", { email, password });
-      const { token, role, userId, name } = response.data;
+  const login = async (email, password, remember) => {
+    try {
+      const response = await axios.post("http://localhost:3000/api/auth/login", { email, password });
+      const { token, role, userId, name, redirectPath } = response.data;
 
-      if (remember) {
-        localStorage.setItem("token", token);
-      } else {
-        sessionStorage.setItem("token", token);
-      }
+      if (remember) {
+        localStorage.setItem("token", token);
+      } else {
+        sessionStorage.setItem("token", token);
+      }
 
-      const userData = { token, role, userId, name };
-      setUser(userData);
+      const userData = { token, role, userId, name, redirectPath };
+      setUser(userData);
       fetchUnreadCount(token, userId, role); // <-- Ambil count saat login sukses
-      return true;
-    } catch (error) {
-      throw error.response?.data?.error || "Login failed";
-    }
-  };
+      return userData; // return user info so caller can redirect reliably
+    } catch (error) {
+      throw error.response?.data?.error || "Login failed";
+    }
+  };
 
   // Logout function
   const logout = () => {

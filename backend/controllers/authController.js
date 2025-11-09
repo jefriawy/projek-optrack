@@ -7,6 +7,7 @@ const Sales = require("../models/sales");
 const Expert = require("../models/expert");
 const Akademik = require("../models/akademik");
 const PM = require("../models/pm");
+const HR = require("../models/hr");
 
 // Helper function to generate JWT
 const generateToken = (user) => {
@@ -36,6 +37,8 @@ const roleToRedirect = (role) => {
       return "/dashboard/akademik";
     case "PM":
       return "/project";
+    case "HR":
+      return "/outsource";
     default:
       return "/";
   }
@@ -119,6 +122,20 @@ const login = [
             email: pmUser.emailPM,
             role: "PM", // role di-hardcode karena tidak ada di tabel
             password: pmUser.password,
+          };
+        }
+      }
+
+      // Try to find user in HR table
+      if (!user) {
+        const hrUser = await HR.findByEmail(email);
+        if (hrUser) {
+          user = {
+            id: hrUser.idHR,
+            name: hrUser.nmHR,
+            email: hrUser.emailHR,
+            role: "HR",
+            password: hrUser.password,
           };
         }
       }

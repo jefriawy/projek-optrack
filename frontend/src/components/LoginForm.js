@@ -17,14 +17,14 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password);
-      // After successful login, the 'user' object from AuthContext will be updated.
-      // We can then use it for redirection.
-      // The 'user' object here will reflect the state *after* the login function completes.
-      if (user && user.role === 'Sales') { // Check the user role
-        navigate("/"); // Redirect Sales to homepage
+      const result = await login(email, password);
+      // Use returned result to decide redirect immediately (avoid stale context state)
+      if (result && result.redirectPath) {
+        navigate(result.redirectPath);
+      } else if (result && result.role === 'Sales') {
+        navigate("/");
       } else {
-        navigate("/customer"); // Redirect others to customer page
+        navigate("/customer");
       }
     } catch (err) {
       setError(err || "An error occurred. Please try again.");

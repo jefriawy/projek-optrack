@@ -174,6 +174,7 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
   const [customers, setCustomers] = useState([]);
   const [sumber, setSumber] = useState([]);
   const [experts, setExperts] = useState([]);
+  const [hrs, setHrs] = useState([]);
   const [projectManagers, setProjectManagers] = useState([]);
   const [proposalFile, setProposalFile] = useState(null);
 
@@ -193,10 +194,13 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
       return experts
         .filter((ex) => ex.role === "Expert" || ex.role === "Head of Expert")
         .map((ex) => ({ value: ex.idExpert, label: ex.nmExpert }));
+    } else if (formData.jenisOpti === "Outsource") {
+      // Untuk Outsource, gunakan data HR
+      return hrs;
     } else {
       return experts.map((ex) => ({ value: ex.idExpert, label: ex.nmExpert }));
     }
-  }, [experts, formData.jenisOpti]);
+  }, [experts, hrs, formData.jenisOpti]);
 
   useEffect(() => {
     const run = async () => {
@@ -207,9 +211,8 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
         });
         setCustomers(res.data.customers || []);
         setSumber(res.data.sumber || []);
-        const rawExperts = Array.isArray(res.data.experts)
-          ? res.data.experts
-          : [];
+        // Experts
+        const rawExperts = Array.isArray(res.data.experts) ? res.data.experts : [];
         const normalizedExperts = rawExperts
           .map((e) => ({
             idExpert: e.idExpert ?? e.id_expert ?? e.id ?? e.ID ?? null,
@@ -225,6 +228,15 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
           .filter((e) => e.idExpert && e.nmExpert);
         setExperts(normalizedExperts);
         setProjectManagers(res.data.pms || []);
+        // HRs
+        const rawHrs = Array.isArray(res.data.hrs) ? res.data.hrs : [];
+        const normalizedHrs = rawHrs
+          .map((hr) => ({
+            value: hr.idHR ?? hr.id_hr ?? hr.id ?? null,
+            label: hr.nmHR ?? hr.nm_hr ?? hr.name ?? hr.fullName ?? hr.username ?? null,
+          }))
+          .filter((hr) => hr.value && hr.label);
+        setHrs(normalizedHrs);
       } catch (e) {
         console.error("Error fetching form options:", e);
       }
@@ -404,7 +416,7 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
   };
 
   const isExpertRequired =
-    formData.jenisOpti === "Training" || formData.jenisOpti === "Project";
+    formData.jenisOpti === "Training" || formData.jenisOpti === "Project" || formData.jenisOpti === "Outsource";
   const selectedExpertValue = expertOptions.find(
     (option) => option.value === formData.idExpert
   );
@@ -456,6 +468,20 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
       {children}
     </button>
   );
+
+  // label & placeholder for the expert/HR select (change when Outsource)
+  const expertLabel =
+    formData.jenisOpti === "Training"
+      ? "Trainer"
+      : formData.jenisOpti === "Outsource"
+      ? "Human Resource"
+      : "Expert";
+  const expertPlaceholder =
+    formData.jenisOpti === "Training"
+      ? "Pilih atau cari Trainer..."
+      : formData.jenisOpti === "Outsource"
+      ? "Pilih atau cari Human Resource..."
+      : "Pilih atau cari Expert...";
 
   return (
     <form
@@ -603,14 +629,14 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                   ) : user?.role === "Sales" ? null : (
                     <>
                       <label className="block text-sm font-medium mb-1">
-                        Expert
+                        {expertLabel}
                       </label>
                       <Select
                         name="idExpert"
                         options={expertOptions}
                         value={selectedExpertValue}
                         onChange={handleSelectChange("idExpert")}
-                        placeholder="Pilih atau cari Expert..."
+                        placeholder={expertPlaceholder}
                         isClearable
                         isDisabled={!isExpertRequired}
                         styles={selectStyles}
@@ -626,18 +652,14 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                 ) : (
                   <>
                     <label className="block text-sm font-medium mb-1">
-                      {formData.jenisOpti === "Training" ? "Trainer" : "Expert"}
+                      {expertLabel}
                     </label>
                     <Select
                       name="idExpert"
                       options={expertOptions}
                       value={selectedExpertValue}
                       onChange={handleSelectChange("idExpert")}
-                      placeholder={
-                        formData.jenisOpti === "Training"
-                          ? "Pilih atau cari Trainer..."
-                          : "Pilih atau cari Expert..."
-                      }
+                      placeholder={expertPlaceholder}
                       isClearable
                       isDisabled={!isExpertRequired}
                       styles={selectStyles}
@@ -944,13 +966,32 @@ const OptiForm = ({ initialData, onSubmit, onPaymentSubmit, onClose }) => {
                 {activeTab === "Outsource" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Value *
-                      </label>
+                      <label className="block text-sm font-medium mb-1">Mulai</label>
+                      <input
+                        type="datetime-local"
+                        name="startTraining"
+                        value={formData.startTraining || ""}
+                        onChange={handleChange}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Selesai</label>
+                      <input
+                        type="datetime-local"
+                        name="endTraining"
+                        value={formData.endTraining || ""}
+                        onChange={handleChange}
+                        className={inputClass}
+                      />
+                      {dateError && (
+                        <p className="text-red-600 text-sm">{dateError}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium mb-1">Value *</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">
-                          Rp.
-                        </span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 select-none">Rp.</span>
                         <input
                           type="text"
                           name="valOpti"

@@ -16,6 +16,7 @@ const Opti = {
       kebutuhan,
       jenisOpti,
       idExpert,
+      idHR,
       idPM,
       proposalOpti,
       valOpti,
@@ -30,9 +31,9 @@ const Opti = {
     const query = `
       INSERT INTO opti
         (idOpti, nmOpti, contactOpti, mobileOpti, emailOpti, statOpti, datePropOpti,
-         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idPM, proposalOpti, valOpti,
+         idCustomer, idSumber, kebutuhan, idSales, jenisOpti, idExpert, idHR, idPM, proposalOpti, valOpti,
          startProgram, endProgram, placeProgram, idTypeTraining, idTypeProject, dokPendaftaran, terminPembayaran)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       idOpti,
@@ -48,6 +49,7 @@ const Opti = {
       idSales,
       jenisOpti,
       idExpert,
+      idHR,
       idPM,
       proposalOpti,
       valOpti,
@@ -234,6 +236,7 @@ const Opti = {
       kebutuhan,
       jenisOpti,
       idExpert,
+      idHR,
       idPM,
       proposalOpti,
       valOpti,
@@ -249,7 +252,7 @@ const Opti = {
       `UPDATE opti SET
          nmOpti = ?, contactOpti = ?, mobileOpti = ?, emailOpti = ?, statOpti = ?,
          datePropOpti = ?, idCustomer = ?, idSumber = ?, kebutuhan = ?,
-         jenisOpti = ?, idExpert = ?, idPM = ?, proposalOpti = ?, valOpti = ?,
+         jenisOpti = ?, idExpert = ?, idHR = ?, idPM = ?, proposalOpti = ?, valOpti = ?,
          startProgram = ?, endProgram = ?, placeProgram = ?, idTypeTraining = ?,
          idTypeProject = ?, dokPendaftaran = ? , terminPembayaran = ?
        WHERE idOpti = ?`,
@@ -265,6 +268,7 @@ const Opti = {
         kebutuhan,
         jenisOpti,
         idExpert,
+        idHR,
         idPM,
         proposalOpti,
         valOpti,
