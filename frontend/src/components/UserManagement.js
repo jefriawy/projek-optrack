@@ -7,12 +7,9 @@ import AddUserForm from "./AddUserForm";
 import EditUserForm from "./EditUserForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
-// Import komponen tombol user baru
-import CreateUserButton from "./CreateUserButton"; 
-// Import modal skill category baru
-import SkillCategoryModal from "./SkillCategoryModal"; 
+import CreateUserButton from "./CreateUserButton";
+import SkillCategoryModal from "./SkillCategoryModal";
 
-// ... (Constants, getDisplayName, getAvatarUrl, Initials tetap sama) ...
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const getDisplayName = (user) => {
@@ -24,12 +21,15 @@ const getDisplayName = (user) => {
     user.nmAdmin ||
     user.nmAkademik ||
     user.nmPM ||
+    user.nmHR ||
+    user.nmOutsourcer || // <-- Nama dari outsourcer
     user.fullName ||
     user.username ||
     (user.email ? user.email.split("@")[0] : "User")
   );
 };
 const getAvatarUrl = (user) => {
+  // ... (fungsi ini tidak berubah) ...
   if (!user) return null;
   const candidate =
     user.photoURL ||
@@ -46,6 +46,7 @@ const getAvatarUrl = (user) => {
     .pop()}`;
 };
 const Initials = ({ name }) => {
+  // ... (fungsi ini tidak berubah) ...
   const ini = (name || "U")
     .split(" ")
     .map((s) => s[0])
@@ -76,10 +77,9 @@ const UserManagement = () => {
 
   // background detail loading (non-blocking)
   const [detailLoading, setDetailLoading] = useState(false);
-  
-  // STATE BARU UNTUK MODAL KATEGORI SKILL
-  const [isCategorySkillsModalOpen, setIsCategorySkillsModalOpen] = useState(false);
 
+  const [isCategorySkillsModalOpen, setIsCategorySkillsModalOpen] =
+    useState(false);
 
   const fetchUsers = useCallback(async () => {
     if (!user || !user.token) {
@@ -91,9 +91,11 @@ const UserManagement = () => {
       const response = await axios.get(`${API_BASE}/api/user/all`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
+
+      // --- PERUBAHAN MAPPING ---
       setUsers(
         response.data.map((u) => ({
-          ...u,
+          ...u, // <-- Sertakan semua properti (termasuk statOutsourcer)
           id:
             u.id ||
             u.idAdmin ||
@@ -101,7 +103,8 @@ const UserManagement = () => {
             u.idExpert ||
             u.idAkademik ||
             u.idPM ||
-            u.idHR,
+            u.idHR ||
+            u.idOutsourcer, // ID outsourcer
           name:
             u.name ||
             u.nmAdmin ||
@@ -109,7 +112,8 @@ const UserManagement = () => {
             u.nmExpert ||
             u.nmAkademik ||
             u.nmPM ||
-            u.nmHR,
+            u.nmHR ||
+            u.nmOutsourcer, // Nama outsourcer
           email:
             u.email ||
             u.emailAdmin ||
@@ -117,7 +121,8 @@ const UserManagement = () => {
             u.emailExpert ||
             u.emailAkademik ||
             u.emailPM ||
-            u.emailHR,
+            u.emailHR ||
+            u.emailOutsourcer, // Email outsourcer
           mobile:
             u.mobile ||
             u.mobileAdmin ||
@@ -125,10 +130,14 @@ const UserManagement = () => {
             u.mobileExpert ||
             u.mobileAkademik ||
             u.mobilePM ||
-            u.mobileHR,
+            u.mobileHR ||
+            u.mobileOutsourcer, // Mobile outsourcer
           skills: u.skills,
+          // statOutsourcer akan otomatis ada di 'u' karena query backend
         }))
       );
+      // --- AKHIR PERUBAHAN MAPPING ---
+
       setErrorMessage("");
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -144,7 +153,7 @@ const UserManagement = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // --- Add User Handlers ---
+  // ... (handleOpenAddModal, handleCloseAddModal, handleOpenCategorySkillsModal, handleCloseCategorySkillsModal) ...
   const handleOpenAddModal = (type) => {
     setAddUserType(type);
     setIsAddModalOpen(true);
@@ -153,17 +162,16 @@ const UserManagement = () => {
     setIsAddModalOpen(false);
     setAddUserType(null);
   };
-  
-  // --- Category Skills Handlers (BARU) ---
+
   const handleOpenCategorySkillsModal = () => {
     setIsCategorySkillsModalOpen(true);
   };
-  
+
   const handleCloseCategorySkillsModal = () => {
     setIsCategorySkillsModalOpen(false);
   };
-  
-  // --- Add User Submit (tetap sama) ---
+
+  // --- handleAddUserSubmit (Sudah benar dari respons sebelumnya) ---
   const handleAddUserSubmit = async (formData) => {
     let url = "";
     let payload = {};
@@ -229,6 +237,17 @@ const UserManagement = () => {
           mobile: formData.mobile,
         };
         break;
+      case "Outsourcer":
+        url = `${API_BASE}/api/outsourcer`;
+        payload = {
+          nmOutsourcer: formData.name,
+          emailOutsourcer: formData.email,
+          password: formData.password,
+          mobileOutsourcer: formData.mobile,
+          role: formData.role, // 'external' or 'internal'
+          statOutsourcer: formData.statOutsourcer,
+        };
+        break;
       default:
         setErrorMessage("Invalid user type.");
         setTimeout(() => setErrorMessage(""), 3000);
@@ -255,11 +274,13 @@ const UserManagement = () => {
     }
   };
 
-  // --- Edit & Delete Handlers (tetap sama) ---
+  // --- Edit & Delete Handlers (Sudah benar dari respons sebelumnya) ---
   const handleEditClick = async (userToEditData) => {
-    const isExpertRole = ["Expert", "Trainer"].includes(userToEditData.role);
+    const isExpertRole = ["Expert", "Trainer", "Head of Expert"].includes(
+      userToEditData.role
+    );
 
-    setUserToEdit(userToEditData);
+    setUserToEdit(userToEditData); // <-- Set data dasar dari tabel
     setIsEditModalOpen(true);
 
     if (isExpertRole && user?.token) {
@@ -272,8 +293,8 @@ const UserManagement = () => {
           }
         );
         setUserToEdit((prev) => ({
-          ...prev,
-          ...response.data,
+          ...prev, // Data dasar
+          ...response.data, // Data detail (termasuk .skills)
           id: prev.id,
           name: response.data.nmExpert || prev.name,
           email: response.data.emailExpert || prev.email,
@@ -285,24 +306,25 @@ const UserManagement = () => {
           err?.response?.status || err.message
         );
         setErrorMessage(
-          "Info: detail expert tidak ditemukan, menggunakan data baris."
+          "Info: Gagal mengambil detail skills, menggunakan data dasar."
         );
         setTimeout(() => setErrorMessage(""), 3000);
       } finally {
         setDetailLoading(false);
       }
     }
+    // Tidak perlu fetch detail untuk Outsourcer karena semua data (termasuk statOutsourcer) sudah diambil di fetchUsers
   };
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setUserToEdit(null);
   };
-  
+
   const buildPayloadForRole = (role, formData) => {
     const clean = (v) => (v === "" ? undefined : v);
     const p = {};
-    if (["Expert", "Trainer"].includes(role)) {
+    if (["Expert", "Trainer", "Head of Expert"].includes(role)) {
       p.nmExpert = clean(formData.name);
       p.emailExpert = clean(formData.email);
       if (clean(formData.password)) p.password = formData.password;
@@ -319,17 +341,32 @@ const UserManagement = () => {
       if (clean(formData.statExpert)) p.statExpert = formData.statExpert;
       return p;
     }
+
+    if (["Outsourcer", "external", "internal"].includes(role)) {
+      p.name = clean(formData.name);
+      p.email = clean(formData.email);
+      if (clean(formData.password)) p.password = formData.password;
+      p.mobile = clean(formData.mobile);
+      p.role = clean(formData.role); // Mengirim 'external' atau 'internal'
+      p.statOutsourcer = clean(formData.statOutsourcer); // Mengirim status
+      return p;
+    }
+
     p.name = clean(formData.name);
     p.email = clean(formData.email);
     if (clean(formData.password)) p.password = formData.password;
     p.mobile = clean(formData.mobile);
     p.role = clean(formData.role);
+    if (["Sales", "Head Sales"].includes(role)) {
+      p.descSales = clean(formData.descSales);
+    }
     return p;
   };
 
   const handleEditUserSubmit = async (id, originalRole, formData) => {
     const targetRole = formData.role || originalRole;
     let endpoint = "";
+
     switch (targetRole) {
       case "Admin":
         endpoint = `${API_BASE}/api/user/Admin/${id}`;
@@ -340,6 +377,7 @@ const UserManagement = () => {
         break;
       case "Expert":
       case "Trainer":
+      case "Head of Expert":
         endpoint = `${API_BASE}/api/expert/${id}`;
         break;
       case "Akademik":
@@ -350,6 +388,12 @@ const UserManagement = () => {
         break;
       case "HR":
         endpoint = `${API_BASE}/api/user/HR/${id}`;
+        break;
+      case "Outsourcer":
+      case "external":
+      case "internal":
+        // Gunakan role 'Outsourcer' untuk endpoint update generik
+        endpoint = `${API_BASE}/api/user/Outsourcer/${id}`;
         break;
       default:
         setErrorMessage("❌ Invalid role for update.");
@@ -406,6 +450,7 @@ const UserManagement = () => {
     if (!userToDelete) return;
 
     let urlSuffix = "";
+    // Gunakan role asli dari data user (termasuk 'external'/'internal')
     switch (userToDelete.role) {
       case "Admin":
         urlSuffix = `Admin/${userToDelete.id}`;
@@ -416,6 +461,7 @@ const UserManagement = () => {
         break;
       case "Expert":
       case "Trainer":
+      case "Head of Expert":
         urlSuffix = `${userToDelete.role}/${userToDelete.id}`;
         break;
       case "Akademik":
@@ -426,6 +472,11 @@ const UserManagement = () => {
         break;
       case "HR":
         urlSuffix = `HR/${userToDelete.id}`;
+        break;
+      case "external":
+      case "internal":
+        // Gunakan role 'Outsourcer' untuk endpoint delete generik
+        urlSuffix = `Outsourcer/${userToDelete.id}`;
         break;
       default:
         setErrorMessage("❌ Invalid role for delete.");
@@ -451,7 +502,7 @@ const UserManagement = () => {
     }
   };
 
-
+  // --- PERUBAHAN TAMPILAN ROLE ---
   const getRoleClass = (role) => {
     switch (role) {
       case "Sales":
@@ -464,28 +515,36 @@ const UserManagement = () => {
         return "bg-purple-100 text-purple-800";
       case "Trainer":
         return "bg-pink-100 text-pink-700";
+      case "Head of Expert":
+        return "bg-fuchsia-100 text-fuchsia-800";
       case "Akademik":
         return "bg-indigo-100 text-indigo-800";
       case "PM":
         return "bg-red-100 text-red-800";
       case "HR":
         return "bg-teal-100 text-teal-800";
+      case "external": // <-- Tambahkan ini
+      case "internal": // <-- Tambahkan ini
+        return "bg-cyan-100 text-cyan-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
+  const getRoleDisplayName = (role) => {
+    if (role === "external" || role === "internal") {
+      return "Outsourcer";
+    }
+    return role || "N/A";
+  };
+  // --- AKHIR PERUBAHAN TAMPILAN ROLE ---
+
   return (
     <>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">All Users</h2>
 
-      {/* BLOK TOMBOL BARU */}
       <div className="flex flex-wrap gap-2 mb-6">
-        
-        {/* Tombol 1: + User dengan Dropdown */}
         <CreateUserButton onRoleSelect={handleOpenAddModal} />
-
-        {/* Tombol 2: + Category Skills */}
         <button
           onClick={handleOpenCategorySkillsModal}
           className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition text-sm"
@@ -509,7 +568,6 @@ const UserManagement = () => {
         <p className="text-center text-gray-500 py-4">Loading users...</p>
       )}
 
-      {/* Tabel Users (tetap sama) */}
       {!loading && (
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="w-full">
@@ -546,21 +604,23 @@ const UserManagement = () => {
                       {u.mobile || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {/* --- PERUBAHAN TAMPILAN ROLE --- */}
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleClass(
                           u.role
                         )}`}
                       >
-                        {u.role || "N/A"}
+                        {getRoleDisplayName(u.role)}
                       </span>
+                      {/* --- AKHIR PERUBAHAN --- */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <button
                         onClick={() => handleEditClick(u)}
                         title={`Edit ${u.name}`}
                         aria-label={`Edit ${u.name}`}
-                        disabled={loading}
-                        className="inline-flex items-center gap-2 px-2 py-1 mr-2 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 transition"
+                        disabled={loading || detailLoading}
+                        className="inline-flex items-center gap-2 px-2 py-1 mr-2 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 transition disabled:opacity-50"
                       >
                         <FaEdit className="w-4 h-4" />
                         <span className="hidden md:inline text-sm">Edit</span>
@@ -615,11 +675,15 @@ const UserManagement = () => {
           onClose={handleCloseEditModal}
           title={`Edit User: ${userToEdit.name}`}
         >
-          <EditUserForm
-            user={userToEdit}
-            onSubmit={handleEditUserSubmit}
-            onClose={handleCloseEditModal}
-          />
+          {detailLoading ? (
+            <div className="text-center p-8">Memuat detail user...</div>
+          ) : (
+            <EditUserForm
+              user={userToEdit} // userToEdit sekarang mungkin berisi skills
+              onSubmit={handleEditUserSubmit}
+              onClose={handleCloseEditModal}
+            />
+          )}
         </Modal>
       )}
 
@@ -629,17 +693,19 @@ const UserManagement = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         itemName={
-          userToDelete ? `${userToDelete.name} (${userToDelete.role})` : "User"
+          userToDelete
+            ? `${userToDelete.name} (${getRoleDisplayName(userToDelete.role)})`
+            : "User"
         }
       />
-      
+
       {/* MODAL BARU: Category Skills */}
       {isCategorySkillsModalOpen && (
         <Modal
           isOpen={isCategorySkillsModalOpen}
           onClose={handleCloseCategorySkillsModal}
           title="Kelola Kategori Skills"
-          fullWidth={true}
+          maxWidthClass="sm:max-w-md md:max-w-lg"
         >
           <SkillCategoryModal onClose={handleCloseCategorySkillsModal} />
         </Modal>

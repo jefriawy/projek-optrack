@@ -4,39 +4,35 @@ import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
 import Select from "react-select"; // Import react-select
 
-// Base URL (redundant if using AuthContext token for API calls, but good for consistency)
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
-  const { user: authUser } = useContext(AuthContext); // Logged-in admin user
+  const { user: authUser } = useContext(AuthContext);
 
-  // Initialize form state based on the user being edited
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "", // Keep password blank initially for updates
+    password: "",
     role: "",
     mobile: "",
-    // Sales specific
     descSales: "",
-    // Expert specific
     statExpert: "",
     Row: "",
-    // skillCtgIds will be derived from selectedSkills state
+    statOutsourcer: "", // <-- TAMBAHKAN INI
   });
 
-  const [skillCategories, setSkillCategories] = useState([]); // Available skill categories
-  const [selectedSkills, setSelectedSkills] = useState([]); // Currently selected skills for the expert
-  const [initialSkillsLoaded, setInitialSkillsLoaded] = useState(false); // Flag to load skills once
-  const [errors, setErrors] = useState({}); // Validation errors
+  const [skillCategories, setSkillCategories] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [initialSkillsLoaded, setInitialSkillsLoaded] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // Effect to populate form when userToEditProp changes or on initial load
+  // Effect untuk mengisi form saat userToEditProp berubah
   useEffect(() => {
     if (userToEditProp) {
       setFormData({
         name: userToEditProp.name || "",
         email: userToEditProp.email || "",
-        password: "", // Always start blank for edit
+        password: "",
         role: userToEditProp.role || "",
         mobile:
           userToEditProp.mobile ||
@@ -44,20 +40,22 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
           userToEditProp.mobileExpert ||
           userToEditProp.mobileAkademik ||
           userToEditProp.mobilePM ||
+          userToEditProp.mobileHR || // <-- TAMBAHAN
+          userToEditProp.mobileOutsourcer || // <-- TAMBAHAN
           "",
-        // Specific fields based on potential role in the passed user object
+        // Specific fields
         descSales: userToEditProp.descSales || "",
         statExpert: userToEditProp.statExpert || "",
         Row: userToEditProp.Row || "",
+        statOutsourcer: userToEditProp.statOutsourcer || "", // <-- TAMBAHAN
       });
 
-      // Reset skill states if the user changes
       setSelectedSkills([]);
-      setInitialSkillsLoaded(false); // Allow skills to reload for the new user
+      setInitialSkillsLoaded(false);
     }
   }, [userToEditProp]);
 
-  // Effect to fetch available skill categories IF the user being edited is an Expert/Trainer/Head of Expert
+  // ... (useEffect untuk fetchSkillCategories tetap sama) ...
   useEffect(() => {
     const isExpertRole = ["Expert", "Trainer", "Head of Expert"].includes(
       formData.role
@@ -75,22 +73,21 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
           setSkillCategories(options);
         } catch (error) {
           console.error("Failed to fetch skill categories:", error);
-          setSkillCategories([]); // Clear on error
+          setSkillCategories([]);
           setErrors((prev) => ({ ...prev, skills: "Failed to load skills." }));
         }
       };
       fetchSkillCategories();
     } else {
-      setSkillCategories([]); // Clear if not an expert role
+      setSkillCategories([]);
     }
-  }, [formData.role, authUser?.token]); // Re-run if role changes
+  }, [formData.role, authUser?.token]);
 
-  // Effect to fetch and set the CURRENT skills of the expert being edited
+  // ... (useEffect untuk set CURRENT skills tetap sama) ...
   useEffect(() => {
     const isExpertRole = ["Expert", "Trainer", "Head of Expert"].includes(
       formData.role
     );
-    // Fetch only if it's an expert role, we have categories, and haven't loaded initial skills yet
     if (
       isExpertRole &&
       userToEditProp?.id &&
@@ -100,32 +97,23 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
     ) {
       const fetchExpertDetailsIncludingSkills = async () => {
         try {
-          // Assuming you have an endpoint like this, or adjust as needed
-          // It should return the expert details including an array of their current skillCtgIds or skill objects
-          // For now, let's assume `userToEditProp` might contain a `skills` array like [{ idSkillCtg: 1, nmSkillCtg: 'JS' }]
-          // If not, you'd fetch from `/api/expert/:id` which should include skills
-
-          // Example: If userToEditProp.skills is like [{idSkillCtg: 5}, {idSkillCtg: 2}]
+          // userToEditProp.skills diambil dari fetch detail di UserManagement.js
           const currentSkillIds =
             userToEditProp.skills?.map((s) => s.idSkillCtg) || [];
 
-          // Map the IDs to the { value, label } format needed by react-select, using the fetched categories
           const initialSelection = skillCategories.filter((option) =>
             currentSkillIds.includes(option.value)
           );
           setSelectedSkills(initialSelection);
-          setInitialSkillsLoaded(true); // Mark as loaded
+          setInitialSkillsLoaded(true);
         } catch (error) {
-          console.error("Failed to fetch expert's current skills:", error);
-          // Handle error - maybe show a message
+          console.error("Failed to set expert's current skills:", error);
         }
       };
       fetchExpertDetailsIncludingSkills();
-    }
-    // If the role is not expert, ensure selected skills are cleared
-    else if (!isExpertRole) {
+    } else if (!isExpertRole) {
       setSelectedSkills([]);
-      setInitialSkillsLoaded(false); // Reset flag if role changes away from expert
+      setInitialSkillsLoaded(false);
     }
   }, [
     formData.role,
@@ -133,45 +121,39 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
     skillCategories,
     initialSkillsLoaded,
     authUser?.token,
-  ]); // Dependencies
+  ]);
 
-  // Standard form field change handler
+  // ... (handleChange dan handleMultiSelectChange tetap sama) ...
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" })); // Clear specific error on change
+    setErrors((prev) => ({ ...prev, [name]: "" }));
 
-    // If role changes, reset skills states
     if (name === "role") {
       setSelectedSkills([]);
-      setInitialSkillsLoaded(false); // Force reload of skills if role changes back to expert
+      setInitialSkillsLoaded(false);
     }
   };
 
-  // Handler for react-select multi (for skills)
   const handleMultiSelectChange = (selectedOptions) => {
     setSelectedSkills(selectedOptions || []);
-    setErrors((prev) => ({ ...prev, skillCtgIds: "" })); // Clear skill validation error
+    setErrors((prev) => ({ ...prev, skillCtgIds: "" }));
   };
 
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Prepare the payload to send to the backend
     let payload = { ...formData };
 
-    // If it's an expert, add the skill IDs array
     const isExpertRole = ["Expert", "Trainer", "Head of Expert"].includes(
       formData.role
     );
     if (isExpertRole) {
       payload.skillCtgIds = selectedSkills.map((skill) => skill.value);
     } else {
-      // Ensure skillCtgIds is not sent or is empty if not an expert
       delete payload.skillCtgIds;
     }
 
-    // Basic Frontend Validation (Optional, can rely on backend or add Yup)
     let formIsValid = true;
     let newErrors = {};
     if (!payload.name) {
@@ -182,12 +164,10 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
       newErrors.email = "Email is required";
       formIsValid = false;
     }
-    // Add more validation if needed
 
     setErrors(newErrors);
 
     if (formIsValid) {
-      // Call the onSubmit prop passed from UserManagement, passing the ID and payload
       onSubmit(userToEditProp.id, userToEditProp.role, payload);
     }
   };
@@ -216,7 +196,7 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
     menu: (base) => ({ ...base, zIndex: 50 }),
   };
 
-  // Determine which fields to show based on the role
+  // Tentukan role untuk field kondisional
   const role = formData.role;
   const isSalesRole = role === "Sales" || role === "Head Sales";
   const isExpertRole =
@@ -224,6 +204,8 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
   const isAdminRole = role === "Admin";
   const isAkademikRole = role === "Akademik";
   const isPmRole = role === "PM";
+  const isHrRole = role === "HR"; // <-- TAMBAHAN
+  const isOutsourcerRole = role === "external" || role === "internal"; // <-- TAMBAHAN
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -277,7 +259,6 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
             className="mt-1 block w-full border border-gray-300 rounded-md p-2"
             autoComplete="new-password"
           />
-          {/* No error display for optional password */}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -298,12 +279,11 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
         </div>
       </div>
 
-      {/* Role Selection (Only allow changing within compatible groups if needed, but simple dropdown for now) */}
+      {/* --- PERUBAHAN DROPDOWN ROLE --- */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Role *
         </label>
-        {/* Simple select for all roles */}
         <select
           name="role"
           value={formData.role}
@@ -320,17 +300,20 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
           <option value="Head of Expert">Head of Expert</option>
           <option value="Akademik">Akademik</option>
           <option value="PM">PM</option>
+          <option value="HR">HR</option>
+          <option value="external">Outsourcer (External)</option>
+          <option value="internal">Outsourcer (Internal)</option>
         </select>
         {errors.role && (
           <p className="text-red-500 text-xs mt-1">{errors.role}</p>
         )}
       </div>
+      {/* --- AKHIR PERUBAHAN DROPDOWN --- */}
 
       {/* Sales Specific Fields */}
       {isSalesRole && (
         <div className="space-y-4 pt-4 border-t mt-4">
           <h3 className="font-semibold text-gray-800">Sales Details</h3>
-          {/* Role selection specifically for Sales/Head Sales if needed, but handled above */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Description (Optional)
@@ -352,7 +335,6 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
           <h3 className="font-semibold text-gray-800">
             Expert/Trainer Details
           </h3>
-          {/* Role selection specifically for Expert/Trainer/Head if needed, but handled above */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Skills (Pilih satu atau lebih)
@@ -366,7 +348,7 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
               value={selectedSkills}
               onChange={handleMultiSelectChange}
               placeholder="Pilih skill..."
-              isLoading={!skillCategories.length && isExpertRole} // Show loading state
+              isLoading={!skillCategories.length && isExpertRole}
               styles={selectStyles}
             />
             {errors.skillCtgIds && typeof errors.skillCtgIds === "string" && (
@@ -374,8 +356,7 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
             )}
             {errors.skills && (
               <p className="text-red-500 text-xs mt-1">{errors.skills}</p>
-            )}{" "}
-            {/* Error fetching skills */}
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -404,25 +385,48 @@ const EditUserForm = ({ user: userToEditProp, onSubmit, onClose }) => {
         </div>
       )}
 
-      {/* Fields for other roles (Admin, Akademik, PM) - Add if they have specific editable fields */}
+      {/* --- TAMBAHAN BLOK KONDISIONAL --- */}
       {isAdminRole && (
         <div className="pt-4 border-t mt-4">
-          <h3 className="font-semibold text-gray-800">Admin Details</h3>{" "}
-          {/* Admin specific fields */}{" "}
+          <h3 className="font-semibold text-gray-800">Admin Details</h3>
         </div>
       )}
       {isAkademikRole && (
         <div className="pt-4 border-t mt-4">
-          <h3 className="font-semibold text-gray-800">Akademik Details</h3>{" "}
-          {/* Akademik specific fields */}{" "}
+          <h3 className="font-semibold text-gray-800">Akademik Details</h3>
         </div>
       )}
       {isPmRole && (
         <div className="pt-4 border-t mt-4">
-          <h3 className="font-semibold text-gray-800">PM Details</h3>{" "}
-          {/* PM specific fields */}{" "}
+          <h3 className="font-semibold text-gray-800">PM Details</h3>
         </div>
       )}
+      {isHrRole && (
+        <div className="pt-4 border-t mt-4">
+          <h3 className="font-semibold text-gray-800">HR Details</h3>
+        </div>
+      )}
+
+      {/* Outsourcer Specific Fields */}
+      {isOutsourcerRole && (
+        <div className="space-y-4 pt-4 border-t mt-4">
+          <h3 className="font-semibold text-gray-800">Outsourcer Details</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Status (Optional)
+            </label>
+            <input
+              type="text"
+              name="statOutsourcer"
+              value={formData.statOutsourcer || ""} // Gunakan statOutsourcer
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              placeholder="Contoh: Active, On Contract"
+            />
+          </div>
+        </div>
+      )}
+      {/* --- AKHIR TAMBAHAN --- */}
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-2 pt-4">

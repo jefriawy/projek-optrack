@@ -86,6 +86,23 @@ const hrSchema = Yup.object({
   mobile: Yup.string().optional(),
 });
 
+// <-- TAMBAHKAN SKEMA OUTSOURCER -->
+const outsourcerSchema = Yup.object({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string()
+    .email("Invalid email format")
+    .required("Email is required"),
+  password: Yup.string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+  mobile: Yup.string().optional(),
+  role: Yup.string()
+    .oneOf(["external", "internal"])
+    .required("Role is required"),
+  statOutsourcer: Yup.string().optional(),
+});
+// <-- AKHIR TAMBAHAN -->
+
 const validationSchemaMap = {
   Admin: adminSchema,
   Sales: salesSchema,
@@ -93,6 +110,7 @@ const validationSchemaMap = {
   Akademik: akademikSchema,
   PM: pmSchema,
   HR: hrSchema,
+  Outsourcer: outsourcerSchema, // <-- TAMBAHKAN INI
 };
 
 const AddUserForm = ({ userType, onClose, onSubmit }) => {
@@ -120,22 +138,17 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         ? "Admin"
         : userType === "HR"
         ? "HR"
+        : userType === "Outsourcer" // <-- TAMBAHKAN INI
+        ? "external" // <-- Default untuk Outsourcer
         : "",
     // Sales specific
     descSales: "",
     // Expert specific
     statExpert: "",
     Row: "",
+    // Outsourcer specific
+    statOutsourcer: "", // <-- TAMBAHKAN INI
   });
-      {/* HR */}
-      {userType === "HR" && (
-        <div className="space-y-4 animate-fadeIn">
-          <h3 className="font-semibold text-gray-800">Human Resource Details</h3>
-          {/* Role is fixed */}
-          <input type="hidden" name="role" value="HR" />
-          {/* Add other HR-specific fields if needed */}
-        </div>
-      )}
 
   const [errors, setErrors] = useState({});
 
@@ -144,7 +157,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
     // Reset skills when switching user type
     setSelectedSkills([]);
     setSkillCategories([]);
-    
+
     if (userType === "Expert") {
       const fetchSkillCategories = async () => {
         if (user.token) {
@@ -406,6 +419,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
             >
               <option value="Expert">Expert</option>
               <option value="Trainer">Trainer</option>
+              <option value="Head of Expert">Head of Expert</option>
             </select>
             {errors.role && (
               <p className="text-red-500 text-sm mt-1">{errors.role}</p>
@@ -457,6 +471,58 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
           </div>
         </div>
       )}
+
+      {/* HR */}
+      {userType === "HR" && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">
+            Human Resource Details
+          </h3>
+          {/* Role is fixed */}
+          <input type="hidden" name="role" value="HR" />
+          {/* Add other HR-specific fields if needed */}
+        </div>
+      )}
+
+      {/* <-- BLOK BARU UNTUK OUTSOURCER --> */}
+      {userType === "Outsourcer" && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">Outsourcer Details</h3>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Tipe Role *
+            </label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded-md ${
+                errors.role ? "border-red-500" : "border-gray-300"
+              }`}
+            >
+              <option value="external">External</option>
+              <option value="internal">Internal</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Status (Optional)
+            </label>
+            <input
+              type="text"
+              name="statOutsourcer"
+              value={formData.statOutsourcer}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Contoh: Active, On Contract"
+            />
+          </div>
+        </div>
+      )}
+      {/* <-- AKHIR BLOK BARU --> */}
 
       {/* Submit Buttons */}
       <div className="flex justify-end space-x-2 pt-4">

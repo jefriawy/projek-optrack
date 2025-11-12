@@ -1,31 +1,10 @@
+// backend/controllers/userController.js
 const HR = require("../models/hr");
 const { generateUserId } = require("../utils/idGenerator");
-// Tambah user HR
-const createHRUser = async (req, res) => {
-  try {
-    const { name, email, password, mobile } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "Name, email, and password are required." });
-    }
-    // Cek email unik
-    const existing = await HR.findByEmail(email);
-    if (existing) {
-      return res.status(409).json({ error: "Email already exists." });
-    }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const idHR = await generateUserId("HR");
-  await HR.create({ idHR, nmHR: name, emailHR: email, password: hashedPassword, mobileHR: mobile });
-  res.status(201).json({ message: "HR user created successfully." });
-  } catch (error) {
-    console.error("Error creating HR user:", error);
-    res.status(500).json({ error: "Server error while creating HR user." });
-  }
-};
-// backend/controllers/userController.js
 const pool = require("../config/database");
-const bcrypt = require("bcrypt"); // Pastikan bcrypt di-import di atas
+const bcrypt = require("bcrypt");
 
-// Fungsi getAllUsers dan deleteUserByRole tidak berubah
+// Fungsi getAllUsers
 const getAllUsers = async (req, res) => {
   try {
     const [
@@ -35,6 +14,7 @@ const getAllUsers = async (req, res) => {
       akademikPromise,
       pmPromise,
       hrPromise,
+      outsourcerPromise, // <-- Variabel ini sudah ada
     ] = [
       pool.query(
         "SELECT idAdmin, nmAdmin, emailAdmin, 'Admin' as role, mobileAdmin FROM admin"
@@ -50,16 +30,32 @@ const getAllUsers = async (req, res) => {
       ),
       pool.query("SELECT idPM, nmPM, emailPM, 'PM' as role, mobilePM FROM pm"),
       pool.query("SELECT idHR, nmHR, emailHR, 'HR' as role, mobileHR FROM hr"),
+
+      // --- PERUBAHAN QUERY DI SINI ---
+      // Tambahkan 'statOutsourcer' dan 'mobileOutsourcer'
+      pool.query(
+        "SELECT idOutsourcer, nmOutsourcer, emailOutsourcer, role, mobileOutsourcer, statOutsourcer FROM outsourcer"
+      ),
     ];
-    const [[admins], [sales], [experts], [akademiks], [pms], [hrs]] =
-      await Promise.all([
-        adminPromise,
-        salesPromise,
-        expertPromise,
-        akademikPromise,
-        pmPromise,
-        hrPromise,
-      ]);
+
+    const [
+      [admins],
+      [sales],
+      [experts],
+      [akademiks],
+      [pms],
+      [hrs],
+      [outsourcers],
+    ] = await Promise.all([
+      adminPromise,
+      salesPromise,
+      expertPromise,
+      akademikPromise,
+      pmPromise,
+      hrPromise,
+      outsourcerPromise,
+    ]);
+
     const allUsers = [
       ...admins.map((u) => ({
         ...u,
@@ -87,6 +83,18 @@ const getAllUsers = async (req, res) => {
       })),
       ...pms.map((u) => ({ ...u, id: u.idPM, name: u.nmPM, email: u.emailPM })),
       ...hrs.map((u) => ({ ...u, id: u.idHR, name: u.nmHR, email: u.emailHR })),
+
+      // --- PERUBAHAN MAPPING DI SINI ---
+      // Pastikan semua data (termasuk statOutsourcer) di-pass
+      ...outsourcers.map((u) => ({
+        ...u,
+        id: u.idOutsourcer,
+        name: u.nmOutsourcer,
+        email: u.emailOutsourcer,
+        mobile: u.mobileOutsourcer, // Map mobile
+        statOutsourcer: u.statOutsourcer, // Map status
+        // role: 'Outsourcer' // Kita biarkan role asli ('external'/'internal')
+      })),
     ];
     res.json(allUsers);
   } catch (error) {
@@ -95,6 +103,8 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+// ... (sisa file: deleteUserByRole, updateUserByRole, getPMs, createHRUser tetap sama seperti respons sebelumnya) ...
+// Fungsi deleteUserByRole
 const deleteUserByRole = async (req, res) => {
   const { id, role } = req.params;
   if (!id || !role) {
@@ -115,6 +125,7 @@ const deleteUserByRole = async (req, res) => {
       break;
     case "Expert":
     case "Trainer":
+    case "Head of Expert":
       tableName = "expert";
       idColumn = "idExpert";
       break;
@@ -129,6 +140,12 @@ const deleteUserByRole = async (req, res) => {
     case "HR":
       tableName = "hr";
       idColumn = "idHR";
+      break;
+    case "Outsourcer":
+    case "external":
+    case "internal":
+      tableName = "outsourcer";
+      idColumn = "idOutsourcer";
       break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
@@ -149,8 +166,7 @@ const deleteUserByRole = async (req, res) => {
   }
 };
 
-// ==================== PERUBAHAN DIMULAI ====================
-// Fungsi updateUserByRole ditulis ulang untuk keamanan dan fungsionalitas
+// Fungsi updateUserByRole
 const updateUserByRole = async (req, res) => {
   const { id, role } = req.params;
   const data = req.body;
@@ -209,7 +225,8 @@ const updateUserByRole = async (req, res) => {
       }
       break;
     case "Expert":
-    case "Trainer": // Menambahkan 'Trainer' karena mereka ada di tabel 'expert'
+    case "Trainer":
+    case "Head of Expert":
       tableName = "expert";
       idColumn = "idExpert";
       if (data.name) {
@@ -277,6 +294,33 @@ const updateUserByRole = async (req, res) => {
         params.push(data.mobile);
       }
       break;
+    case "Outsourcer":
+    case "external":
+    case "internal":
+      tableName = "outsourcer";
+      idColumn = "idOutsourcer";
+      if (data.name) {
+        setClauses.push("nmOutsourcer = ?");
+        params.push(data.name);
+      }
+      if (data.email) {
+        setClauses.push("emailOutsourcer = ?");
+        params.push(data.email);
+      }
+      if (data.mobile) {
+        setClauses.push("mobileOutsourcer = ?");
+        params.push(data.mobile);
+      }
+      if (data.role) {
+        // data.role akan 'external' atau 'internal' dari form
+        setClauses.push("role = ?");
+        params.push(data.role);
+      }
+      if (data.statOutsourcer) {
+        setClauses.push("statOutsourcer = ?");
+        params.push(data.statOutsourcer);
+      }
+      break;
     default:
       return res.status(400).json({ error: "Invalid user role." });
   }
@@ -299,10 +343,14 @@ const updateUserByRole = async (req, res) => {
     res.json({ message: "User updated successfully" });
   } catch (error) {
     console.error(`Error updating user in ${tableName}:`, error);
+    if (error.code === "ER_DUP_ENTRY") {
+      return res
+        .status(400)
+        .json({ error: "Email address is already in use by another account." });
+    }
     res.status(500).json({ error: `Server error while updating user.` });
   }
 };
-// ==================== AKHIR PERUBAHAN ====================
 
 const getPMs = async (req, res) => {
   try {
@@ -314,4 +362,38 @@ const getPMs = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, deleteUserByRole, updateUserByRole, getPMs, createHRUser };
+const createHRUser = async (req, res) => {
+  try {
+    const { name, email, password, mobile } = req.body;
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Name, email, and password are required." });
+    }
+    const existing = await HR.findByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const idHR = await generateUserId("HR");
+    await HR.create({
+      idHR,
+      nmHR: name,
+      emailHR: email,
+      password: hashedPassword,
+      mobileHR: mobile,
+    });
+    res.status(201).json({ message: "HR user created successfully." });
+  } catch (error) {
+    console.error("Error creating HR user:", error);
+    res.status(500).json({ error: "Server error while creating HR user." });
+  }
+};
+
+module.exports = {
+  getAllUsers,
+  deleteUserByRole,
+  updateUserByRole,
+  getPMs,
+  createHRUser,
+};

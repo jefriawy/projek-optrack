@@ -17,6 +17,7 @@ const roleToCode = {
   Project: "08",
   Outsource: "09",
   HR: "67",
+  Outsourcer: "70",
 };
 
 // Mapping dari role ke informasi tabel
@@ -36,6 +37,7 @@ const roleToTableInfo = {
   Project: { tableName: "project", idColumn: "idProject" },
   Outsource: { tableName: "outsource", idColumn: "idOutsource" },
   HR: { tableName: "hr", idColumn: "idHR" },
+  Outsourcer: { tableName: "outsourcer", idColumn: "idOutsourcer" },
 };
 
 // Mapping dari jenis file ke kode numerik

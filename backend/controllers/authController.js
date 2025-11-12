@@ -8,6 +8,7 @@ const Expert = require("../models/expert");
 const Akademik = require("../models/akademik");
 const PM = require("../models/pm");
 const HR = require("../models/hr");
+const Outsourcer = require("../models/outsourcer"); // <-- TAMBAHKAN INI
 
 // Helper function to generate JWT
 const generateToken = (user) => {
@@ -39,6 +40,10 @@ const roleToRedirect = (role) => {
       return "/project";
     case "HR":
       return "/outsource";
+    case "Outsourcer": // <-- TAMBAHKAN INI
+    case "external":
+    case "internal":
+      return "/outsource"; // (Asumsi Outsourcer melihat halaman outsource)
     default:
       return "/";
   }
@@ -66,9 +71,6 @@ const login = [
       if (adminRows.length > 0) {
         user = adminRows[0];
       }
-
-      // ==================== PERUBAHAN DIMULAI ====================
-      // Logika di bawah ini distandarkan untuk memastikan konsistensi
 
       // Try to find user in Sales table
       if (!user) {
@@ -140,7 +142,21 @@ const login = [
         }
       }
 
-      // ==================== AKHIR PERUBAHAN ====================
+      // <-- TAMBAHKAN BLOK INI -->
+      // Try to find user in Outsourcer table
+      if (!user) {
+        const outsourcerUser = await Outsourcer.findByEmail(email);
+        if (outsourcerUser) {
+          user = {
+            id: outsourcerUser.idOutsourcer,
+            name: outsourcerUser.nmOutsourcer,
+            email: outsourcerUser.emailOutsourcer,
+            role: outsourcerUser.role, // 'external' or 'internal'
+            password: outsourcerUser.password,
+          };
+        }
+      }
+      // <-- AKHIR TAMBAHAN -->
 
       // If user not found in any table
       if (!user) {
