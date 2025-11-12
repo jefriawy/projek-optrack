@@ -1,3 +1,13 @@
+// Ambil semua outsourcer
+const getAllOutsourcers = async (req, res) => {
+  try {
+    const outsourcers = await Outsourcer.getAll();
+    res.json(outsourcers);
+  } catch (error) {
+    console.error("Error fetching outsourcers:", error);
+    res.status(500).json({ error: "Failed to fetch outsourcers" });
+  }
+};
 // backend/controllers/outsourcerController.js
 const Outsourcer = require("../models/outsourcer");
 const bcrypt = require("bcrypt");
@@ -64,4 +74,4 @@ const createOutsourcerUser = async (req, res) => {
   }
 };
 
-module.exports = { createOutsourcerUser };
+module.exports = { createOutsourcerUser, getAllOutsourcers };

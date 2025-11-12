@@ -262,7 +262,19 @@ const AppRoutes = () => {
         path="/outsource"
         element={
           <Protected
-            allow={["Sales", "Head Sales", "Expert", "Head of Expert", "Admin", "HR"]}
+            allow={[
+              "Sales",
+              "Head Sales",
+              "Expert",
+              "Head of Expert",
+              "Admin",
+              "HR",
+              // allow outsourcer roles (normalized role is 'Outsourcer')
+              "Outsourcer",
+              // also accept original role names if present
+              "external",
+              "internal",
+            ]}
           >
             <Layout>
               <OutsourcePage />

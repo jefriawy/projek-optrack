@@ -1,3 +1,43 @@
+// Ambil outsource berdasarkan idOutsourcer (mirip getByExpertId di project)
+async function getByOutsourcerId(outsourcerId) {
+  const query = `
+    SELECT o.*, op.nmOpti, op.statOpti, op.valOpti, op.kebutuhan, op.proposalOpti,
+           c.corpCustomer, c.nmCustomer, s.nmSales, hr.nmHR, op.idHR
+    FROM outsource o
+    LEFT JOIN opti op ON o.idOpti = op.idOpti
+    LEFT JOIN customer c ON op.idCustomer = c.idCustomer
+    LEFT JOIN sales s ON op.idSales = s.idSales
+    LEFT JOIN hr ON op.idHR = hr.idHR
+    JOIN outsource_officer oo ON o.idOutsource = oo.idOutsource
+    WHERE oo.idOutsourcer = ? AND op.statOpti = 'po received'
+    ORDER BY o.startOutsource DESC
+  `;
+  const [rows] = await db.query(query, [outsourcerId]);
+  return rows;
+}
+// Update penugasan outsourcer ke outsource (tabel outsource_officer)
+async function updateOutsourceOutsourcers(outsourceId, outsourcerIds) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    // Hapus semua penugasan outsourcer lama
+    await connection.query("DELETE FROM outsource_officer WHERE idOutsource = ?", [outsourceId]);
+    // Masukkan outsourcer baru jika ada
+    if (outsourcerIds && outsourcerIds.length > 0) {
+      const values = outsourcerIds.map((idOutsourcer) => [outsourceId, idOutsourcer]);
+      await connection.query(
+        "INSERT INTO outsource_officer (idOutsource, idOutsourcer) VALUES ?",
+        [values]
+      );
+    }
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
 const db = require("../config/database");
 
 // Get all outsource (accept optional user to filter for HR)
@@ -77,4 +117,6 @@ module.exports = {
   createOutsource,
   updateOutsource,
   deleteOutsource,
+  updateOutsourceOutsourcers,
+  getByOutsourcerId,
 };

@@ -27,7 +27,8 @@ export const AuthProvider = ({ children }) => {
   const markAllAsRead = async () => {
     if (!user?.token) return;
     try {
-      await axios.put("http://localhost:3000/api/notifications/mark-read", {}, {
+      // backend route is /api/notifications/mark-as-read
+      await axios.put("http://localhost:3000/api/notifications/mark-as-read", {}, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setUnreadCount(0); // Clear state setelah sukses

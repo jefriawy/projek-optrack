@@ -1,8 +1,14 @@
 // backend/routes/outsourcer.js
 const express = require("express");
 const router = express.Router();
-const { createOutsourcerUser } = require("../controllers/outsourcerController");
+const { createOutsourcerUser, getAllOutsourcers } = require("../controllers/outsourcerController");
 const authMiddleware = require("../middleware/authMiddleware");
+// GET /api/outsourcer - ambil semua outsourcer
+router.get(
+  "/",
+  authMiddleware(["Admin", "HR"]),
+  getAllOutsourcers
+);
 const { body, validationResult } = require("express-validator");
 
 // Middleware untuk validasi input

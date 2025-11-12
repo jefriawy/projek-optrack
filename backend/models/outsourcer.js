@@ -1,3 +1,4 @@
+// ...existing code...
 // backend/models/outsourcer.js
 const pool = require("../config/database");
 
@@ -35,6 +36,11 @@ const Outsourcer = {
       ]
     );
     return result;
+  },
+
+  async getAll() {
+    const [rows] = await pool.query("SELECT * FROM outsourcer");
+    return rows;
   },
 };
 

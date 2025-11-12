@@ -5,7 +5,21 @@ const notificationController = require("../controllers/notificationController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Semua role berhak melihat notifikasi
-const allRoles = ["Sales", "Head Sales", "Trainer", "Expert", "Admin", "Akademik", "PM", "HR"];
+// Tambahkan role outsourcer (external/internal) dan alias 'Outsourcer'
+const allRoles = [
+	"Sales",
+	"Head Sales",
+	"Trainer",
+	"Expert",
+	"Admin",
+	"Akademik",
+	"PM",
+	"HR",
+	// outsourcer roles
+	"external",
+	"internal",
+	"Outsourcer",
+];
 
 router.get("/unread-count", authMiddleware(allRoles), notificationController.getUnreadCount);
 router.get("/", authMiddleware(allRoles), notificationController.getNotifications);

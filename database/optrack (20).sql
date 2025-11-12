@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 10, 2025 at 12:28 AM
+-- Generation Time: Nov 12, 2025 at 08:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -389,6 +389,33 @@ CREATE TABLE `outsourcer` (
   `role` enum('external','internal') DEFAULT 'external'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `outsourcer`
+--
+
+INSERT INTO `outsourcer` (`idOutsourcer`, `nmOutsourcer`, `mobileOutsourcer`, `emailOutsourcer`, `password`, `statOutsourcer`, `role`) VALUES
+(2570001, 'Arya Stark', '08331245332', 'arystark02@gmail.com', '$2b$10$9ko1N3bV45ZR6TFqWhUw6OLiuPaOhXAK6i4XmqakNSFta6GatVHEO', 'Active', 'internal'),
+(2570002, 'Consort Radahn', '08774378543', 'consortradahn@gmail.com', '$2b$10$LO78PbnZ4BBRD.NqJYt4HuNeLDa89B7KBuZA3qwq7aD.J2ME0v9jG', 'On Contract', 'external');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `outsource_officer`
+--
+
+CREATE TABLE `outsource_officer` (
+  `idOutsourcer` int(11) NOT NULL,
+  `idOutsource` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `outsource_officer`
+--
+
+INSERT INTO `outsource_officer` (`idOutsourcer`, `idOutsource`) VALUES
+(2570001, 2509002),
+(2570002, 2509001);
+
 -- --------------------------------------------------------
 
 --
@@ -768,6 +795,13 @@ ALTER TABLE `outsourcer`
   ADD PRIMARY KEY (`idOutsourcer`);
 
 --
+-- Indexes for table `outsource_officer`
+--
+ALTER TABLE `outsource_officer`
+  ADD PRIMARY KEY (`idOutsourcer`,`idOutsource`),
+  ADD KEY `idx_idOutsourcer` (`idOutsourcer`);
+
+--
 -- Indexes for table `pm`
 --
 ALTER TABLE `pm`
@@ -906,7 +940,7 @@ ALTER TABLE `outsource`
 -- AUTO_INCREMENT for table `outsourcer`
 --
 ALTER TABLE `outsourcer`
-  MODIFY `idOutsourcer` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idOutsourcer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2570003;
 
 --
 -- AUTO_INCREMENT for table `pm`

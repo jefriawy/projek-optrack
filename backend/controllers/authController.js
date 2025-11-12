@@ -147,11 +147,14 @@ const login = [
       if (!user) {
         const outsourcerUser = await Outsourcer.findByEmail(email);
         if (outsourcerUser) {
+          // Normalize outsourcer role to a single role value 'Outsourcer'
+          // but keep the original role ('external'|'internal') in originalRole
           user = {
             id: outsourcerUser.idOutsourcer,
             name: outsourcerUser.nmOutsourcer,
             email: outsourcerUser.emailOutsourcer,
-            role: outsourcerUser.role, // 'external' or 'internal'
+            role: "Outsourcer",
+            originalRole: outsourcerUser.role || "external",
             password: outsourcerUser.password,
           };
         }

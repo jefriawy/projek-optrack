@@ -1,6 +1,8 @@
 // src/components/OutsourceDetailTab.js
-import React from "react";
+import React, { useState, useContext } from "react";
+import AddOutsourcerForm from "./AddOutsourcerForm";
 import pdfIcon from "../iconres/pdf.png";
+import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -20,71 +22,79 @@ const diffDays = (start, end) => {
 };
 
 const OutsourceDetailTab = ({ outsource }) => {
+  const [activeTab, setActiveTab] = useState("detail");
+  const { user } = useContext(AuthContext);
+  const isHR = user?.role === "HR";
   if (!outsource) return null;
-  // Status logic for parent modal
-  // const now = new Date();
-  // const start = outsource.startOutsource ? new Date(outsource.startOutsource) : null;
-  // const end = outsource.endOutsource ? new Date(outsource.endOutsource) : null;
-  // let status = "-";
-  // if (start && now < start) status = "PO Received";
-  // else if (start && end && now >= start && now <= end) status = "Outsource On Going";
-  // else if (end && now > end) status = "Outsource Delivered";
+
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border p-4">
-        <div className="text-sm text-gray-500 mb-2">Jadwal</div>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">Mulai</span>
-            <b>{fmtDateTime(outsource.startOutsource)}</b>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">Selesai</span>
-            <b>{fmtDateTime(outsource.endOutsource)}</b>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">Durasi</span>
-            <b>{diffDays(outsource.startOutsource, outsource.endOutsource) ?? "-"} hari</b>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border p-4">
-          <div className="text-sm text-gray-500 mb-2">Sales</div>
-          <div>{outsource.nmSales || "-"}</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-sm text-gray-500 mb-2">Human Resource</div>
-          <div>{outsource.nmHR || "-"}</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border p-4">
-          <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
-          <div>{outsource.kebutuhan || "Belum ada deskripsi."}</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-sm text-gray-500 mb-2">Proposal</div>
-          <div>{outsource.proposalOpti || "Belum ada proposal."}</div>
-        </div>
-      </div>
-      {/* Dokumen Outsource jika ada */}
-      {/* <div className="rounded-lg border p-4">
-        <div className="text-sm text-gray-500 mb-2">Dokumen Outsource</div>
-        {outsource.documentOutsource ? (
-          <a
-            href={`${API_BASE}/uploads/outsource/${outsource.documentOutsource}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-black hover:underline flex items-center gap-2"
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b mb-2">
+        <button
+          className={`px-4 py-2 -mb-px border-b-2 ${activeTab === "detail" ? "border-blue-600 text-blue-600 font-semibold" : "border-transparent text-gray-500"}`}
+          onClick={() => setActiveTab("detail")}
+        >
+          Detail
+        </button>
+        {/* Tampilkan tab tambah outsourcer hanya jika user adalah HR */}
+        {isHR && (
+          <button
+            className={`px-4 py-2 -mb-px border-b-2 ${activeTab === "outsourcer" ? "border-blue-600 text-blue-600 font-semibold" : "border-transparent text-gray-500"}`}
+            onClick={() => setActiveTab("outsourcer")}
           >
-            <img src={pdfIcon} alt="PDF Icon" className="w-5 h-5" />
-            <span>{outsource.documentOutsource}</span>
-          </a>
-        ) : (
-          <div className="text-sm text-gray-700">Belum ada dokumen.</div>
+            Tambah Outsourcer
+          </button>
         )}
-      </div> */}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "detail" && (
+        <>
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-gray-500 mb-2">Jadwal</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Mulai</span>
+                <b>{fmtDateTime(outsource.startOutsource)}</b>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Selesai</span>
+                <b>{fmtDateTime(outsource.endOutsource)}</b>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Durasi</span>
+                <b>{diffDays(outsource.startOutsource, outsource.endOutsource) ?? "-"} hari</b>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-gray-500 mb-2">Sales</div>
+              <div>{outsource.nmSales || "-"}</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-gray-500 mb-2">Human Resource</div>
+              <div>{outsource.nmHR || "-"}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-gray-500 mb-2">Deskripsi</div>
+              <div>{outsource.kebutuhan || "Belum ada deskripsi."}</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-gray-500 mb-2">Proposal</div>
+              <div>{outsource.proposalOpti || "Belum ada proposal."}</div>
+            </div>
+          </div>
+        </>
+      )}
+      {activeTab === "outsourcer" && isHR && (
+        <div className="rounded-lg border p-4">
+          <AddOutsourcerForm outsourceId={outsource.idOutsource} />
+        </div>
+      )}
     </div>
   );
 };

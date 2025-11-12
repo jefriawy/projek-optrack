@@ -49,6 +49,45 @@ const OutsourcePage = () => {
     return "-";
   };
 
+  const fmtDate = (v) =>
+    v
+      ? new Date(v).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : "-";
+
+  const remainingLabel = (item) => {
+    const now = Date.now();
+    const end = item.endOutsource ? new Date(item.endOutsource).getTime() : null;
+    if (!end) return "-";
+    if (now > end) return "Selesai";
+    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    return `${days} hari`;
+  };
+
+  // computeStatus returns label and tailwind className similar to ProjectPage/TrainingPage
+  const computeStatus = (item) => {
+    const now = Date.now();
+    const start = item.startOutsource ? new Date(item.startOutsource).getTime() : null;
+    const end = item.endOutsource ? new Date(item.endOutsource).getTime() : null;
+
+    if (start && now < start) {
+      return { label: "Po Received", className: "bg-amber-500 text-white" };
+    }
+
+    if (start && end && now >= start && now <= end) {
+      return { label: "Outsource On Going", className: "bg-blue-600 text-white" };
+    }
+
+    if (end && now > end) {
+      return { label: "Outsource Delivered", className: "bg-green-500 text-white" };
+    }
+
+    return { label: "Po Received", className: "bg-amber-500 text-white" };
+  };
+
   useEffect(() => {
     if (!user?.token) return;
     setLoading(true);
@@ -153,23 +192,27 @@ const OutsourcePage = () => {
                     Human Resource: <span className="text-purple-600 font-bold">{item.nmHR || '-'}</span>
                   </div>
                 </div>
-                  <span className="px-3 py-1 text-xs rounded-full font-semibold bg-blue-600 text-white">{getStatus(item)}</span>
+                  {(() => {
+                    const s = computeStatus(item);
+                    return (
+                      <span className={`px-3 py-1 text-xs rounded-full font-semibold ${s.className}`}>{s.label}</span>
+                    );
+                  })()}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
                   <FaCalendar className="text-gray-500" />
-                  <span>{item.startOutsource} – {item.endOutsource}</span>
+                  <span>{fmtDate(item.startOutsource)} – {fmtDate(item.endOutsource)}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
                   <FaClock className="text-gray-500" />
-                  <span>Sisa: {/* logika sisa waktu bisa ditambahkan di sini */}</span>
+                  <span>{remainingLabel(item)}</span>
                 </div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg" onClick={() => handleDetailClick(item)}>
+                <button className="bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm" onClick={() => handleDetailClick(item)}>
                   Lihat Detail
                 </button>
-                <button className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg">Lihat Feedback</button>
               </div>
             </div>
           ))}

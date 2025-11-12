@@ -1,9 +1,42 @@
+// Ambil outsource yang diberikan ke outsourcer login
+const getMyOutsources = async (req, res) => {
+  try {
+    const outsourcerId = req.user.id;
+    const data = await Outsource.getByOutsourcerId(outsourcerId);
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching my outsources:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+// Update penugasan outsourcer ke outsource (mirip project/experts)
+const updateOutsourceOutsourcers = async (req, res) => {
+  try {
+    const { outsourceId } = req.params;
+    const { outsourcerIds } = req.body;
+    if (!Array.isArray(outsourcerIds)) {
+      return res.status(400).json({ error: "outsourcerIds must be an array." });
+    }
+    await Outsource.updateOutsourceOutsourcers(outsourceId, outsourcerIds);
+    res.json({ message: "Outsourcer assignment updated" });
+  } catch (err) {
+    console.error("Error updating outsource-outsourcers:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 const Outsource = require("../models/outsourceModel");
 const { generateUserId } = require("../utils/idGenerator");
 
 const getOutsources = async (req, res) => {
   try {
-    // Pass the authenticated user so model can filter results for HR
+    // If the authenticated user is an Outsourcer, return only outsourcing
+    // rows assigned to them via outsource_officer table.
+    if (req.user && (req.user.role === "Outsourcer" || req.user.role === "external" || req.user.role === "internal")) {
+      const data = await Outsource.getByOutsourcerId(req.user.id);
+      return res.json(data);
+    }
+
+    // Otherwise pass the authenticated user so model can filter results for HR/Sales
     const data = await Outsource.getAllOutsource(req.user);
     res.json(data);
   } catch (err) {
@@ -36,6 +69,15 @@ const getOutsourceById = async (req, res) => {
       }
       // Admin, Head Sales, Expert tetap bisa mengakses
     }
+    // Ambil daftar outsourcer yang ditugaskan ke outsource ini
+    const [assignedRows] = await require("../config/database").query(
+      `SELECT oof.idOutsourcer, os.nmOutsourcer
+       FROM outsource_officer oof
+       JOIN outsourcer os ON oof.idOutsourcer = os.idOutsourcer
+       WHERE oof.idOutsource = ?`,
+      [id]
+    );
+    outsource.outsourcers = assignedRows;
     res.json(outsource);
   } catch (err) {
     console.error("Error fetching outsource:", err);
@@ -82,4 +124,6 @@ module.exports = {
   createOutsource,
   updateOutsource,
   deleteOutsource,
+  updateOutsourceOutsourcers,
+  getMyOutsources,
 };
