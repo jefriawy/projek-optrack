@@ -175,89 +175,85 @@ const UserManagement = () => {
   const handleAddUserSubmit = async (formData) => {
     let url = "";
     let payload = {};
+    let headers = { Authorization: `Bearer ${user.token}` };
 
-    switch (addUserType) {
-      case "Admin":
-        url = `${API_BASE}/api/admin`;
-        payload = {
-          nmAdmin: formData.name,
-          emailAdmin: formData.email,
-          password: formData.password,
-          mobileAdmin: formData.mobile,
-        };
-        break;
-      case "Sales":
-        url = `${API_BASE}/api/sales`;
-        payload = {
-          nmSales: formData.name,
-          emailSales: formData.email,
-          password: formData.password,
-          mobileSales: formData.mobile,
-          role: formData.role,
-          descSales: formData.descSales,
-        };
-        break;
-      case "Expert":
-        url = `${API_BASE}/api/expert`;
-        payload = {
-          nmExpert: formData.name,
-          emailExpert: formData.email,
-          password: formData.password,
-          mobileExpert: formData.mobile,
-          role: formData.role,
-          skillCtgIds: formData.skillCtgIds,
-          statExpert: formData.statExpert,
-          Row: formData.Row,
-        };
-        break;
-      case "Akademik":
-        url = `${API_BASE}/api/admin/akademik`;
-        payload = {
-          nmAkademik: formData.name,
-          emailAkademik: formData.email,
-          password: formData.password,
-          mobileAkademik: formData.mobile,
-        };
-        break;
-      case "PM":
-        url = `${API_BASE}/api/admin/pm`;
-        payload = {
-          nmPM: formData.name,
-          emailPM: formData.email,
-          password: formData.password,
-          mobilePM: formData.mobile,
-        };
-        break;
-      case "HR":
-        url = `${API_BASE}/api/user/hr`;
-        payload = {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          mobile: formData.mobile,
-        };
-        break;
-      case "Outsourcer":
-        url = `${API_BASE}/api/outsourcer`;
-        payload = {
-          nmOutsourcer: formData.name,
-          emailOutsourcer: formData.email,
-          password: formData.password,
-          mobileOutsourcer: formData.mobile,
-          role: formData.role, // 'external' or 'internal'
-          statOutsourcer: formData.statOutsourcer,
-        };
-        break;
-      default:
-        setErrorMessage("Invalid user type.");
-        setTimeout(() => setErrorMessage(""), 3000);
-        return;
+    // UNTUK EXPERT: formData adalah sudah FormData object dari AddUserForm
+    if (addUserType === "Expert" && formData instanceof FormData) {
+      url = `${API_BASE}/api/expert`;
+      payload = formData;
+      // Jangan set Content-Type, browser akan mengatur boundary otomatis
+      headers = { Authorization: `Bearer ${user.token}` };
+    } else {
+      // UNTUK ROLE LAIN: build payload object biasa
+      switch (addUserType) {
+        case "Admin":
+          url = `${API_BASE}/api/admin`;
+          payload = {
+            nmAdmin: formData.name,
+            emailAdmin: formData.email,
+            password: formData.password,
+            mobileAdmin: formData.mobile,
+          };
+          break;
+        case "Sales":
+          url = `${API_BASE}/api/sales`;
+          payload = {
+            nmSales: formData.name,
+            emailSales: formData.email,
+            password: formData.password,
+            mobileSales: formData.mobile,
+            role: formData.role,
+            descSales: formData.descSales,
+          };
+          break;
+        case "Akademik":
+          url = `${API_BASE}/api/admin/akademik`;
+          payload = {
+            nmAkademik: formData.name,
+            emailAkademik: formData.email,
+            password: formData.password,
+            mobileAkademik: formData.mobile,
+          };
+          break;
+        case "PM":
+          url = `${API_BASE}/api/admin/pm`;
+          payload = {
+            nmPM: formData.name,
+            emailPM: formData.email,
+            password: formData.password,
+            mobilePM: formData.mobile,
+          };
+          break;
+        case "HR":
+          url = `${API_BASE}/api/user/hr`;
+          payload = {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            mobile: formData.mobile,
+          };
+          break;
+        case "Outsourcer":
+          url = `${API_BASE}/api/outsourcer`;
+          payload = {
+            nmOutsourcer: formData.name,
+            emailOutsourcer: formData.email,
+            password: formData.password,
+            mobileOutsourcer: formData.mobile,
+            role: formData.role, // 'external' or 'internal'
+            statOutsourcer: formData.statOutsourcer,
+          };
+          break;
+        default:
+          setErrorMessage("Invalid user type.");
+          setTimeout(() => setErrorMessage(""), 3000);
+          return;
+      }
+      headers["Content-Type"] = "application/json";
     }
 
     try {
-      await axios.post(url, payload, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      await axios.post(url, payload, { headers });
       setSuccess(`✅ ${addUserType} user added successfully`);
       fetchUsers();
       handleCloseAddModal();
@@ -330,7 +326,10 @@ const UserManagement = () => {
       if (clean(formData.password)) p.password = formData.password;
       p.mobileExpert = clean(formData.mobile);
       p.role = clean(formData.role);
-      if (formData.skillCtgIds) {
+      // Support new dynamic expertSkills (array of objects) when present
+      if (formData.expertSkills) {
+        p.expertSkills = formData.expertSkills;
+      } else if (formData.skillCtgIds) {
         p.skillCtgIds = Array.isArray(formData.skillCtgIds)
           ? formData.skillCtgIds
           : String(formData.skillCtgIds)
@@ -364,7 +363,9 @@ const UserManagement = () => {
   };
 
   const handleEditUserSubmit = async (id, originalRole, formData) => {
-    const targetRole = formData.role || originalRole;
+    const targetRole = formData instanceof FormData 
+      ? (formData.get("role") || originalRole) 
+      : (formData.role || originalRole);
     let endpoint = "";
 
     switch (targetRole) {
@@ -401,10 +402,16 @@ const UserManagement = () => {
         return;
     }
 
-    const payload = buildPayloadForRole(targetRole, formData);
-    Object.keys(payload).forEach(
-      (k) => payload[k] === undefined && delete payload[k]
-    );
+    // Jika formData adalah FormData object (Expert dengan file), langsung gunakan
+    let payload = formData;
+    
+    // Jika formData adalah object biasa, build payload berdasarkan role
+    if (!(formData instanceof FormData)) {
+      payload = buildPayloadForRole(targetRole, formData);
+      Object.keys(payload).forEach(
+        (k) => payload[k] === undefined && delete payload[k]
+      );
+    }
 
     try {
       const res = await axios.put(endpoint, payload, {

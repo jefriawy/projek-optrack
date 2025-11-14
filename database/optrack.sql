@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Nov 12, 2025 at 08:52 PM
+-- Host: 127.0.0.1:4306
+-- Generation Time: Nov 14, 2025 at 11:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -162,7 +162,7 @@ CREATE TABLE `expert` (
 --
 
 INSERT INTO `expert` (`idExpert`, `nmExpert`, `mobileExpert`, `emailExpert`, `password`, `statExpert`, `Row`, `role`) VALUES
-(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', NULL, NULL, 'Expert'),
+(2504004, 'Rima Ayu', '089585681402', 'arimakanayu@gmail.com', '$2b$10$K0noNs2NNMsFcfE7X0H2rOmWUV0mhvgsylWku8/0UIwOpJk9s1DK.', '', '', 'Expert'),
 (2504005, 'Kresna Saraswati', '08129421087', 'saraswatikresna@gmail.com', '$2b$10$KhCOIL/QsPmMmwRV6nfQSurqBXx2Tpnf3piyd2hHZe8MsIhQkvrdi', NULL, NULL, 'Expert'),
 (2504006, 'Yudha Pratama', '08128321592', 'yudhapratamaass18@gmail.com', '$2b$10$HUAJLd9Y3wQjcAtJ9jb8ueEklJfA1l8ND5XzZucHjFKbOxrx5QZni', NULL, NULL, 'Expert'),
 (2504007, 'Restu Ardianto', '08126754402', 'ardianto812@gmail.com', '$2b$10$Fk0bv7JQf.SMbyPpaoMzguPpmNMTDMed7x9gNsCk15ZRs0m1oaGSa', NULL, NULL, 'Expert'),
@@ -273,7 +273,7 @@ INSERT INTO `notification` (`id`, `recipient_user_id`, `recipient_role`, `sender
 (55, 'ALL_ROLE', 'Head Sales', '2503003', 'Galang Pratama', 'Sales (Galang Pratama) Telah menambahkan OPTI: Outsource Scouting ', 'opti_added', '2506062', 1, '2025-11-09 00:07:02'),
 (56, '2503003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status OPTI (Outsource Scouting ) menjadi po received', 'opti_status_updated', '2506062', 1, '2025-11-09 00:07:54'),
 (57, 'ALL_ROLE', 'Head Sales', '2503003', 'Galang Pratama', 'Sales (Galang Pratama) Telah menambahkan OPTI: Outsource Coaching Staff', 'opti_added', '2506063', 1, '2025-11-10 06:25:11'),
-(58, '2503003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status OPTI (Outsource Coaching Staff) menjadi po received', 'opti_status_updated', '2506063', 0, '2025-11-10 06:25:36');
+(58, '2503003', 'Sales', '2502003', 'Surya Legowo', 'Head Sales (Surya Legowo) Telah Mengupdate Status OPTI (Outsource Coaching Staff) menjadi po received', 'opti_status_updated', '2506063', 1, '2025-11-10 06:25:36');
 
 -- --------------------------------------------------------
 
@@ -465,7 +465,7 @@ INSERT INTO `project` (`idProject`, `nmProject`, `idTypeProject`, `startProject`
 (2508001, 'project 1', 3, '2025-10-03 14:56:00', '2025-10-03 14:59:00', 'gedung a', 2505015, 2506057, 'Finished', NULL, ''),
 (2508002, 'Projek MBG', 3, '2025-10-05 08:37:00', '2025-10-31 08:38:00', 'Azana Hotel Jakarta Airport - Jakarta', 2505007, 2506058, 'On Progress', NULL, ''),
 (2508003, 'Microsoft Azure Cloud Platform', 3, '2025-10-09 08:56:00', '2025-10-31 08:56:00', 'Jogja Expo Center (JEC), Yogyakarta', 2505003, 2506059, 'On Progress', NULL, ''),
-(2508004, 'Project Management Certification - PT Karya Nusantara', 3, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', 2505001, 2506060, 'Finished', NULL, '');
+(2508004, 'Project Management Certification - PT Karya Nusantara', 3, '2025-10-05 15:05:00', '2025-10-06 14:21:00', 'gedung b', 2505001, 2506060, 'Finished', 'assdcsd', '[{\"original\":\"expert_report.pdf\",\"stored\":\"1763110227085_feedback_project_expert_report.pdf\"}]');
 
 -- --------------------------------------------------------
 
@@ -550,18 +550,21 @@ INSERT INTO `sales` (`idSales`, `nmSales`, `mobileSales`, `emailSales`, `passwor
 
 CREATE TABLE `skill` (
   `idExpert` int(11) NOT NULL,
-  `idSkillCtg` int(11) NOT NULL
+  `idSkillCtg` int(11) NOT NULL,
+  `experience` varchar(100) NOT NULL,
+  `certificate_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `skill`
 --
 
-INSERT INTO `skill` (`idExpert`, `idSkillCtg`) VALUES
-(2504005, 1),
-(2504005, 4),
-(2504005, 5),
-(2514002, 10);
+INSERT INTO `skill` (`idExpert`, `idSkillCtg`, `experience`, `certificate_path`) VALUES
+(2504004, 12, '3 tahun', '2504004_12_1763116539407.pdf'),
+(2504005, 1, '', NULL),
+(2504005, 4, '', NULL),
+(2504005, 5, '', NULL),
+(2514002, 10, '', NULL);
 
 -- --------------------------------------------------------
 
@@ -590,7 +593,9 @@ INSERT INTO `skill_category` (`idSkillCtg`, `nmSkillCtg`, `statSkillCtg`, `descS
 (7, 'UI/UX Design', 'Active', 'Desain antarmuka dan pengalaman pengguna yang intuitif dan menarik.'),
 (8, 'Python for Data Science', 'Active', 'Analisis data dan machine learning menggunakan bahasa pemrograman Python.'),
 (9, 'Public Speaking & Presentation', 'Active', 'Kemampuan menyampaikan materi secara efektif di depan audiens.'),
-(10, 'Leadership & Team Management', 'Active', 'Keahlian dalam memimpin dan mengelola tim untuk mencapai tujuan proyek.');
+(10, 'Leadership & Team Management', 'Active', 'Keahlian dalam memimpin dan mengelola tim untuk mencapai tujuan proyek.'),
+(11, 'Fullstack Developer', 'Active', 'Backend, Frontend, UI/UX'),
+(12, 'Backend Develop', 'Active', 'asss');
 
 -- --------------------------------------------------------
 
@@ -970,7 +975,7 @@ ALTER TABLE `sales`
 -- AUTO_INCREMENT for table `skill_category`
 --
 ALTER TABLE `skill_category`
-  MODIFY `idSkillCtg` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `idSkillCtg` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `statcustomer`

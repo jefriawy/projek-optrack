@@ -1,7 +1,7 @@
-// backend/routes/expert.js
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
+const uploadExpertDocs = require("../middleware/uploadExpertDocs"); // Import Multer
 const {
   getExperts,
   createExpertUser,
@@ -12,15 +12,31 @@ const {
 } = require("../controllers/expertController");
 const { body, validationResult } = require("express-validator");
 
-// --- PERUBAHAN VALIDASI ---
+// --- MIDDLEWARE: Extract FormData fields dari array menjadi string ---
+const extractFormDataFields = (req, res, next) => {
+  if (req.body) {
+    // Ekstrak field text dari array menjadi string
+    req.body.nmExpert = Array.isArray(req.body.nmExpert) ? req.body.nmExpert[0] : req.body.nmExpert;
+    req.body.emailExpert = Array.isArray(req.body.emailExpert) ? req.body.emailExpert[0] : req.body.emailExpert;
+    req.body.password = Array.isArray(req.body.password) ? req.body.password[0] : req.body.password;
+    req.body.mobileExpert = Array.isArray(req.body.mobileExpert) ? req.body.mobileExpert[0] : req.body.mobileExpert;
+    req.body.statExpert = Array.isArray(req.body.statExpert) ? req.body.statExpert[0] : req.body.statExpert;
+    req.body.Row = Array.isArray(req.body.Row) ? req.body.Row[0] : req.body.Row;
+    req.body.role = Array.isArray(req.body.role) ? req.body.role[0] : req.body.role;
+    req.body.expertSkills = Array.isArray(req.body.expertSkills) ? req.body.expertSkills[0] : req.body.expertSkills;
+  }
+  next();
+};
+// --- AKHIR MIDDLEWARE ---
+
+// --- PERBAIKAN VALIDASI EXPERT (HANYA UNTUK FIELD UTAMA) ---
 const validateExpertInput = (isUpdate = false) => [
-  // Tambahkan parameter isUpdate
   body("nmExpert", "Expert name is required").notEmpty(),
   body("emailExpert", "Please include a valid email").isEmail(),
 
   // Password: Wajib saat create, Opsional saat update
   body("password")
-    .if((value, { req }) => !isUpdate || (isUpdate && value)) // Jalankan validasi jika create ATAU jika update dan password diisi
+    .if((value, { req }) => !isUpdate || (isUpdate && value)) 
     .isLength({ min: 6 })
     .withMessage("Password must be 6 or more characters"),
 
@@ -29,20 +45,13 @@ const validateExpertInput = (isUpdate = false) => [
     "Head of Expert",
     "Trainer",
   ]),
-  body("skillCtgIds")
-    .optional()
-    .isArray()
-    .withMessage("Skills must be an array"),
-  body("skillCtgIds.*")
-    .optional()
-    .isInt({ gt: 0 })
-    .withMessage("Each skill ID must be a positive integer"),
+  
+  // HAPUS: Validasi lama untuk skillCtgIds yang berupa array.
+  // Validasi expertSkills (JSON string) ditangani di controller.
+
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Mengembalikan error validasi agar frontend bisa menampilkannya
-      // return res.status(400).json({ errors: errors.array() });
-      // Kirim format yang mungkin diharapkan frontend (berdasarkan log error)
       return res
         .status(400)
         .json({ error: "Validation failed", errors: errors.array() });
@@ -50,47 +59,50 @@ const validateExpertInput = (isUpdate = false) => [
     next();
   },
 ];
-// --- AKHIR PERUBAHAN VALIDASI ---
+// --- AKHIR PERBAIKAN VALIDASI ---
 
 // --- Routes ---
 // Get all experts
 router.get("/", authMiddleware(["Admin", "PM", "Head Sales"]), getExperts);
 
-// Create new expert - Gunakan validasi tanpa flag 'isUpdate' (default: false)
+// Create new expert - Menerima FormData dan File Upload
 router.post(
   "/",
   authMiddleware(["Admin"]),
-  validateExpertInput(),
+  // Multer harus dijalankan pertama untuk memproses FormData
+  uploadExpertDocs.any(), // Menerima semua field dan file
+  extractFormDataFields, // Ekstrak field dari array menjadi string
+  validateExpertInput(), // Validasi dasar (Nama, Email, Password, Role)
   createExpertUser
 );
 
-// Update expert - Gunakan validasi DENGAN flag 'isUpdate' true
+// Update expert - Menerima FormData dan File Upload (sama seperti POST)
 router.put(
   "/:idExpert",
   authMiddleware(["Admin"]),
+  uploadExpertDocs.any(), // Menerima semua field dan file
+  extractFormDataFields, // Ekstrak field dari array menjadi string
   validateExpertInput(true),
   updateExpertUser
-); // Beri argumen 'true'
-
-// Get expert by ID
+);// Get expert by ID
 router.get(
-  "/:idExpert",
-  authMiddleware(["Admin", "PM", "Head Sales"]),
-  getExpertById
+  "/:idExpert",
+  authMiddleware(["Admin", "PM", "Head Sales"]),
+  getExpertById
 );
 
 // Get dashboard for logged-in expert
 router.get(
-  "/my-dashboard",
-  authMiddleware(["Expert", "Head of Expert", "Trainer"]),
-  getMyDashboardData
+  "/my-dashboard",
+  authMiddleware(["Expert", "Head of Expert", "Trainer"]),
+  getMyDashboardData
 );
 
 // Get aggregated dashboard for Head of Expert
 router.get(
-  "/head-dashboard",
-  authMiddleware(["Admin", "Head of Expert"]),
-  getHeadExpertDashboardData
+  "/head-dashboard",
+  authMiddleware(["Admin", "Head of Expert"]),
+  getHeadExpertDashboardData
 );
 
 module.exports = router;

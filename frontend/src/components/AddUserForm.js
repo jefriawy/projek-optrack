@@ -1,9 +1,8 @@
-// frontend/src/components/AddUserForm.js
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import * as Yup from "yup";
 import axios from "axios";
-import Select from "react-select"; // Import react-select
+import Select from "react-select"; 
 
 // Define separate validation schemas for each user type for clarity
 const adminSchema = Yup.object({
@@ -32,7 +31,7 @@ const salesSchema = Yup.object({
   descSales: Yup.string().optional(),
 });
 
-// Expert schema for multi-skill
+// Expert schema for dynamic multi-skill with details
 const expertSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string()
@@ -42,10 +41,19 @@ const expertSchema = Yup.object({
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
   mobile: Yup.string().optional(),
-  skillCtgIds: Yup.array()
-    .of(Yup.number().integer().positive("Skill ID must be positive"))
-    .nullable()
-    .default([]),
+  
+  // Skema array untuk validasi skill yang dipilih
+  expertSkills: Yup.array()
+    .of(
+      Yup.object({
+        idSkillCtg: Yup.number().required('Skill ID is required'), 
+        experience: Yup.string().required('Pengalaman is required'), 
+        certificate: Yup.mixed().nullable(), 
+      })
+    )
+    .min(1, 'Minimal satu Skill harus ditambahkan.') 
+    .required('Minimal satu Skill harus ditambahkan.'),
+
   role: Yup.string()
     .oneOf(["Expert", "Trainer", "Head of Expert"])
     .required("Role is required"),
@@ -86,7 +94,6 @@ const hrSchema = Yup.object({
   mobile: Yup.string().optional(),
 });
 
-// <-- TAMBAHKAN SKEMA OUTSOURCER -->
 const outsourcerSchema = Yup.object({
   name: Yup.string().required("Name is required"),
   email: Yup.string()
@@ -101,7 +108,6 @@ const outsourcerSchema = Yup.object({
     .required("Role is required"),
   statOutsourcer: Yup.string().optional(),
 });
-// <-- AKHIR TAMBAHAN -->
 
 const validationSchemaMap = {
   Admin: adminSchema,
@@ -110,21 +116,21 @@ const validationSchemaMap = {
   Akademik: akademikSchema,
   PM: pmSchema,
   HR: hrSchema,
-  Outsourcer: outsourcerSchema, // <-- TAMBAHKAN INI
+  Outsourcer: outsourcerSchema, 
 };
 
 const AddUserForm = ({ userType, onClose, onSubmit }) => {
   const { user } = useContext(AuthContext);
-  // Rename skills state to skillCategories
-  const [skillCategories, setSkillCategories] = useState([]);
-  const [selectedSkills, setSelectedSkills] = useState([]); // For react-select multi
+  const API_BASE = "http://localhost:3000"; 
+  
+  const [skillCategories, setSkillCategories] = useState([]); 
+  const [expertSkills, setExpertSkills] = useState([]); 
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     mobile: "",
-    // Default role based on userType
     role:
       userType === "Expert"
         ? "Expert"
@@ -138,38 +144,32 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         ? "Admin"
         : userType === "HR"
         ? "HR"
-        : userType === "Outsourcer" // <-- TAMBAHKAN INI
-        ? "external" // <-- Default untuk Outsourcer
+        : userType === "Outsourcer"
+        ? "external" 
         : "",
-    // Sales specific
     descSales: "",
-    // Expert specific
     statExpert: "",
     Row: "",
-    // Outsourcer specific
-    statOutsourcer: "", // <-- TAMBAHKAN INI
+    statOutsourcer: "", 
   });
 
   const [errors, setErrors] = useState({});
 
   // Fetch Skill Categories when userType is Expert
   useEffect(() => {
-    // Reset skills when switching user type
-    setSelectedSkills([]);
+    setExpertSkills([]); 
     setSkillCategories([]);
 
     if (userType === "Expert") {
       const fetchSkillCategories = async () => {
         if (user.token) {
           try {
-            // Use the new endpoint
             const response = await axios.get(
-              "http://localhost:3000/api/skill-categories",
+              `${API_BASE}/api/skill-categories`,
               {
                 headers: { Authorization: `Bearer ${user.token}` },
               }
             );
-            // Map data for react-select options
             const options = response.data.map((cat) => ({
               value: cat.idSkillCtg,
               label: cat.nmSkillCtg,
@@ -177,7 +177,6 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
             setSkillCategories(options);
           } catch (error) {
             console.error("Failed to fetch skill categories", error);
-            // Optionally set an error state here
           }
         }
       };
@@ -189,68 +188,182 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
   };
-
-  // Handler specifically for react-select multi
-  const handleMultiSelectChange = (selectedOptions) => {
-    setSelectedSkills(selectedOptions || []); // Ensure it's always an array
-    // Clear potential validation error for skills
-    setErrors((prevErrors) => ({ ...prevErrors, skillCtgIds: "" }));
+  
+  // Handler untuk memilih skill dari dropdown dan menambahkannya ke array
+  const handleSkillSelect = (selectedOption) => {
+    if (selectedOption) {
+      if (!expertSkills.find(s => s.idSkillCtg === selectedOption.value)) {
+        setExpertSkills((prevSkills) => [
+          ...prevSkills,
+          {
+            idSkillCtg: selectedOption.value,
+            nmSkillCtg: selectedOption.label, 
+            experience: "", 
+            certificate: null, 
+            certificateFileName: null, 
+          },
+        ]);
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          delete newErrors.expertSkills;
+          return newErrors;
+        });
+      }
+    }
   };
+
+  // Handler untuk menghapus baris skill
+  const handleRemoveSkill = (skillIdToRemove) => {
+    setExpertSkills((prevSkills) =>
+      prevSkills.filter((skill) => skill.idSkillCtg !== skillIdToRemove)
+    );
+    setErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        delete newErrors.expertSkills;
+        return newErrors;
+    });
+  };
+
+  // Handler untuk mengubah nilai input (pengalaman)
+  const handleSkillExperienceChange = (skillId, value) => {
+    setExpertSkills((prevSkills) => {
+      const updatedSkills = prevSkills.map((skill) =>
+        skill.idSkillCtg === skillId
+          ? { ...skill, experience: value }
+          : skill
+      );
+      
+      // Perhitungan index untuk membersihkan error
+      const index = updatedSkills.findIndex(s => s.idSkillCtg === skillId);
+      if (index !== -1) {
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          delete newErrors[`expertSkills[${index}].experience`];
+          return newErrors;
+        });
+      }
+      return updatedSkills;
+    });
+  };
+
+  // Handler untuk upload file (sertifikat)
+  const handleCertificateUpload = (skillId, file) => {
+    setExpertSkills((prevSkills) =>
+      prevSkills.map((skill) =>
+        skill.idSkillCtg === skillId
+          ? { 
+              ...skill, 
+              certificate: file, 
+              certificateFileName: file ? file.name : null
+            }
+          : skill
+      )
+    );
+  };
+  
+  // Handler untuk menghapus sertifikat saja
+  const handleRemoveCertificate = (skillId) => {
+    setExpertSkills((prevSkills) =>
+      prevSkills.map((skill) =>
+        skill.idSkillCtg === skillId
+          ? { ...skill, certificate: null, certificateFileName: null }
+          : skill
+      )
+    );
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const currentValidationSchema = validationSchemaMap[userType];
 
-    // Prepare payload, extracting skill IDs from selectedSkills for Expert
     let payload = { ...formData };
+    let finalPayload = payload;
+
     if (userType === "Expert") {
-      payload.skillCtgIds = selectedSkills.map((skill) => skill.value);
-    }
-
-    try {
-      await currentValidationSchema.validate(payload, { abortEarly: false });
-      // Submit the potentially modified payload (with skillCtgIds)
-      await onSubmit(payload);
-      // Reset form or close modal handled by parent component (UserManagement)
-    } catch (error) {
-      if (error.name === "ValidationError") {
-        const validationErrors = {};
-        error.inner.forEach((err) => {
-          validationErrors[err.path] = err.message;
+      payload.expertSkills = expertSkills;
+      
+      try {
+        await currentValidationSchema.validate(payload, { abortEarly: false });
+        
+        const data = new FormData();
+        
+        // Tambahkan field umum
+        data.append('nmExpert', formData.name);
+        data.append('emailExpert', formData.email);
+        data.append('password', formData.password);
+        data.append('mobileExpert', formData.mobile || '');
+        data.append('role', formData.role);
+        data.append('statExpert', formData.statExpert || '');
+        data.append('Row', formData.Row || '');
+        
+        // Tambahkan array skill dan file
+        const skillDataArray = expertSkills.map(skill => {
+            if (skill.certificate) {
+                const fileKey = `certificate_${skill.idSkillCtg}`;
+                data.append(fileKey, skill.certificate, skill.certificateFileName);
+                return {
+                    idSkillCtg: skill.idSkillCtg,
+                    experience: skill.experience,
+                    certificateFileKey: fileKey, 
+                };
+            }
+            return {
+                idSkillCtg: skill.idSkillCtg,
+                experience: skill.experience,
+                certificateFileKey: null,
+            };
         });
-        console.log("Validation Errors:", validationErrors);
-        setErrors(validationErrors);
-      } else {
-        // API errors are handled in UserManagement.js
-        console.error("Submission error:", error);
-      }
-    }
-  };
 
+        data.append('expertSkills', JSON.stringify(skillDataArray));
+        
+        finalPayload = data;
+
+      } catch (error) {
+        if (error.name === "ValidationError") {
+          const validationErrors = {};
+          error.inner.forEach((err) => {
+            validationErrors[err.path] = err.message;
+          });
+          console.log("Validation Errors:", validationErrors);
+          setErrors(validationErrors);
+          return; 
+        } else {
+          console.error("Validation failed:", error);
+          setErrors({ general: 'Validation error occurred.' });
+          return;
+        }
+      }
+    } 
+
+    await onSubmit(finalPayload);
+  };
+  
+  // Custom Styles untuk react-select (DIPERBAIKI: menggunakan errors.expertSkills)
   const selectStyles = {
     control: (base, state) => ({
       ...base,
       borderColor: state.isFocused
         ? "#3b82f6"
-        : errors.skillCtgIds
+        : errors.expertSkills
         ? "#ef4444"
-        : "#d1d5db", // Error border color
+        : "#d1d5db", 
       "&:hover": {
         borderColor: state.isFocused
           ? "#3b82f6"
-          : errors.skillCtgIds
+          : errors.expertSkills
           ? "#ef4444"
           : "#9ca3af",
       },
       boxShadow: state.isFocused
         ? "0 0 0 1px #3b82f6"
-        : errors.skillCtgIds
+        : errors.expertSkills
         ? "0 0 0 1px #ef4444"
         : "none",
     }),
-    menu: (base) => ({ ...base, zIndex: 50 }), // Ensure dropdown is above other elements
+    menu: (base) => ({ ...base, zIndex: 50 }), 
   };
-
+  
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-4">
       {/* --- Common Fields --- */}
@@ -329,7 +442,7 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
 
       {/* --- Conditional Fields --- */}
 
-      {/* Sales */}
+      {/* Sales, Akademik, PM, Admin, HR, Outsourcer blocks (Tidak diubah) */}
       {userType === "Sales" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Sales Details</h3>
@@ -367,124 +480,38 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
         </div>
       )}
 
-      {/* Akademik */}
       {userType === "Akademik" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Akademik Details</h3>
-          {/* Role is fixed */}
           <input type="hidden" name="role" value="Akademik" />
-          {/* Add other Akademik-specific fields if any */}
         </div>
       )}
 
-      {/* PM */}
       {userType === "PM" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">
             Project Manager Details
           </h3>
-          {/* Role is fixed */}
           <input type="hidden" name="role" value="PM" />
-          {/* Add other PM-specific fields if any */}
         </div>
       )}
 
-      {/* Admin */}
       {userType === "Admin" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Admin Details</h3>
-          {/* Role is fixed */}
           <input type="hidden" name="role" value="Admin" />
-          {/* Add other Admin-specific fields if any */}
         </div>
       )}
-
-      {/* Expert */}
-      {userType === "Expert" && (
-        <div className="space-y-4 animate-fadeIn">
-          <h3 className="font-semibold text-gray-800">
-            Expert/Trainer Details
-          </h3>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Role *
-            </label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={`w-full p-2 border rounded-md ${
-                errors.role ? "border-red-500" : "border-gray-300"
-              }`}
-            >
-              <option value="Expert">Expert</option>
-              <option value="Trainer">Trainer</option>
-              <option value="Head of Expert">Head of Expert</option>
-            </select>
-            {errors.role && (
-              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Skills (Pilih satu atau lebih)
-            </label>
-            <Select
-              isMulti
-              name="skillCtgIds" // Name matches validation schema path
-              options={skillCategories}
-              className="basic-multi-select"
-              classNamePrefix="select"
-              value={selectedSkills}
-              onChange={handleMultiSelectChange}
-              placeholder="Pilih skill..."
-              styles={selectStyles} // Apply custom styles for error indication
-            />
-            {/* Display validation error for the array itself if needed */}
-            {errors.skillCtgIds && typeof errors.skillCtgIds === "string" && (
-              <p className="text-red-500 text-sm mt-1">{errors.skillCtgIds}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Status (Optional)
-            </label>
-            <input
-              type="text"
-              name="statExpert"
-              value={formData.statExpert}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Notes (Optional)
-            </label>
-            <textarea
-              name="Row"
-              value={formData.Row}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              rows="3"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* HR */}
+      
       {userType === "HR" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">
             Human Resource Details
           </h3>
-          {/* Role is fixed */}
           <input type="hidden" name="role" value="HR" />
-          {/* Add other HR-specific fields if needed */}
         </div>
       )}
 
-      {/* <-- BLOK BARU UNTUK OUTSOURCER --> */}
       {userType === "Outsourcer" && (
         <div className="space-y-4 animate-fadeIn">
           <h3 className="font-semibold text-gray-800">Outsourcer Details</h3>
@@ -522,7 +549,176 @@ const AddUserForm = ({ userType, onClose, onSubmit }) => {
           </div>
         </div>
       )}
-      {/* <-- AKHIR BLOK BARU --> */}
+
+      {/* --- Expert Block dengan Dynamic Skills BARU (Minimalis Design) --- */}
+      {userType === "Expert" && (
+        <div className="space-y-4 animate-fadeIn">
+          <h3 className="font-semibold text-gray-800">
+            Expert/Trainer Details
+          </h3>
+          
+          {/* Role Selection */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Role *
+            </label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded-md ${
+                errors.role ? "border-red-500" : "border-gray-300"
+              }`}
+            >
+              <option value="Expert">Expert</option>
+              <option value="Trainer">Trainer</option>
+              <option value="Head of Expert">Head of Expert</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+            )}
+          </div>
+          
+          {/* Dynamic Skills Input (Minimalis Design) */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Skills (Pilih satu atau lebih) *
+            </label>
+            
+            {/* Dropdown untuk Menambah Skill Baru (Add Skills) */}
+            <Select
+              name="skillSelector"
+              options={skillCategories.filter(opt => !expertSkills.find(s => s.idSkillCtg === opt.value))}
+              className="basic-single-select"
+              classNamePrefix="select"
+              value={null}
+              onChange={handleSkillSelect}
+              placeholder="Add Skills" 
+              isClearable={false}
+              isDisabled={skillCategories.length === expertSkills.length}
+              styles={selectStyles}
+            />
+            {errors.expertSkills && typeof errors.expertSkills === "string" && (
+              <p className="text-red-500 text-sm mt-1">{errors.expertSkills}</p>
+            )}
+
+            {/* Daftar Skill yang Sudah Dipilih (Re-designed minimalis) */}
+            <div className="mt-4 space-y-3">
+              {expertSkills.map((skill, index) => (
+                <div 
+                  key={skill.idSkillCtg} 
+                  className="flex items-center space-x-2" 
+                >
+                  <div className="flex-grow flex items-center bg-white border border-gray-400 rounded-lg px-3 py-2 text-sm shadow-sm">
+                    {/* Nama Skill & Input Pengalaman */}
+                    <span className="font-medium text-gray-800 whitespace-nowrap">
+                      {skill.nmSkillCtg}
+                    </span>
+                    <span className="mx-2 text-gray-400">–</span>
+                    
+                    {/* Input Pengalaman (Mirip dengan text biasa) */}
+                    <input
+                      type="text"
+                      name={`expertSkills[${index}].experience`}
+                      value={skill.experience}
+                      onChange={(e) =>
+                        handleSkillExperienceChange(skill.idSkillCtg, e.target.value)
+                      }
+                      className={`flex-grow border-none focus:ring-0 p-0 text-sm placeholder-gray-500 ${
+                        errors[`expertSkills[${index}].experience`] ? "text-red-600" : "text-gray-700"
+                      }`}
+                      placeholder="Pengalaman" 
+                    />
+                    
+                    {/* Error Pengalaman (jika ada) */}
+                    {errors[`expertSkills[${index}].experience`] && (
+                        <span className="text-red-500 text-xs ml-2">
+                          {/* Menampilkan hanya ikon (atau disingkat) jika perlu */}
+                          !
+                        </span>
+                    )}
+
+                    {/* Indikator dan tombol Sertifikat */}
+                    {skill.certificateFileName ? (
+                      <div className="flex items-center ml-2 border-l border-gray-200 pl-2">
+                        <span className="text-blue-600 font-medium text-sm truncate max-w-[100px] sm:max-w-none">
+                          {/* Nama Sertif */}
+                          {skill.certificateFileName.split('.').slice(0, -1).join('.') || 'Sertifikat'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCertificate(skill.idSkillCtg)}
+                          className="ml-1 text-red-500 hover:text-red-700 text-xs font-bold"
+                          title="Hapus Dokumen"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center ml-2 border-l border-gray-200 pl-2">
+                         <input
+                          type="file"
+                          id={`certificate-file-${skill.idSkillCtg}`}
+                          onChange={(e) =>
+                            handleCertificateUpload(skill.idSkillCtg, e.target.files[0])
+                          }
+                          className="hidden" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                        />
+                        <label 
+                          htmlFor={`certificate-file-${skill.idSkillCtg}`}
+                          className="text-gray-500 hover:text-gray-700 text-xs cursor-pointer whitespace-nowrap border rounded-md px-2 py-1"
+                          title="Upload Sertifikat"
+                        >
+                          Upload Sertifikat
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Tombol Hapus Baris Skill (Merah, sesuai gambar) */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSkill(skill.idSkillCtg)}
+                    className="bg-red-500 text-white w-20 px-3 py-2 rounded-md hover:bg-red-600 transition shadow-md whitespace-nowrap"
+                    title="Hapus Baris"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* Akhir Daftar Skill */}
+          </div>
+          {/* --- Akhir Dynamic Skills Input --- */}
+          
+          {/* Status & Notes (tidak berubah) */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Status (Optional)
+            </label>
+            <input
+              type="text"
+              name="statExpert"
+              value={formData.statExpert}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Notes (Optional)
+            </label>
+            <textarea
+              name="Row"
+              value={formData.Row}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              rows="3"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Submit Buttons */}
       <div className="flex justify-end space-x-2 pt-4">
