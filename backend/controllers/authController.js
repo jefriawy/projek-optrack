@@ -35,7 +35,8 @@ const roleToRedirect = (role) => {
     case "Trainer":
       return "/training";
     case "Akademik":
-      return "/dashboard/akademik";
+      // Frontend routes send Akademik users to the training page
+      return "/training";
     case "PM":
       return "/project";
     case "HR":
